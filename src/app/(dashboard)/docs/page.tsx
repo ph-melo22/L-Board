@@ -2,11 +2,47 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.1.0 beta'
+const VERSION = '0.2.0 beta'
+
+const CHANGELOG = [
+  {
+    version: '0.2.0 beta',
+    date: '2026-04-12',
+    changes: [
+      'Sistema de equipe: convite de funcionários por e-mail via Supabase Auth',
+      'Roles: founder, employee, developer (Dev/TI) com acessos distintos',
+      'Tabela profiles com RLS — perfil criado automaticamente no primeiro login',
+      'Middleware atualizado com controle de acesso por role',
+      'Sidebar dinâmica — exibe navegação de acordo com o role do usuário',
+      'Aba "Equipe" no Founder Board com convite, edição de role e remoção de membros',
+      'API routes: /api/team/invite, /api/team/remove/[id], /api/team/role',
+      'Admin client Supabase (service_role) para operações privilegiadas',
+      'Deploy na Vercel — app hospedado em produção',
+      'Correção de tipos TypeScript nos cookies do Supabase SSR',
+    ],
+  },
+  {
+    version: '0.1.0 beta',
+    date: '2026-04-10',
+    changes: [
+      'Dashboard com métricas (MRR, receita, custos, lucro, clientes, tarefas)',
+      'Gráfico de área dos últimos 6 meses',
+      'Alertas de renovação de clientes (próximos 30 dias)',
+      'Simulador de crescimento com projeção de MRR',
+      'Módulo Clientes: CRUD, filtros, ordenação, paginação, detalhe por cliente',
+      'Módulo Financeiro: entradas e despesas com gráfico PieChart por categoria',
+      'Kanban de Demandas: 5 colunas, prioridade crítica, filtros avançados',
+      'Founder Board: OKRs com Key Results, Projetos Estratégicos, Notas com tags',
+      'Autenticação via Supabase Auth com proteção de rotas por middleware',
+      'Schema SQL completo com 8 tabelas e RLS',
+      'Documentação técnica integrada ao app',
+    ],
+  },
+]
+
 const STACK = [
   { name: 'Next.js 14', role: 'Framework React (App Router)' },
   { name: 'TypeScript', role: 'Tipagem estática' },
@@ -14,64 +50,43 @@ const STACK = [
   { name: 'Tailwind CSS', role: 'Estilização utilitária' },
   { name: 'shadcn/ui', role: 'Componentes de interface' },
   { name: 'Recharts', role: 'Gráficos e visualizações' },
-  { name: 'date-fns', role: 'Manipulação de datas' },
+  { name: 'Vercel', role: 'Hospedagem e deploy contínuo' },
+]
+
+const ROLES = [
+  {
+    role: 'founder',
+    label: 'Founder',
+    color: 'text-amber-700 bg-amber-50 border-amber-200',
+    acesso: 'Acesso total: Dashboard, Clientes, Financeiro, Demandas, Founder Board, Documentação',
+  },
+  {
+    role: 'developer',
+    label: 'Dev / TI',
+    color: 'text-blue-700 bg-blue-50 border-blue-200',
+    acesso: 'Dashboard, Demandas, Documentação',
+  },
+  {
+    role: 'employee',
+    label: 'Funcionário',
+    color: 'text-muted-foreground bg-muted border-border',
+    acesso: 'Dashboard, Demandas',
+  },
 ]
 
 const PAGES = [
-  {
-    route: '/',
-    file: 'src/app/page.tsx',
-    description: 'Rota raiz — redireciona automaticamente para /dashboard.',
-    type: 'redirect',
-  },
-  {
-    route: '/auth/login',
-    file: 'src/app/auth/login/page.tsx',
-    description: 'Tela de login com e-mail e senha via Supabase Auth. Redireciona para /dashboard após autenticação.',
-    type: 'public',
-  },
-  {
-    route: '/dashboard',
-    file: 'src/app/(dashboard)/dashboard/page.tsx',
-    description: 'Visão geral do negócio. Cards de métricas (MRR, receita, custos, lucro, clientes, tarefas, receita em risco) e gráfico de área dos últimos 6 meses.',
-    type: 'privado',
-  },
-  {
-    route: '/clients',
-    file: 'src/app/(dashboard)/clients/page.tsx',
-    description: 'Listagem de clientes com filtro por status (Ativo, Trial, Inativo, Churned). CRUD completo via modal (criar, editar, deletar).',
-    type: 'privado',
-  },
-  {
-    route: '/clients/[id]',
-    file: 'src/app/(dashboard)/clients/[id]/page.tsx',
-    description: 'Detalhe do cliente: métricas individuais (receita, custo, lucro, margem), informações gerais e todas as tarefas vinculadas ao cliente.',
-    type: 'privado',
-  },
-  {
-    route: '/financial',
-    file: 'src/app/(dashboard)/financial/page.tsx',
-    description: 'Gestão financeira em duas abas: Entradas (receitas) e Despesas. Cards de resumo com total de receitas, despesas e resultado. CRUD completo em ambas.',
-    type: 'privado',
-  },
-  {
-    route: '/demands',
-    file: 'src/app/(dashboard)/demands/page.tsx',
-    description: 'Kanban board com 5 colunas: Backlog → A fazer → Em progresso → Revisão → Concluído. Botões de mover cards entre colunas. CRUD completo com campo de impacto em receita.',
-    type: 'privado',
-  },
-  {
-    route: '/founder',
-    file: 'src/app/(dashboard)/founder/page.tsx',
-    description: 'Painel do founder em 3 abas: OKRs (com Key Results e barras de progresso), Projetos Estratégicos e Notas Estratégicas com tags. CRUD completo em tudo.',
-    type: 'privado',
-  },
-  {
-    route: '/docs',
-    file: 'src/app/(dashboard)/docs/page.tsx',
-    description: 'Esta página. Documentação técnica completa da aplicação v0.1 beta.',
-    type: 'privado',
-  },
+  { route: '/', file: 'src/app/page.tsx', description: 'Rota raiz — redireciona para /dashboard.', type: 'redirect' },
+  { route: '/auth/login', file: 'src/app/auth/login/page.tsx', description: 'Tela de login com e-mail e senha via Supabase Auth.', type: 'público' },
+  { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
+  { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo.', type: 'founder' },
+  { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações e tarefas vinculadas.', type: 'founder' },
+  { route: '/financial', file: 'src/app/(dashboard)/financial/page.tsx', description: 'Entradas e despesas financeiras com gráfico PieChart. CRUD completo.', type: 'founder' },
+  { route: '/demands', file: 'src/app/(dashboard)/demands/page.tsx', description: 'Kanban 5 colunas com filtros avançados. Prioridade crítica destacada.', type: 'privado' },
+  { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos, Notas e Equipe (convite e gestão de membros).', type: 'founder' },
+  { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
+  { route: '/api/team/invite', file: 'src/app/api/team/invite/route.ts', description: 'POST — convida usuário por e-mail via Supabase Admin e pré-cria perfil com role.', type: 'api' },
+  { route: '/api/team/remove/[id]', file: 'src/app/api/team/remove/[id]/route.ts', description: 'DELETE — remove usuário do Supabase Auth (cascata no profiles).', type: 'api' },
+  { route: '/api/team/role', file: 'src/app/api/team/role/route.ts', description: 'PATCH — atualiza o role de um membro da equipe.', type: 'api' },
 ]
 
 const SERVICES = [
@@ -79,128 +94,93 @@ const SERVICES = [
     file: 'src/services/dashboard.ts',
     tabela: '—',
     funcoes: [
-      { name: 'getDashboardMetrics()', desc: 'Retorna métricas gerais: MRR, receita total, custos, lucro, clientes ativos/churned, tarefas pendentes, receita em risco.' },
-      { name: 'getRevenueChartData()', desc: 'Retorna dados dos últimos 6 meses agrupados por mês: receita, custos e lucro. Usado no gráfico de área.' },
+      { name: 'getDashboardMetrics()', desc: 'Métricas gerais: MRR, receita total, custos, lucro, clientes ativos/churned, tarefas pendentes, receita em risco.' },
+      { name: 'getRevenueChartData()', desc: 'Dados dos últimos 6 meses por mês: receita, custos e lucro. Usado no gráfico de área.' },
     ],
   },
   {
     file: 'src/services/clients.ts',
     tabela: 'clients',
     funcoes: [
-      { name: 'getClients()', desc: 'Lista todos os clientes ordenados por criação. Inclui profit e margin calculados.' },
-      { name: 'getClientById(id)', desc: 'Busca um cliente pelo ID com profit e margin.' },
-      { name: 'createClient_(formData)', desc: 'Cria um novo cliente.' },
+      { name: 'getClients()', desc: 'Lista todos os clientes com profit e margin calculados.' },
+      { name: 'getClientById(id)', desc: 'Busca cliente pelo ID com profit e margin.' },
+      { name: 'createClient(formData)', desc: 'Cria um novo cliente.' },
       { name: 'updateClient(id, formData)', desc: 'Atualiza dados de um cliente.' },
       { name: 'deleteClient(id)', desc: 'Remove um cliente.' },
-      { name: 'getClientOptions()', desc: 'Lista id e nome dos clientes ativos. Usado nos selects de outros formulários.' },
+      { name: 'getClientOptions()', desc: 'Lista id e nome dos clientes. Usado nos selects.' },
     ],
   },
   {
     file: 'src/services/financial.ts',
     tabela: 'financial_entries + financial_expenses',
     funcoes: [
-      { name: 'getFinancialEntries()', desc: 'Lista todas as entradas financeiras com nome do cliente vinculado.' },
-      { name: 'createFinancialEntry(formData)', desc: 'Cria uma entrada financeira.' },
-      { name: 'updateFinancialEntry(id, formData)', desc: 'Atualiza uma entrada.' },
-      { name: 'deleteFinancialEntry(id)', desc: 'Remove uma entrada.' },
-      { name: 'getFinancialExpenses()', desc: 'Lista todas as despesas.' },
-      { name: 'createFinancialExpense(formData)', desc: 'Cria uma despesa.' },
-      { name: 'updateFinancialExpense(id, formData)', desc: 'Atualiza uma despesa.' },
-      { name: 'deleteFinancialExpense(id)', desc: 'Remove uma despesa.' },
-      { name: 'calcEntriesTotal(entries)', desc: 'Soma as entradas confirmadas (ignora canceladas).' },
-      { name: 'calcExpensesTotal(expenses)', desc: 'Soma todas as despesas.' },
+      { name: 'getFinancialEntries()', desc: 'Lista entradas com nome do cliente vinculado.' },
+      { name: 'createFinancialEntry(formData)', desc: 'Cria entrada financeira.' },
+      { name: 'updateFinancialEntry(id, formData)', desc: 'Atualiza entrada.' },
+      { name: 'deleteFinancialEntry(id)', desc: 'Remove entrada.' },
+      { name: 'getFinancialExpenses()', desc: 'Lista despesas.' },
+      { name: 'createFinancialExpense(formData)', desc: 'Cria despesa.' },
+      { name: 'updateFinancialExpense(id, formData)', desc: 'Atualiza despesa.' },
+      { name: 'deleteFinancialExpense(id)', desc: 'Remove despesa.' },
     ],
   },
   {
     file: 'src/services/demands.ts',
     tabela: 'tasks',
     funcoes: [
-      { name: 'getTasks()', desc: 'Lista todas as tarefas com nome do cliente vinculado.' },
-      { name: 'getTasksByStatus(status)', desc: 'Filtra tarefas por status.' },
-      { name: 'createTask(formData)', desc: 'Cria uma tarefa.' },
-      { name: 'updateTask(id, formData)', desc: 'Atualiza uma tarefa.' },
-      { name: 'updateTaskStatus(id, status)', desc: 'Atualiza apenas o status da tarefa. Usado nos botões ← → do kanban.' },
-      { name: 'deleteTask(id)', desc: 'Remove uma tarefa.' },
+      { name: 'getTasks()', desc: 'Lista todas as tarefas com cliente vinculado.' },
+      { name: 'createTask(formData)', desc: 'Cria tarefa.' },
+      { name: 'updateTask(id, formData)', desc: 'Atualiza tarefa.' },
+      { name: 'updateTaskStatus(id, status)', desc: 'Atualiza apenas o status. Usado nos botões ← → do kanban.' },
+      { name: 'deleteTask(id)', desc: 'Remove tarefa.' },
     ],
   },
   {
     file: 'src/services/founder.ts',
     tabela: 'okrs + key_results + strategic_projects + strategic_notes',
     funcoes: [
-      { name: 'getOKRs()', desc: 'Lista OKRs com todos os Key Results aninhados.' },
-      { name: 'createOKR(okr)', desc: 'Cria um OKR.' },
-      { name: 'updateOKR(id, okr)', desc: 'Atualiza um OKR.' },
-      { name: 'deleteOKR(id)', desc: 'Remove um OKR e seus Key Results (CASCADE).' },
-      { name: 'createKeyResult(okrId, kr)', desc: 'Adiciona um Key Result a um OKR.' },
-      { name: 'updateKeyResult(id, kr)', desc: 'Atualiza um Key Result.' },
-      { name: 'deleteKeyResult(id)', desc: 'Remove um Key Result.' },
-      { name: 'getProjects()', desc: 'Lista projetos estratégicos.' },
-      { name: 'createProject(project)', desc: 'Cria um projeto.' },
-      { name: 'updateProject(id, project)', desc: 'Atualiza um projeto.' },
-      { name: 'deleteProject(id)', desc: 'Remove um projeto.' },
-      { name: 'getNotes()', desc: 'Lista notas estratégicas ordenadas por atualização.' },
-      { name: 'upsertNote(note)', desc: 'Cria ou atualiza uma nota (upsert por ID).' },
-      { name: 'deleteNote(id)', desc: 'Remove uma nota.' },
+      { name: 'getOKRs()', desc: 'Lista OKRs com Key Results aninhados.' },
+      { name: 'createOKR / updateOKR / deleteOKR', desc: 'CRUD de OKRs.' },
+      { name: 'createKeyResult / updateKeyResult / deleteKeyResult', desc: 'CRUD de Key Results.' },
+      { name: 'getProjects / createProject / updateProject / deleteProject', desc: 'CRUD de Projetos Estratégicos.' },
+      { name: 'getNotes / upsertNote / deleteNote', desc: 'CRUD de Notas Estratégicas (upsert por ID).' },
+    ],
+  },
+  {
+    file: 'src/services/team.ts',
+    tabela: 'profiles',
+    funcoes: [
+      { name: 'getTeam()', desc: 'Lista todos os membros (profiles) ordenados por criação.' },
+      { name: 'getCurrentProfile()', desc: 'Retorna o perfil do usuário logado.' },
+      { name: 'inviteTeamMember(name, email, role)', desc: 'Chama /api/team/invite para enviar convite e criar perfil.' },
+      { name: 'removeTeamMember(id)', desc: 'Chama /api/team/remove/[id] para revogar acesso.' },
+      { name: 'updateMemberRole(id, role)', desc: 'Chama /api/team/role para alterar função.' },
     ],
   },
 ]
 
 const MODELS = [
-  {
-    name: 'Client / ClientWithProfit',
-    tabela: 'clients',
-    campos: ['id', 'name', 'product', 'monthly_revenue', 'operational_cost', 'start_date', 'renewal_date', 'status', 'created_at', '(+profit, +margin calculados)'],
-  },
-  {
-    name: 'FinancialEntry',
-    tabela: 'financial_entries',
-    campos: ['id', 'client_id', 'value', 'type', 'category', 'status', 'date', 'description', 'created_at', '(+clients join)'],
-  },
-  {
-    name: 'FinancialExpense',
-    tabela: 'financial_expenses',
-    campos: ['id', 'supplier', 'category', 'cost_center', 'value', 'type', 'date', 'description', 'created_at'],
-  },
-  {
-    name: 'Task',
-    tabela: 'tasks',
-    campos: ['id', 'title', 'description', 'client_id', 'squad', 'responsible', 'priority', 'impacts_revenue', 'revenue_impact_value', 'due_date', 'status', 'created_at', '(+clients join)'],
-  },
-  {
-    name: 'OKR',
-    tabela: 'okrs',
-    campos: ['id', 'objective', 'status', 'quarter', 'created_at', '(+key_results join)'],
-  },
-  {
-    name: 'KeyResult',
-    tabela: 'key_results',
-    campos: ['id', 'okr_id', 'description', 'target', 'current', 'unit', 'created_at'],
-  },
-  {
-    name: 'StrategicProject',
-    tabela: 'strategic_projects',
-    campos: ['id', 'title', 'description', 'status', 'priority', 'due_date', 'created_at'],
-  },
-  {
-    name: 'StrategicNote',
-    tabela: 'strategic_notes',
-    campos: ['id', 'title', 'content', 'tags[]', 'created_at', 'updated_at'],
-  },
+  { name: 'Client / ClientWithProfit', tabela: 'clients', campos: ['id', 'name', 'product', 'monthly_revenue', 'operational_cost', 'start_date', 'renewal_date', 'status', 'created_at', '+profit', '+margin'] },
+  { name: 'FinancialEntry', tabela: 'financial_entries', campos: ['id', 'client_id', 'value', 'type', 'category', 'status', 'date', 'description', 'created_at', '+clients join'] },
+  { name: 'FinancialExpense', tabela: 'financial_expenses', campos: ['id', 'supplier', 'category', 'cost_center', 'value', 'type', 'date', 'description', 'created_at'] },
+  { name: 'Task', tabela: 'tasks', campos: ['id', 'title', 'description', 'client_id', 'squad', 'responsible', 'priority', 'impacts_revenue', 'revenue_impact_value', 'due_date', 'status', 'created_at'] },
+  { name: 'OKR', tabela: 'okrs', campos: ['id', 'objective', 'status', 'quarter', 'created_at', '+key_results'] },
+  { name: 'KeyResult', tabela: 'key_results', campos: ['id', 'okr_id', 'description', 'target', 'current', 'unit', 'created_at'] },
+  { name: 'StrategicProject', tabela: 'strategic_projects', campos: ['id', 'title', 'description', 'status', 'priority', 'due_date', 'created_at'] },
+  { name: 'StrategicNote', tabela: 'strategic_notes', campos: ['id', 'title', 'content', 'tags[]', 'created_at', 'updated_at'] },
+  { name: 'Profile', tabela: 'profiles', campos: ['id', 'full_name', 'email', 'role', 'created_at'] },
 ]
 
 const INFRA = [
-  { file: 'src/middleware.ts', desc: 'Intercepta todas as rotas. Redireciona usuário não autenticado para /auth/login. Redireciona usuário autenticado que tenta acessar /auth para /dashboard.' },
-  { file: 'src/lib/supabase/client.ts', desc: 'Cria o cliente Supabase para uso no browser (componentes client-side com "use client").' },
-  { file: 'src/lib/supabase/server.ts', desc: 'Cria o cliente Supabase para uso server-side (Server Components, API Routes). Gerencia cookies de sessão.' },
-  { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), calculateProfit(), calculateMargin(), getStatusColor(), getPriorityColor(), getLabelByStatus(), getMonthName().' },
-  { file: 'src/hooks/use-toast.ts', desc: 'Hook para disparar notificações toast na interface.' },
-  { file: 'src/app/layout.tsx', desc: 'Layout raiz da aplicação. Configura fonte Inter, metadata e inclui o componente <Toaster> globalmente.' },
-  { file: 'src/app/(dashboard)/layout.tsx', desc: 'Layout das páginas autenticadas. Renderiza Sidebar + Header + área de conteúdo principal.' },
-  { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral com navegação entre as páginas. Destaca a rota ativa. Botão de logout no rodapé.' },
-  { file: 'src/components/layout/Header.tsx', desc: 'Barra superior que exibe o título e descrição da página atual com base na rota.' },
-  { file: 'supabase/schema.sql', desc: 'SQL completo para criação das 8 tabelas e políticas de Row Level Security (RLS). Rodar no SQL Editor do Supabase.' },
-  { file: '.env.local', desc: 'Variáveis de ambiente. NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY obrigatórias. Não commitar no git.' },
-  { file: 'next.config.mjs', desc: 'Configuração do Next.js. Server Actions habilitados para localhost:3000.' },
+  { file: 'src/middleware.ts', desc: 'Intercepta todas as rotas. Autentica usuário, auto-cria perfil no primeiro login, e redireciona com base no role (founder/developer/employee).' },
+  { file: 'src/lib/supabase/client.ts', desc: 'Cliente Supabase para uso no browser (componentes "use client").' },
+  { file: 'src/lib/supabase/server.ts', desc: 'Cliente Supabase server-side para Server Components e API Routes.' },
+  { file: 'src/lib/supabase/admin.ts', desc: 'Cliente Supabase com service_role key. Exclusivo para API routes — nunca expor no client-side.' },
+  { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
+  { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral dinâmico — exibe itens de navegação de acordo com o role do usuário logado.' },
+  { file: 'src/components/layout/Header.tsx', desc: 'Barra superior com título e descrição da página atual.' },
+  { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
+  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Nunca commitar no git.' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -218,9 +198,12 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function TypeBadge({ type }: { type: string }) {
   const colors: Record<string, string> = {
-    privado: 'text-blue-600 bg-blue-50 border-blue-200',
-    público: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    redirect: 'text-gray-500 bg-gray-50 border-gray-200',
+    privado:   'text-blue-600 bg-blue-50 border-blue-200',
+    público:   'text-emerald-600 bg-emerald-50 border-emerald-200',
+    founder:   'text-amber-600 bg-amber-50 border-amber-200',
+    dev:       'text-purple-600 bg-purple-50 border-purple-200',
+    api:       'text-gray-600 bg-gray-50 border-gray-200',
+    redirect:  'text-gray-400 bg-gray-50 border-gray-200',
   }
   return (
     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${colors[type] ?? colors.privado}`}>
@@ -233,6 +216,7 @@ function TypeBadge({ type }: { type: string }) {
 
 export default function DocsPage() {
   const [openService, setOpenService] = useState<string | null>(null)
+  const [openChangelog, setOpenChangelog] = useState<string | null>(CHANGELOG[0].version)
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -244,9 +228,62 @@ export default function DocsPage() {
           <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.1
+          BETA 0.2
         </span>
       </div>
+
+      {/* Changelog */}
+      <Section title="Histórico de Versões">
+        <div className="space-y-2">
+          {CHANGELOG.map((v) => (
+            <Card key={v.version} className="shadow-none">
+              <CardHeader
+                className="cursor-pointer py-3"
+                onClick={() => setOpenChangelog(openChangelog === v.version ? null : v.version)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold font-mono text-primary">v{v.version}</span>
+                    <span className="text-xs text-muted-foreground">{v.date}</span>
+                    {v.version === VERSION && (
+                      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">atual</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{openChangelog === v.version ? '▲' : '▼'}</span>
+                </div>
+              </CardHeader>
+              {openChangelog === v.version && (
+                <CardContent className="pt-0">
+                  <ul className="space-y-1">
+                    {v.changes.map((c, i) => (
+                      <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                        <span className="text-primary shrink-0">+</span>
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              )}
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      {/* Roles */}
+      <Section title="Roles e Permissões">
+        <div className="space-y-2">
+          {ROLES.map((r) => (
+            <Card key={r.role} className="shadow-none">
+              <CardContent className="flex items-start gap-4 py-3">
+                <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${r.color}`}>
+                  {r.label}
+                </span>
+                <p className="text-xs text-muted-foreground">{r.acesso}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </Section>
 
       {/* Stack */}
       <Section title="Stack Tecnológico">
@@ -263,7 +300,7 @@ export default function DocsPage() {
       </Section>
 
       {/* Pages */}
-      <Section title="Páginas e Rotas">
+      <Section title="Páginas, Rotas e APIs">
         <Card className="shadow-none">
           <CardContent className="p-0">
             <table className="w-full text-sm">
@@ -271,7 +308,7 @@ export default function DocsPage() {
                 <tr className="border-b border-border text-xs text-muted-foreground">
                   <th className="px-4 py-3 text-left font-medium">Rota</th>
                   <th className="px-4 py-3 text-left font-medium">Arquivo</th>
-                  <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                  <th className="px-4 py-3 text-left font-medium">Acesso</th>
                   <th className="px-4 py-3 text-left font-medium">Descrição</th>
                 </tr>
               </thead>
@@ -295,10 +332,7 @@ export default function DocsPage() {
         <div className="space-y-2">
           {SERVICES.map((s) => (
             <Card key={s.file} className="shadow-none">
-              <CardHeader
-                className="cursor-pointer py-3"
-                onClick={() => setOpenService(openService === s.file ? null : s.file)}
-              >
+              <CardHeader className="cursor-pointer py-3" onClick={() => setOpenService(openService === s.file ? null : s.file)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-xs font-mono font-semibold text-primary">{s.file}</CardTitle>
@@ -372,14 +406,15 @@ export default function DocsPage() {
       <Section title="Banco de Dados">
         <div className="grid gap-3 md:grid-cols-2">
           {[
-            { table: 'clients', desc: 'Clientes com receita mensal, custo operacional, status e datas de início/renovação.' },
-            { table: 'financial_entries', desc: 'Entradas financeiras (receitas) com tipo, categoria, status e vínculo com cliente.' },
-            { table: 'financial_expenses', desc: 'Despesas com fornecedor, categoria, centro de custo e tipo (fixo/variável/investimento).' },
-            { table: 'tasks', desc: 'Tarefas do kanban com prioridade, status, responsável, squad e flag de impacto em receita.' },
+            { table: 'clients', desc: 'Clientes com receita mensal, custo operacional, status e datas.' },
+            { table: 'financial_entries', desc: 'Entradas financeiras (receitas) com tipo, categoria, status e cliente.' },
+            { table: 'financial_expenses', desc: 'Despesas com fornecedor, categoria, centro de custo e tipo.' },
+            { table: 'tasks', desc: 'Tarefas do kanban com prioridade, status, responsável, squad e impacto em receita.' },
             { table: 'okrs', desc: 'Objetivos estratégicos com status e quarter. Relacionado com key_results (1:N).' },
-            { table: 'key_results', desc: 'Resultados-chave de cada OKR com meta, valor atual e unidade. Deletado em cascata com o OKR pai.' },
+            { table: 'key_results', desc: 'Resultados-chave com meta, valor atual e unidade. Cascata ao deletar OKR.' },
             { table: 'strategic_projects', desc: 'Projetos estratégicos com status, prioridade e prazo.' },
-            { table: 'strategic_notes', desc: 'Notas estratégicas com conteúdo livre e tags (array de texto).' },
+            { table: 'strategic_notes', desc: 'Notas estratégicas com conteúdo livre e tags (array).' },
+            { table: 'profiles', desc: 'Perfis de usuários vinculados ao auth.users. Armazena nome, email e role (founder/developer/employee). Criado automaticamente no primeiro login.' },
           ].map((db) => (
             <Card key={db.table} className="shadow-none">
               <CardContent className="p-3 flex gap-3">
@@ -390,13 +425,13 @@ export default function DocsPage() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          RLS ativo em todas as tabelas. Política: apenas usuários autenticados têm acesso total (<code className="font-mono">auth_full_access</code>).
+          RLS ativo em todas as tabelas. Políticas por role gerenciadas via middleware e admin client.
         </p>
       </Section>
 
       {/* Footer */}
       <div className="border-t border-border pt-4 text-xs text-muted-foreground">
-        L Board v{VERSION} · Gerado em {new Date().toLocaleDateString('pt-BR')} · Single-tenant (founder only)
+        L Board v{VERSION} · Atualizado em {new Date().toLocaleDateString('pt-BR')} · Stack: Next.js + Supabase + Vercel
       </div>
     </div>
   )
