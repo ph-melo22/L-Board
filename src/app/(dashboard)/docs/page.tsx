@@ -5,9 +5,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.2.0 beta'
+const VERSION = '0.3.0 beta'
 
 const CHANGELOG = [
+  {
+    version: '0.3.0 beta',
+    date: '2026-04-13',
+    changes: [
+      'Otimização completa para Mobile (iOS e Android)',
+      'Sidebar como drawer deslizante no mobile com overlay e fechamento ao navegar',
+      'Botão hamburger (☰) no Header visível apenas em telas pequenas',
+      'DashboardShell: novo client component que gerencia estado do menu mobile',
+      'Padding responsivo no layout principal: p-4 (mobile) → p-6 (desktop)',
+      'Viewport meta tag com viewport-fit=cover para safe area do iPhone (notch/home indicator)',
+      'themeColor dinâmico para barra do navegador em light/dark mode',
+      'Tabelas de Clientes, Entradas e Despesas com overflow-x-auto para scroll horizontal',
+      'Kanban de Demandas com scroll horizontal fluido e colunas min-w-[200px]',
+      'Grid de cards Financeiro: grid-cols-3 fixo → grid-cols-1 sm:grid-cols-3',
+      'Fluxo "Esqueci minha senha": formulário de e-mail → link por e-mail → nova senha',
+      'Página /auth/forgot-password com confirmação visual de envio',
+      'Página /auth/reset-password com indicador de força de senha (fraca/média/forte)',
+      'Route handler /auth/callback: troca code por sessão (PKCE) para convite e recuperação',
+      'Fluxo de convite: founder convida → pessoa recebe e-mail → cria senha → acessa com role correto',
+      'Página /team dedicada para gestão de equipe (founders only)',
+      'Middleware atualizado: /auth/reset-password e /auth/callback acessíveis mesmo com sessão ativa',
+      'API de convite atualizada com redirectTo dinâmico baseado na origin da requisição',
+    ],
+  },
   {
     version: '0.2.0 beta',
     date: '2026-04-12',
@@ -58,7 +82,7 @@ const ROLES = [
     role: 'founder',
     label: 'Founder',
     color: 'text-amber-700 bg-amber-50 border-amber-200',
-    acesso: 'Acesso total: Dashboard, Clientes, Financeiro, Demandas, Founder Board, Documentação',
+    acesso: 'Acesso total: Dashboard, Clientes, Financeiro, Demandas, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
   },
   {
     role: 'developer',
@@ -76,15 +100,19 @@ const ROLES = [
 
 const PAGES = [
   { route: '/', file: 'src/app/page.tsx', description: 'Rota raiz — redireciona para /dashboard.', type: 'redirect' },
-  { route: '/auth/login', file: 'src/app/auth/login/page.tsx', description: 'Tela de login com e-mail e senha via Supabase Auth.', type: 'público' },
+  { route: '/auth/login', file: 'src/app/auth/login/page.tsx', description: 'Tela de login com e-mail e senha. Link "Esqueci minha senha" abaixo do campo de senha.', type: 'público' },
+  { route: '/auth/forgot-password', file: 'src/app/auth/forgot-password/page.tsx', description: 'Formulário para recuperação de senha. Envia e-mail com link via Supabase e exibe confirmação visual.', type: 'público' },
+  { route: '/auth/callback', file: 'src/app/auth/callback/route.ts', description: 'Route handler que recebe o redirect do Supabase (convite ou recuperação). Troca o code por sessão (PKCE) e redireciona para /auth/reset-password.', type: 'público' },
+  { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Inclui indicador de força de senha e confirmação.', type: 'público' },
   { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
-  { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo.', type: 'founder' },
+  { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo. Tabela com scroll horizontal no mobile.', type: 'founder' },
   { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações e tarefas vinculadas.', type: 'founder' },
-  { route: '/financial', file: 'src/app/(dashboard)/financial/page.tsx', description: 'Entradas e despesas financeiras com gráfico PieChart. CRUD completo.', type: 'founder' },
-  { route: '/demands', file: 'src/app/(dashboard)/demands/page.tsx', description: 'Kanban 5 colunas com filtros avançados. Prioridade crítica destacada.', type: 'privado' },
-  { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos, Notas e Equipe (convite e gestão de membros).', type: 'founder' },
+  { route: '/financial', file: 'src/app/(dashboard)/financial/page.tsx', description: 'Entradas e despesas com gráfico PieChart. CRUD completo. Tabelas com scroll horizontal no mobile.', type: 'founder' },
+  { route: '/demands', file: 'src/app/(dashboard)/demands/page.tsx', description: 'Kanban 5 colunas com filtros avançados. Scroll horizontal no mobile. Prioridade crítica destacada.', type: 'privado' },
+  { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
+  { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
-  { route: '/api/team/invite', file: 'src/app/api/team/invite/route.ts', description: 'POST — convida usuário por e-mail via Supabase Admin e pré-cria perfil com role.', type: 'api' },
+  { route: '/api/team/invite', file: 'src/app/api/team/invite/route.ts', description: 'POST — convida usuário por e-mail (redirectTo dinâmico para /auth/callback) e pré-cria perfil com role.', type: 'api' },
   { route: '/api/team/remove/[id]', file: 'src/app/api/team/remove/[id]/route.ts', description: 'DELETE — remove usuário do Supabase Auth (cascata no profiles).', type: 'api' },
   { route: '/api/team/role', file: 'src/app/api/team/role/route.ts', description: 'PATCH — atualiza o role de um membro da equipe.', type: 'api' },
 ]
@@ -172,13 +200,14 @@ const MODELS = [
 ]
 
 const INFRA = [
-  { file: 'src/middleware.ts', desc: 'Intercepta todas as rotas. Autentica usuário, auto-cria perfil no primeiro login, e redireciona com base no role (founder/developer/employee).' },
+  { file: 'src/middleware.ts', desc: 'Intercepta todas as rotas. Autentica usuário, auto-cria perfil no primeiro login, redireciona por role. Libera /auth/callback, /auth/reset-password e /auth/forgot-password mesmo com sessão ativa.' },
+  { file: 'src/components/layout/DashboardShell.tsx', desc: 'Client component que gerencia o estado do menu mobile (sidebarOpen). Renderiza Sidebar, overlay, Header e children.' },
+  { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral dinâmico. No mobile funciona como drawer: oculto por padrão, desliza da esquerda ao abrir. Fecha automaticamente ao navegar.' },
+  { file: 'src/components/layout/Header.tsx', desc: 'Barra superior com título/descrição da página. Inclui botão hamburger (☰) visível apenas no mobile (md:hidden).' },
   { file: 'src/lib/supabase/client.ts', desc: 'Cliente Supabase para uso no browser (componentes "use client").' },
   { file: 'src/lib/supabase/server.ts', desc: 'Cliente Supabase server-side para Server Components e API Routes.' },
   { file: 'src/lib/supabase/admin.ts', desc: 'Cliente Supabase com service_role key. Exclusivo para API routes — nunca expor no client-side.' },
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
-  { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral dinâmico — exibe itens de navegação de acordo com o role do usuário logado.' },
-  { file: 'src/components/layout/Header.tsx', desc: 'Barra superior com título e descrição da página atual.' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
   { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Nunca commitar no git.' },
 ]

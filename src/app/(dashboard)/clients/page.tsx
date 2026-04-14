@@ -203,44 +203,46 @@ export default function ClientsPage() {
           ) : paginated.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-xs text-muted-foreground">
-                  <SortTh col="name" label="Cliente" />
-                  <th className="px-4 py-3 text-left font-medium">Produto</th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <SortTh col="monthly_revenue" label="Receita/mês" />
-                  <SortTh col="margin" label="Margem" />
-                  <SortTh col="renewal_date" label="Renovação" />
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {paginated.map((c) => (
-                  <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.product}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(c.status)}`}>
-                        {getLabelByStatus(c.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">{formatCurrency(c.monthly_revenue)}</td>
-                    <td className="px-4 py-3 text-right">{formatPercent(c.margin)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(c.renewal_date)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link href={`/clients/${c.id}`}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button>
-                        </Link>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    <SortTh col="name" label="Cliente" />
+                    <th className="px-4 py-3 text-left font-medium">Produto</th>
+                    <th className="px-4 py-3 text-left font-medium">Status</th>
+                    <SortTh col="monthly_revenue" label="Receita/mês" />
+                    <SortTh col="margin" label="Margem" />
+                    <SortTh col="renewal_date" label="Renovação" />
+                    <th className="px-4 py-3" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginated.map((c) => (
+                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                      <td className="px-4 py-3 font-medium">{c.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.product}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(c.status)}`}>
+                          {getLabelByStatus(c.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(c.monthly_revenue)}</td>
+                      <td className="px-4 py-3 text-right">{formatPercent(c.margin)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(c.renewal_date)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/clients/${c.id}`}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                          </Link>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>

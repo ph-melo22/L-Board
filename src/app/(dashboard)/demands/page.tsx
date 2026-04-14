@@ -136,9 +136,9 @@ export default function DemandsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[180px]">
+        <div className="relative min-w-[160px] flex-1 sm:flex-none sm:min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar tarefa..." className="pl-8 h-9 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Buscar tarefa..." className="pl-8 h-9 text-sm w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={filterClient} onValueChange={setFilterClient}>
           <SelectTrigger className="w-40 h-9 text-sm"><SelectValue placeholder="Cliente" /></SelectTrigger>
@@ -147,8 +147,8 @@ export default function DemandsPage() {
             {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Input placeholder="Responsável..." className="w-36 h-9 text-sm" value={filterResponsible} onChange={(e) => setFilterResponsible(e.target.value)} />
-        <Input placeholder="Squad..." className="w-32 h-9 text-sm" value={filterSquad} onChange={(e) => setFilterSquad(e.target.value)} />
+        <Input placeholder="Responsável..." className="w-36 h-9 text-sm hidden sm:block" value={filterResponsible} onChange={(e) => setFilterResponsible(e.target.value)} />
+        <Input placeholder="Squad..." className="w-32 h-9 text-sm hidden sm:block" value={filterSquad} onChange={(e) => setFilterSquad(e.target.value)} />
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-muted-foreground">
             <X className="mr-1 h-3.5 w-3.5" /> Limpar
@@ -167,13 +167,13 @@ export default function DemandsPage() {
 
       {/* Kanban */}
       {loading ? (
-        <div className="grid grid-cols-5 gap-3">
-          {STATUSES.map((s) => <Skeleton key={s} className="h-48" />)}
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {STATUSES.map((s) => <Skeleton key={s} className="h-48 min-w-[200px] flex-shrink-0" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-5 gap-3 overflow-x-auto">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
           {STATUSES.map((status) => (
-            <div key={status} className="flex flex-col gap-2 min-w-[180px]">
+            <div key={status} className="flex flex-col gap-2 min-w-[200px] flex-shrink-0 w-[calc(85vw)] sm:w-auto sm:flex-1">
               <div className="flex items-center justify-between px-1">
                 <span className={`text-xs font-semibold uppercase tracking-wide ${getStatusColor(status).split(' ')[0]}`}>
                   {getLabelByStatus(status)}

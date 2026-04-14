@@ -186,11 +186,11 @@ export default function FinancialPage() {
 
       {/* Summary cards */}
       {loading ? (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[1,2,3].map((i) => <Skeleton key={i} className="h-20" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardHeader className="pb-1"><CardTitle className="text-xs text-muted-foreground">Total Receitas</CardTitle></CardHeader>
             <CardContent><p className="text-xl font-bold text-emerald-600">{formatCurrency(totalEntries)}</p></CardContent>
@@ -235,39 +235,41 @@ export default function FinancialPage() {
               ) : filteredEntries.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground">Nenhuma entrada no período.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-xs text-muted-foreground">
-                      <th className="px-4 py-3 text-left font-medium">Data</th>
-                      <th className="px-4 py-3 text-left font-medium">Cliente</th>
-                      <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                      <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                      <th className="px-4 py-3 text-left font-medium">Status</th>
-                      <th className="px-4 py-3 text-right font-medium">Valor</th>
-                      <th className="px-4 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEntries.map((e) => (
-                      <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                        <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
-                        <td className="px-4 py-3">{e.clients?.name ?? '—'}</td>
-                        <td className="px-4 py-3">{getLabelByStatus(e.category)}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{getLabelByStatus(e.type)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(e.status)}`}>{getLabelByStatus(e.status)}</span>
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(e)}><Pencil className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteEntryId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                          </div>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-xs text-muted-foreground">
+                        <th className="px-4 py-3 text-left font-medium">Data</th>
+                        <th className="px-4 py-3 text-left font-medium">Cliente</th>
+                        <th className="px-4 py-3 text-left font-medium">Categoria</th>
+                        <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                        <th className="px-4 py-3 text-left font-medium">Status</th>
+                        <th className="px-4 py-3 text-right font-medium">Valor</th>
+                        <th className="px-4 py-3" />
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredEntries.map((e) => (
+                        <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                          <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
+                          <td className="px-4 py-3">{e.clients?.name ?? '—'}</td>
+                          <td className="px-4 py-3">{getLabelByStatus(e.category)}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{getLabelByStatus(e.type)}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(e.status)}`}>{getLabelByStatus(e.status)}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(e)}><Pencil className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteEntryId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -302,37 +304,39 @@ export default function FinancialPage() {
               ) : filteredExpenses.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground">Nenhuma despesa no período.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-xs text-muted-foreground">
-                      <th className="px-4 py-3 text-left font-medium">Data</th>
-                      <th className="px-4 py-3 text-left font-medium">Fornecedor</th>
-                      <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                      <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                      <th className="px-4 py-3 text-left font-medium">Centro de Custo</th>
-                      <th className="px-4 py-3 text-right font-medium">Valor</th>
-                      <th className="px-4 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredExpenses.map((e) => (
-                      <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                        <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
-                        <td className="px-4 py-3 font-medium">{e.supplier}</td>
-                        <td className="px-4 py-3">{getLabelByStatus(e.category)}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{getLabelByStatus(e.type)}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{e.cost_center ?? '—'}</td>
-                        <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditExpense(e)}><Pencil className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteExpenseId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                          </div>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-xs text-muted-foreground">
+                        <th className="px-4 py-3 text-left font-medium">Data</th>
+                        <th className="px-4 py-3 text-left font-medium">Fornecedor</th>
+                        <th className="px-4 py-3 text-left font-medium">Categoria</th>
+                        <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                        <th className="px-4 py-3 text-left font-medium">Centro de Custo</th>
+                        <th className="px-4 py-3 text-right font-medium">Valor</th>
+                        <th className="px-4 py-3" />
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredExpenses.map((e) => (
+                        <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                          <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
+                          <td className="px-4 py-3 font-medium">{e.supplier}</td>
+                          <td className="px-4 py-3">{getLabelByStatus(e.category)}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{getLabelByStatus(e.type)}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{e.cost_center ?? '—'}</td>
+                          <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditExpense(e)}><Pencil className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteExpenseId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>

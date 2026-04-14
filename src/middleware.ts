@@ -4,10 +4,14 @@ import type { CookieMethodsServer } from '@supabase/ssr'
 
 // Access control per role
 const ROLE_ALLOWED: Record<string, string[]> = {
-  founder:   ['/dashboard', '/clients', '/financial', '/demands', '/founder', '/docs'],
+  founder:   ['/dashboard', '/clients', '/financial', '/demands', '/founder', '/docs', '/team'],
   developer: ['/dashboard', '/demands', '/docs'],
   employee:  ['/dashboard', '/demands'],
 }
+
+// Auth pages that stay accessible even when authenticated
+// (used for invite acceptance and password recovery flows)
+const AUTH_UTILITY_PATHS = ['/auth/reset-password', '/auth/callback', '/auth/forgot-password']
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -34,18 +38,21 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Unauthenticated → login
+  const isAuthUtility = AUTH_UTILITY_PATHS.some((p) => pathname.startsWith(p))
+
+  // Unauthenticated → login (except auth pages)
   if (!user && !pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Authenticated → away from login
-  if (user && pathname.startsWith('/auth')) {
+  // Authenticated + login page → dashboard
+  // (but allow reset-password, callback, and forgot-password so invite/recovery flows work)
+  if (user && pathname.startsWith('/auth') && !isAuthUtility) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Role-based access for authenticated users
-  if (user) {
+  // Role-based access for authenticated users on dashboard routes
+  if (user && !pathname.startsWith('/auth')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')

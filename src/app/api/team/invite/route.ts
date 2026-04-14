@@ -11,8 +11,13 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient()
 
-    // Send invite email via Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email)
+    // The invite email will redirect the user to /auth/callback
+    // where they exchange the code for a session and land on /auth/reset-password to set their password
+    const appUrl = request.nextUrl.origin
+
+    const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${appUrl}/auth/callback`,
+    })
     if (authError) throw authError
 
     // Pre-create the profile with the correct role
