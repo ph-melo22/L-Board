@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, AlertTriangle, Calendar, FolderKanban } from 'lucide-react'
+import { Plus, AlertTriangle, Calendar, FolderKanban, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { getProjects, createProject } from '@/services/projects'
+import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
 import type { ProjectListItem, ProjectFormData, ProjectStatus, ProjectPriority } from '@/types'
 
@@ -80,6 +81,16 @@ export default function ProjectsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<ProjectFormData>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [myOnly, setMyOnly] = useState(false)
+
+  const displayed = useMemo(() => {
+    if (!myOnly || !currentUserId) return projects
+    return projects.filter(p =>
+      p.owner_id === currentUserId ||
+      p.project_members.some(m => m.user_id === currentUserId)
+    )
+  }, [projects, myOnly, currentUserId])
 
   async function load() {
     setLoading(true)
@@ -88,7 +99,10 @@ export default function ProjectsPage() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    createClient().auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null))
+  }, [])
 
   async function handleCreate() {
     setSaving(true)
@@ -120,7 +134,7 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-5">
       {/* Top bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex gap-4">
           {statGroups.map(g => (
             <div key={g.key} className="text-center">
@@ -129,9 +143,18 @@ export default function ProjectsPage() {
             </div>
           ))}
         </div>
-        <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>
-          <Plus className="mr-1.5 h-4 w-4" /> Novo Projeto
-        </Button>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button
+            size="sm" variant={myOnly ? 'default' : 'outline'}
+            onClick={() => setMyOnly(v => !v)}
+            className={myOnly ? '' : 'text-muted-foreground'}
+          >
+            <User className="mr-1.5 h-3.5 w-3.5" /> Meus projetos
+          </Button>
+          <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>
+            <Plus className="mr-1.5 h-4 w-4" /> Novo Projeto
+          </Button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -139,17 +162,21 @@ export default function ProjectsPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44" />)}
         </div>
-      ) : projects.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-20">
           <FolderKanban className="h-10 w-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Nenhum projeto ainda.</p>
-          <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>
-            <Plus className="mr-1.5 h-4 w-4" /> Criar primeiro projeto
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            {myOnly ? 'Nenhum projeto seu encontrado.' : 'Nenhum projeto ainda.'}
+          </p>
+          {!myOnly && (
+            <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>
+              <Plus className="mr-1.5 h-4 w-4" /> Criar primeiro projeto
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {projects.map((project) => {
+          {displayed.map((project) => {
             const pct = calcProgress(project.project_tasks)
             return (
               <Card

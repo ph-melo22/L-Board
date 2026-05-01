@@ -9,7 +9,7 @@ export async function getProjects(): Promise<ProjectListItem[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('projects')
-    .select('*, project_tasks(id, completed, project_subtasks(id, completed))')
+    .select('*, project_tasks(id, completed, project_subtasks(id, completed)), project_members(user_id)')
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as ProjectListItem[]

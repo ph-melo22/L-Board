@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Pencil, Trash2, ChevronRight, ChevronDown,
-  AlertTriangle, Calendar, X, UserRound, Check, Sparkles, Upload, Loader2,
+  AlertTriangle, Calendar, X, UserRound, Check, Sparkles, Upload, Loader2, FileDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -266,11 +266,15 @@ export default function ProjectDetailPage() {
           if (!prev) return prev
           return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === editingTask.id ? { ...t, ...updated } : t) }
         })
+        if (taskForm.assigned_to && taskForm.assigned_to !== editingTask.assigned_to) {
+          notifyAssignment(taskForm.assigned_to, taskForm.title)
+        }
         toast({ title: 'Atividade atualizada' })
       } else {
         const created = await createProjectTask({ ...taskForm, project_id: project.id })
         setProject(prev => prev ? { ...prev, project_tasks: [...prev.project_tasks, created] } : prev)
         setExpanded(prev => new Set(prev).add(created.id))
+        if (taskForm.assigned_to) notifyAssignment(taskForm.assigned_to, taskForm.title)
         toast({ title: 'Atividade criada' })
       }
       setTaskDialogOpen(false)
@@ -329,6 +333,9 @@ export default function ProjectDetailPage() {
           if (!prev) return prev
           return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === subtaskParentId ? { ...t, project_subtasks: (t.project_subtasks ?? []).map(s => s.id === editingSubtask.id ? { ...s, ...updated } : s) } : t) }
         })
+        if (subtaskForm.assigned_to && subtaskForm.assigned_to !== editingSubtask.assigned_to) {
+          notifyAssignment(subtaskForm.assigned_to, subtaskForm.title, 'subtask')
+        }
         toast({ title: 'Sub-atividade atualizada' })
       } else {
         const created = await createProjectSubtask({ ...subtaskForm, task_id: subtaskParentId })
@@ -336,6 +343,7 @@ export default function ProjectDetailPage() {
           if (!prev) return prev
           return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === subtaskParentId ? { ...t, project_subtasks: [...(t.project_subtasks ?? []), created] } : t) }
         })
+        if (subtaskForm.assigned_to) notifyAssignment(subtaskForm.assigned_to, subtaskForm.title, 'subtask')
         toast({ title: 'Sub-atividade criada' })
       }
       setSubtaskDialogOpen(false)
@@ -383,6 +391,124 @@ export default function ProjectDetailPage() {
       })
       setInlineTitle('')
     } catch { toast({ title: 'Erro ao adicionar sub-atividade', variant: 'destructive' }) }
+  }
+
+  // ── Email notification helper ──────────────────────────────────────────────
+
+  function notifyAssignment(assignedId: string, taskTitle: string, taskType: 'task' | 'subtask' = 'task') {
+    const assignee = allMembers.find(m => m.id === assignedId)
+    if (!assignee || !project) return
+    fetch('/api/notify/task-assigned', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assigneeName: assignee.full_name,
+        assigneeEmail: assignee.email,
+        taskTitle,
+        projectTitle: project.title,
+        taskType,
+      }),
+    }).catch(() => {})
+  }
+
+  // ── Export report ──────────────────────────────────────────────────────────
+
+  function handleExport() {
+    if (!project) return
+    const { pct: exportPct } = calcProgress(project.project_tasks)
+    const completedTasks = project.project_tasks.filter(t => t.completed).length
+
+    const memberNames = project.project_members
+      .map(pm => memberMap[pm.user_id] ?? 'Usuário removido')
+      .join(', ') || '—'
+
+    const tasksHtml = project.project_tasks.map(t => {
+      const subs = t.project_subtasks ?? []
+      const subHtml = subs.length > 0 ? `
+        <ul style="margin: 6px 0 0 0; padding-left: 20px; list-style: none;">
+          ${subs.map(s => `
+            <li style="font-size: 13px; color: #555; padding: 3px 0; display: flex; align-items: center; gap: 6px;">
+              <span style="color: ${s.completed ? '#16a34a' : '#d1d5db'}; font-size: 15px;">${s.completed ? '✓' : '○'}</span>
+              <span style="${s.completed ? 'text-decoration: line-through; color: #999;' : ''}">${s.title}</span>
+              ${s.assigned_to && memberMap[s.assigned_to] ? `<span style="color: #888; font-size: 11px;">· ${memberMap[s.assigned_to]}</span>` : ''}
+            </li>
+          `).join('')}
+        </ul>` : ''
+      return `
+        <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; background: ${t.completed ? '#f0fdf4' : '#fff'};">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: ${t.completed ? '#16a34a' : '#d1d5db'}; font-size: 16px;">${t.completed ? '✓' : '○'}</span>
+            <span style="font-weight: 600; font-size: 14px; ${t.completed ? 'text-decoration: line-through; color: #999;' : ''}">${t.title}</span>
+            ${t.assigned_to && memberMap[t.assigned_to] ? `<span style="color: #888; font-size: 12px; margin-left: auto;">· ${memberMap[t.assigned_to]}</span>` : ''}
+          </div>
+          ${t.description ? `<p style="font-size: 12px; color: #777; margin: 4px 0 0 24px;">${t.description}</p>` : ''}
+          ${subHtml}
+        </div>`
+    }).join('')
+
+    const detailSection = (label: string, value: string | null) => value ? `
+      <div style="margin-bottom: 20px;">
+        <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 6px;">${label}</p>
+        <p style="font-size: 14px; color: #333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${value}</p>
+      </div>` : ''
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatório — ${project.title}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 40px; color: #1a1a1a; max-width: 800px; margin: 0 auto; }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none !important; }
+      @page { margin: 1.5cm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="margin-bottom: 24px; display: flex; gap: 8px;">
+    <button onclick="window.print()" style="background: #1a1a1a; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer;">Imprimir / Salvar PDF</button>
+    <button onclick="window.close()" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer;">Fechar</button>
+  </div>
+
+  <div style="border-bottom: 2px solid #1a1a1a; padding-bottom: 16px; margin-bottom: 28px;">
+    <h1 style="margin: 0 0 6px; font-size: 24px;">${project.title}</h1>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #555;">
+      <span>Status: <strong>${STATUS_LABELS[project.status]}</strong></span>
+      <span>Prioridade: <strong>${PRIORITY_LABELS[project.priority]}</strong></span>
+      <span>Progresso: <strong>${exportPct}%</strong> (${completedTasks}/${project.project_tasks.length} atividades)</span>
+      ${project.end_date ? `<span>Prazo: <strong>${new Intl.DateTimeFormat('pt-BR').format(new Date(project.end_date))}</strong></span>` : ''}
+    </div>
+    ${project.description ? `<p style="font-size: 14px; color: #555; margin: 12px 0 0;">${project.description}</p>` : ''}
+  </div>
+
+  ${detailSection('Objetivos', project.objectives)}
+  ${detailSection('Escopo', project.scope)}
+  ${detailSection('Entregáveis', project.deliverables)}
+  ${detailSection('Riscos', project.risks)}
+
+  <div style="margin-bottom: 20px;">
+    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 6px;">Membros</p>
+    <p style="font-size: 14px; color: #333; margin: 0;">${memberNames}</p>
+  </div>
+
+  <div>
+    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 12px;">Atividades</p>
+    ${tasksHtml || '<p style="color: #999; font-size: 14px;">Nenhuma atividade cadastrada.</p>'}
+  </div>
+
+  <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e5e5; font-size: 12px; color: #999;">
+    Relatório gerado em ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date())} · L Board
+  </div>
+</body>
+</html>`
+
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(html)
+    win.document.close()
   }
 
   // ── AI Import ──────────────────────────────────────────────────────────────
@@ -512,6 +638,9 @@ export default function ProjectDetailPage() {
         <div className="flex shrink-0 gap-1.5">
           <Button size="sm" variant="outline" onClick={openAiDialog} className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
             <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Importar via IA
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExport} className="text-muted-foreground">
+            <FileDown className="mr-1.5 h-3.5 w-3.5" /> Exportar
           </Button>
           <Button variant="outline" size="sm" onClick={openEditProject}>
             <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar

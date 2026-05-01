@@ -250,6 +250,7 @@ export interface ProjectListItem extends Project {
     completed: boolean
     project_subtasks: Array<{ id: string; completed: boolean }>
   }>
+  project_members: Array<{ user_id: string }>
 }
 
 export type ProjectFormData = Omit<Project, 'id' | 'created_at'>

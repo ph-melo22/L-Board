@@ -23,11 +23,13 @@ const founderNav = [
 const employeeNav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/demands', label: 'Demandas', icon: ListTodo },
+  { href: '/projects', label: 'Projetos', icon: FolderKanban },
 ]
 
 const developerNav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/demands', label: 'Demandas', icon: ListTodo },
+  { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/docs', label: 'Documentação', icon: FileText },
 ]
 

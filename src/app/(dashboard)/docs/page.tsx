@@ -5,9 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.5.0 beta'
+const VERSION = '0.6.0 beta'
 
 const CHANGELOG = [
+  {
+    version: '0.6.0 beta',
+    date: '2026-05-01',
+    changes: [
+      'Projetos agora visíveis para todos os roles (employee e developer) com filtro automático por membro',
+      'Botão "Meus projetos" na listagem — filtra projetos onde o usuário é dono ou membro',
+      'Notificação por e-mail automática ao delegar atividade ou sub-atividade a um membro',
+      'API route POST /api/notify/task-assigned via Resend (falha silenciosa se RESEND_API_KEY ausente)',
+      'Botão "Exportar" na página do projeto — gera relatório HTML formatado com print/PDF nativo do browser',
+      'Relatório inclui: status, progresso, objetivos, escopo, entregáveis, riscos, membros e lista de atividades',
+      'Sidebar atualizada: /projects adicionado a employeeNav e developerNav',
+      'Middleware: /projects liberado para developer e employee',
+    ],
+  },
   {
     version: '0.5.0 beta',
     date: '2026-05-01',
@@ -150,6 +164,7 @@ const PAGES = [
   { route: '/projects', file: 'src/app/(dashboard)/projects/page.tsx', description: 'Lista de projetos com cards de progresso. CRUD de projetos com dialog de criação.', type: 'founder' },
   { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros, campos detalhados e botão "Importar via IA" para gerar tasks a partir de PDF.', type: 'founder' },
   { route: '/api/projects/[id]/ai-tasks', file: 'src/app/api/projects/[id]/ai-tasks/route.ts', description: 'POST — recebe PDF via multipart/form-data, extrai texto com pdf-parse, envia ao GPT-4o e retorna JSON com tasks e subtasks gerados.', type: 'api' },
+  { route: '/api/notify/task-assigned', file: 'src/app/api/notify/task-assigned/route.ts', description: 'POST — envia e-mail via Resend ao membro delegado. Falha silenciosamente se RESEND_API_KEY não estiver configurada.', type: 'api' },
   { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
@@ -269,7 +284,7 @@ const INFRA = [
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
   { file: 'supabase/projects_schema.sql', desc: 'SQL do módulo Projetos: 4 tabelas (projects, project_members, project_tasks, project_subtasks) + RLS. Executar separadamente no Supabase.' },
-  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY. Nunca commitar no git.' },
+  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY (opcional), RESEND_FROM (opcional). Nunca commitar no git.' },
   { file: 'next.config.mjs', desc: 'serverExternalPackages: [\'pdf-parse\'] para evitar problemas de bundling no Next.js 14. serverActions com allowedOrigins.' },
 ]
 
@@ -318,7 +333,7 @@ export default function DocsPage() {
           <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.5
+          BETA 0.6
         </span>
       </div>
 

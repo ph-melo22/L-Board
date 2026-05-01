@@ -5,8 +5,8 @@ import type { CookieMethodsServer } from '@supabase/ssr'
 // Access control per role
 const ROLE_ALLOWED: Record<string, string[]> = {
   founder:   ['/dashboard', '/clients', '/financial', '/demands', '/founder', '/docs', '/team', '/projects'],
-  developer: ['/dashboard', '/demands', '/docs'],
-  employee:  ['/dashboard', '/demands'],
+  developer: ['/dashboard', '/demands', '/docs', '/projects'],
+  employee:  ['/dashboard', '/demands', '/projects'],
 }
 
 // Auth pages that stay accessible even when authenticated
