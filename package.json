@@ -27,6 +27,8 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.469.0",
     "next": "14.2.18",
+    "openai": "^6.35.0",
+    "pdf-parse": "^2.4.5",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^2.15.0",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.27",

@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Pencil, Trash2, ChevronRight, ChevronDown,
-  AlertTriangle, Calendar, X, UserRound, Check,
+  AlertTriangle, Calendar, X, UserRound, Check, Sparkles, Upload, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -143,6 +143,15 @@ export default function ProjectDetailPage() {
   // Inline quick-add subtask
   const [inlineTaskId, setInlineTaskId] = useState<string | null>(null)
   const [inlineTitle, setInlineTitle] = useState('')
+
+  // AI Import
+  const [aiDialogOpen, setAiDialogOpen] = useState(false)
+  const [aiFile, setAiFile] = useState<File | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiTasks, setAiTasks] = useState<{ title: string; description: string; assigned_to_hint: string | null; subtasks: { title: string; assigned_to_hint: string | null }[] }[]>([])
+  const [aiSelected, setAiSelected] = useState<Set<number>>(new Set())
+  const [aiStep, setAiStep] = useState<'upload' | 'preview'>('upload')
+  const [aiCreating, setAiCreating] = useState(false)
 
   // Delete confirms
   const [deleteProjectOpen, setDeleteProjectOpen] = useState(false)
@@ -376,6 +385,81 @@ export default function ProjectDetailPage() {
     } catch { toast({ title: 'Erro ao adicionar sub-atividade', variant: 'destructive' }) }
   }
 
+  // ── AI Import ──────────────────────────────────────────────────────────────
+
+  function openAiDialog() {
+    setAiFile(null)
+    setAiTasks([])
+    setAiSelected(new Set())
+    setAiStep('upload')
+    setAiDialogOpen(true)
+  }
+
+  async function handleAiGenerate() {
+    if (!aiFile || !project) return
+    setAiLoading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', aiFile)
+      const memberNames = allMembers.map(m => m.full_name).join(', ')
+      if (memberNames) fd.append('members', memberNames)
+
+      const res = await fetch(`/api/projects/${project.id}/ai-tasks`, { method: 'POST', body: fd })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Erro desconhecido')
+
+      setAiTasks(json.tasks)
+      setAiSelected(new Set(json.tasks.map((_: unknown, i: number) => i)))
+      setAiStep('preview')
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : 'Erro ao processar PDF', variant: 'destructive' })
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  async function handleAiCreate() {
+    if (!project) return
+    setAiCreating(true)
+    try {
+      const selected = aiTasks.filter((_, i) => aiSelected.has(i))
+      const memberByName: Record<string, string> = {}
+      allMembers.forEach(m => { memberByName[m.full_name.toLowerCase()] = m.id })
+
+      let position = project.project_tasks.length
+      const created: ProjectTask[] = []
+      for (const t of selected) {
+        const assignedId = t.assigned_to_hint
+          ? memberByName[t.assigned_to_hint.toLowerCase()] ?? null
+          : null
+        const task = await createProjectTask({
+          project_id: project.id, title: t.title, description: t.description || null,
+          assigned_to: assignedId, due_date: null, position: position++, completed: false,
+        })
+        for (const s of t.subtasks) {
+          const subAssignedId = s.assigned_to_hint
+            ? memberByName[s.assigned_to_hint.toLowerCase()] ?? null
+            : null
+          const sub = await createProjectSubtask({
+            task_id: task.id, title: s.title, assigned_to: subAssignedId,
+            due_date: null, completed: false,
+          })
+          task.project_subtasks = [...(task.project_subtasks ?? []), sub]
+        }
+        created.push(task)
+      }
+
+      setProject(prev => prev ? { ...prev, project_tasks: [...prev.project_tasks, ...created] } : prev)
+      setExpanded(prev => { const n = new Set(prev); created.forEach(t => n.add(t.id)); return n })
+      toast({ title: `${created.length} atividade${created.length !== 1 ? 's' : ''} criada${created.length !== 1 ? 's' : ''} com sucesso` })
+      setAiDialogOpen(false)
+    } catch {
+      toast({ title: 'Erro ao criar tarefas', variant: 'destructive' })
+    } finally {
+      setAiCreating(false)
+    }
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -426,6 +510,9 @@ export default function ProjectDetailPage() {
           )}
         </div>
         <div className="flex shrink-0 gap-1.5">
+          <Button size="sm" variant="outline" onClick={openAiDialog} className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Importar via IA
+          </Button>
           <Button variant="outline" size="sm" onClick={openEditProject}>
             <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar
           </Button>
@@ -886,6 +973,140 @@ export default function ProjectDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── AI Import Dialog ── */}
+      <Dialog open={aiDialogOpen} onOpenChange={(o) => { if (!aiLoading && !aiCreating) setAiDialogOpen(o) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-600" />
+              Importar Tarefas via IA
+            </DialogTitle>
+          </DialogHeader>
+
+          {aiStep === 'upload' && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Faça upload de um PDF (contrato, briefing, escopo, etc.) e o GPT-4o vai gerar as atividades automaticamente.
+              </p>
+
+              {/* Drop zone */}
+              <label
+                htmlFor="ai-pdf-input"
+                className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 cursor-pointer transition-colors ${aiFile ? 'border-purple-400 bg-purple-50' : 'border-border hover:border-purple-300 hover:bg-muted/40'}`}
+              >
+                <Upload className={`h-8 w-8 ${aiFile ? 'text-purple-600' : 'text-muted-foreground'}`} />
+                {aiFile ? (
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-purple-700">{aiFile.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{(aiFile.size / 1024).toFixed(0)} KB</p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm font-medium">Clique para selecionar o PDF</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Máx. 10 MB</p>
+                  </div>
+                )}
+                <input
+                  id="ai-pdf-input"
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => setAiFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+
+              {aiFile && (
+                <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => setAiFile(null)}>
+                  <X className="mr-1.5 h-3.5 w-3.5" /> Remover arquivo
+                </Button>
+              )}
+            </div>
+          )}
+
+          {aiStep === 'preview' && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {aiTasks.length} atividade{aiTasks.length !== 1 ? 's' : ''} gerada{aiTasks.length !== 1 ? 's' : ''}. Selecione as que deseja criar:
+                </p>
+                <button
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setAiSelected(aiSelected.size === aiTasks.length ? new Set() : new Set(aiTasks.map((_, i) => i)))}
+                >
+                  {aiSelected.size === aiTasks.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                </button>
+              </div>
+
+              <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                {aiTasks.map((task, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setAiSelected(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n })}
+                    className={`rounded-lg border p-3 cursor-pointer transition-colors ${aiSelected.has(i) ? 'border-purple-300 bg-purple-50' : 'border-border bg-background opacity-50'}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`mt-0.5 h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center ${aiSelected.has(i) ? 'bg-purple-600 border-purple-600' : 'border-border'}`}>
+                        {aiSelected.has(i) && <Check className="h-2.5 w-2.5 text-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{task.title}</p>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{task.description}</p>
+                        )}
+                        {task.assigned_to_hint && (
+                          <p className="text-xs text-purple-600 mt-0.5 flex items-center gap-1">
+                            <UserRound className="h-3 w-3" /> {task.assigned_to_hint}
+                          </p>
+                        )}
+                        {task.subtasks.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {task.subtasks.length} sub-atividade{task.subtasks.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            {aiStep === 'preview' && (
+              <Button variant="outline" size="sm" onClick={() => setAiStep('upload')}>
+                ← Voltar
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setAiDialogOpen(false)} disabled={aiLoading || aiCreating}>
+              Cancelar
+            </Button>
+            {aiStep === 'upload' ? (
+              <Button
+                onClick={handleAiGenerate}
+                disabled={!aiFile || aiLoading}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {aiLoading
+                  ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Analisando...</>
+                  : <><Sparkles className="mr-1.5 h-4 w-4" /> Gerar Tarefas</>
+                }
+              </Button>
+            ) : (
+              <Button
+                onClick={handleAiCreate}
+                disabled={aiSelected.size === 0 || aiCreating}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {aiCreating
+                  ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Criando...</>
+                  : `Criar ${aiSelected.size} atividade${aiSelected.size !== 1 ? 's' : ''}`
+                }
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteSubtaskId} onOpenChange={(o) => !o && setDeleteSubtaskId(null)}>
         <AlertDialogContent>
