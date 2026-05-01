@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound,
+  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -14,6 +14,7 @@ const founderNav = [
   { href: '/clients', label: 'Clientes', icon: Users },
   { href: '/financial', label: 'Financeiro', icon: DollarSign },
   { href: '/demands', label: 'Demandas', icon: ListTodo },
+  { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/founder', label: 'Founder Board', icon: Compass },
   { href: '/docs', label: 'Documentação', icon: FileText },
   { href: '/team', label: 'Equipe', icon: UsersRound },

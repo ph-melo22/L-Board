@@ -188,6 +188,74 @@ export interface Profile {
   created_at: string
 }
 
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+export type ProjectStatus = 'planning' | 'active' | 'paused' | 'completed'
+export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical'
+
+export interface Project {
+  id: string
+  title: string
+  description: string | null
+  objectives: string | null
+  scope: string | null
+  deliverables: string | null
+  risks: string | null
+  status: ProjectStatus
+  priority: ProjectPriority
+  start_date: string | null
+  end_date: string | null
+  owner_id: string | null
+  created_at: string
+}
+
+export interface ProjectMember {
+  id: string
+  project_id: string
+  user_id: string
+  created_at: string
+}
+
+export interface ProjectTask {
+  id: string
+  project_id: string
+  title: string
+  description: string | null
+  assigned_to: string | null
+  due_date: string | null
+  position: number
+  completed: boolean
+  created_at: string
+  project_subtasks?: ProjectSubtask[]
+}
+
+export interface ProjectSubtask {
+  id: string
+  task_id: string
+  title: string
+  assigned_to: string | null
+  due_date: string | null
+  completed: boolean
+  created_at: string
+}
+
+export interface ProjectWithDetails extends Project {
+  project_members: ProjectMember[]
+  project_tasks: ProjectTask[]
+}
+
+export interface ProjectListItem extends Project {
+  project_tasks: Array<{
+    id: string
+    completed: boolean
+    project_subtasks: Array<{ id: string; completed: boolean }>
+  }>
+}
+
+export type ProjectFormData = Omit<Project, 'id' | 'created_at'>
+export type ProjectTaskFormData = Omit<ProjectTask, 'id' | 'created_at' | 'project_subtasks'>
+export type ProjectSubtaskFormData = Omit<ProjectSubtask, 'id' | 'created_at'>
+
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {

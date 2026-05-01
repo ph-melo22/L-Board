@@ -5,9 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.3.0 beta'
+const VERSION = '0.4.0 beta'
 
 const CHANGELOG = [
+  {
+    version: '0.4.0 beta',
+    date: '2026-05-01',
+    changes: [
+      'Módulo Projetos: CRUD completo com atividades e sub-atividades em /projects',
+      'Página /projects com grid de cards mostrando status, progresso e prioridade',
+      'Página /projects/[id] com layout duas colunas: atividades (esquerda) e dashboard de progresso (direita)',
+      'Dashboard de progresso com anel SVG animado mostrando % de conclusão em tempo real',
+      'Atividades com checklist expansível e sub-atividades aninhadas',
+      'Quick-add inline para adicionar sub-atividades diretamente na lista',
+      'Delegação de atividades e sub-atividades a membros da equipe via select',
+      'Gerenciamento de membros do projeto: adicionar/remover direto no painel lateral',
+      'Campos detalhados por projeto: Objetivos, Escopo, Entregáveis e Riscos',
+      'Cálculo de progresso ponderado: subtarefas são a unidade atômica; tasks sem subtarefas contam como 1 item',
+      'Atualização otimista nos checkboxes com rollback automático em caso de erro',
+      'Adicionado /projects à navegação do Founder e ao controle de acesso do middleware',
+      'Novas tabelas no Supabase: projects, project_members, project_tasks, project_subtasks',
+      'Novo service: src/services/projects.ts com 15 funções de CRUD',
+      'Novos tipos: Project, ProjectMember, ProjectTask, ProjectSubtask, ProjectWithDetails, ProjectListItem',
+    ],
+  },
   {
     version: '0.3.0 beta',
     date: '2026-04-13',
@@ -109,6 +130,8 @@ const PAGES = [
   { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações e tarefas vinculadas.', type: 'founder' },
   { route: '/financial', file: 'src/app/(dashboard)/financial/page.tsx', description: 'Entradas e despesas com gráfico PieChart. CRUD completo. Tabelas com scroll horizontal no mobile.', type: 'founder' },
   { route: '/demands', file: 'src/app/(dashboard)/demands/page.tsx', description: 'Kanban 5 colunas com filtros avançados. Scroll horizontal no mobile. Prioridade crítica destacada.', type: 'privado' },
+  { route: '/projects', file: 'src/app/(dashboard)/projects/page.tsx', description: 'Lista de projetos com cards de progresso. CRUD de projetos com dialog de criação.', type: 'founder' },
+  { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros e campos detalhados (objetivos, escopo, entregáveis, riscos).', type: 'founder' },
   { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
@@ -175,6 +198,20 @@ const SERVICES = [
     ],
   },
   {
+    file: 'src/services/projects.ts',
+    tabela: 'projects + project_members + project_tasks + project_subtasks',
+    funcoes: [
+      { name: 'getProjects()', desc: 'Lista todos os projetos com atividades e sub-atividades para cálculo de progresso.' },
+      { name: 'getProject(id)', desc: 'Retorna projeto completo com membros, atividades e sub-atividades.' },
+      { name: 'createProject(formData)', desc: 'Cria projeto com owner_id do usuário logado.' },
+      { name: 'updateProject(id, formData)', desc: 'Atualiza campos do projeto.' },
+      { name: 'deleteProject(id)', desc: 'Remove projeto em cascata (membros, tarefas, subtarefas).' },
+      { name: 'addProjectMember / removeProjectMember', desc: 'Gerencia membros do projeto.' },
+      { name: 'createProjectTask / updateProjectTask / toggleProjectTask / deleteProjectTask', desc: 'CRUD de atividades com toggle de conclusão.' },
+      { name: 'createProjectSubtask / updateProjectSubtask / toggleProjectSubtask / deleteProjectSubtask', desc: 'CRUD de sub-atividades com toggle de conclusão.' },
+    ],
+  },
+  {
     file: 'src/services/team.ts',
     tabela: 'profiles',
     funcoes: [
@@ -197,6 +234,10 @@ const MODELS = [
   { name: 'StrategicProject', tabela: 'strategic_projects', campos: ['id', 'title', 'description', 'status', 'priority', 'due_date', 'created_at'] },
   { name: 'StrategicNote', tabela: 'strategic_notes', campos: ['id', 'title', 'content', 'tags[]', 'created_at', 'updated_at'] },
   { name: 'Profile', tabela: 'profiles', campos: ['id', 'full_name', 'email', 'role', 'created_at'] },
+  { name: 'Project / ProjectWithDetails / ProjectListItem', tabela: 'projects', campos: ['id', 'title', 'description', 'objectives', 'scope', 'deliverables', 'risks', 'status', 'priority', 'start_date', 'end_date', 'owner_id', 'created_at', '+project_members', '+project_tasks'] },
+  { name: 'ProjectMember', tabela: 'project_members', campos: ['id', 'project_id', 'user_id', 'created_at'] },
+  { name: 'ProjectTask', tabela: 'project_tasks', campos: ['id', 'project_id', 'title', 'description', 'assigned_to', 'due_date', 'position', 'completed', 'created_at', '+project_subtasks'] },
+  { name: 'ProjectSubtask', tabela: 'project_subtasks', campos: ['id', 'task_id', 'title', 'assigned_to', 'due_date', 'completed', 'created_at'] },
 ]
 
 const INFRA = [
@@ -209,6 +250,7 @@ const INFRA = [
   { file: 'src/lib/supabase/admin.ts', desc: 'Cliente Supabase com service_role key. Exclusivo para API routes — nunca expor no client-side.' },
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
+  { file: 'supabase/projects_schema.sql', desc: 'SQL do módulo Projetos: 4 tabelas (projects, project_members, project_tasks, project_subtasks) + RLS. Executar separadamente no Supabase.' },
   { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Nunca commitar no git.' },
 ]
 
@@ -257,7 +299,7 @@ export default function DocsPage() {
           <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.2
+          BETA 0.4
         </span>
       </div>
 
@@ -444,6 +486,10 @@ export default function DocsPage() {
             { table: 'strategic_projects', desc: 'Projetos estratégicos com status, prioridade e prazo.' },
             { table: 'strategic_notes', desc: 'Notas estratégicas com conteúdo livre e tags (array).' },
             { table: 'profiles', desc: 'Perfis de usuários vinculados ao auth.users. Armazena nome, email e role (founder/developer/employee). Criado automaticamente no primeiro login.' },
+            { table: 'projects', desc: 'Projetos com campos detalhados: objetivos, escopo, entregáveis, riscos, status, prioridade e datas.' },
+            { table: 'project_members', desc: 'Membros de cada projeto. FK para projects e profiles. Unique por (project_id, user_id).' },
+            { table: 'project_tasks', desc: 'Atividades do projeto com responsável, prazo, posição e flag de conclusão.' },
+            { table: 'project_subtasks', desc: 'Sub-atividades de cada atividade com responsável, prazo e flag de conclusão. Cascata ao deletar task.' },
           ].map((db) => (
             <Card key={db.table} className="shadow-none">
               <CardContent className="p-3 flex gap-3">

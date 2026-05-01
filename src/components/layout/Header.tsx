@@ -10,6 +10,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   '/founder': { title: 'Founder Board', description: 'OKRs, projetos e notas estratégicas' },
   '/docs': { title: 'Documentação', description: 'Relatório técnico v0.1 beta' },
   '/team': { title: 'Equipe', description: 'Membros, convites e permissões' },
+  '/projects': { title: 'Projetos', description: 'Gestão de projetos e atividades' },
 }
 
 interface HeaderProps {
