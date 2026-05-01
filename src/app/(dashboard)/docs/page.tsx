@@ -5,9 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.4.0 beta'
+const VERSION = '0.5.0 beta'
 
 const CHANGELOG = [
+  {
+    version: '0.5.0 beta',
+    date: '2026-05-01',
+    changes: [
+      'Importação de tarefas via IA: botão "Importar via IA" na página de detalhe do projeto',
+      'Upload de PDF com extração de texto server-side via pdf-parse',
+      'Análise por GPT-4o com prompt estruturado — retorna tasks + subtasks em JSON',
+      'Tela de preview com seleção individual de tarefas antes de confirmar criação',
+      'Delegação automática: quando o documento menciona membros da equipe, a IA sugere o responsável',
+      'API route POST /api/projects/[id]/ai-tasks — recebe PDF, extrai texto, chama OpenAI, retorna JSON',
+      'Variável de ambiente OPENAI_API_KEY adicionada ao projeto (não exposta no client-side)',
+      'Pacotes adicionados: openai, pdf-parse (@types/pdf-parse)',
+      'next.config.mjs: serverExternalPackages incluindo pdf-parse para compatibilidade com Next.js 14',
+    ],
+  },
   {
     version: '0.4.0 beta',
     date: '2026-05-01',
@@ -95,6 +110,8 @@ const STACK = [
   { name: 'Tailwind CSS', role: 'Estilização utilitária' },
   { name: 'shadcn/ui', role: 'Componentes de interface' },
   { name: 'Recharts', role: 'Gráficos e visualizações' },
+  { name: 'OpenAI GPT-4o', role: 'IA para geração de tarefas a partir de PDF' },
+  { name: 'pdf-parse', role: 'Extração de texto de PDFs (server-side)' },
   { name: 'Vercel', role: 'Hospedagem e deploy contínuo' },
 ]
 
@@ -131,7 +148,8 @@ const PAGES = [
   { route: '/financial', file: 'src/app/(dashboard)/financial/page.tsx', description: 'Entradas e despesas com gráfico PieChart. CRUD completo. Tabelas com scroll horizontal no mobile.', type: 'founder' },
   { route: '/demands', file: 'src/app/(dashboard)/demands/page.tsx', description: 'Kanban 5 colunas com filtros avançados. Scroll horizontal no mobile. Prioridade crítica destacada.', type: 'privado' },
   { route: '/projects', file: 'src/app/(dashboard)/projects/page.tsx', description: 'Lista de projetos com cards de progresso. CRUD de projetos com dialog de criação.', type: 'founder' },
-  { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros e campos detalhados (objetivos, escopo, entregáveis, riscos).', type: 'founder' },
+  { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros, campos detalhados e botão "Importar via IA" para gerar tasks a partir de PDF.', type: 'founder' },
+  { route: '/api/projects/[id]/ai-tasks', file: 'src/app/api/projects/[id]/ai-tasks/route.ts', description: 'POST — recebe PDF via multipart/form-data, extrai texto com pdf-parse, envia ao GPT-4o e retorna JSON com tasks e subtasks gerados.', type: 'api' },
   { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
@@ -251,7 +269,8 @@ const INFRA = [
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
   { file: 'supabase/projects_schema.sql', desc: 'SQL do módulo Projetos: 4 tabelas (projects, project_members, project_tasks, project_subtasks) + RLS. Executar separadamente no Supabase.' },
-  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Nunca commitar no git.' },
+  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY. Nunca commitar no git.' },
+  { file: 'next.config.mjs', desc: 'serverExternalPackages: [\'pdf-parse\'] para evitar problemas de bundling no Next.js 14. serverActions com allowedOrigins.' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -299,7 +318,7 @@ export default function DocsPage() {
           <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.4
+          BETA 0.5
         </span>
       </div>
 
