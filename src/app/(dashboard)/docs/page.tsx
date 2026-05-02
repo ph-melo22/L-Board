@@ -5,9 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.6.1'
+const VERSION = '0.6.2'
 
 const CHANGELOG = [
+  {
+    version: '0.6.2',
+    date: '2026-05-02',
+    changes: [
+      'Importação via IA agora aceita qualquer tipo de arquivo (PDF, Word/DOCX, imagens, TXT, CSV, MD, JSON, XML, HTML e mais)',
+      'Limite de upload aumentado para 300 MB (verificado server-side)',
+      'Imagens (JPG, PNG, etc.) são analisadas via GPT-4o Vision sem extração de texto',
+      'Arquivos Word/DOCX têm texto extraído pelo pacote mammoth',
+      'Outros formatos são lidos como UTF-8 diretamente',
+      'UI do diálogo de IA atualizada: removida restrição accept=PDF, tamanho exibido em KB ou MB conforme o arquivo',
+      'next.config.mjs: mammoth adicionado a serverExternalPackages, bodySizeLimit definido como 300mb',
+    ],
+  },
   {
     version: '0.6.1',
     date: '2026-05-01',

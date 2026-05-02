@@ -538,7 +538,7 @@ export default function ProjectDetailPage() {
       setAiSelected(new Set(json.tasks.map((_: unknown, i: number) => i)))
       setAiStep('preview')
     } catch (err) {
-      toast({ title: err instanceof Error ? err.message : 'Erro ao processar PDF', variant: 'destructive' })
+      toast({ title: err instanceof Error ? err.message : 'Erro ao processar arquivo', variant: 'destructive' })
     } finally {
       setAiLoading(false)
     }
@@ -1120,7 +1120,7 @@ export default function ProjectDetailPage() {
           {aiStep === 'upload' && (
             <div className="space-y-4 py-2">
               <p className="text-sm text-muted-foreground">
-                Faça upload de um PDF (contrato, briefing, escopo, etc.) e o GPT-4o vai gerar as atividades automaticamente.
+                Faça upload de qualquer arquivo (PDF, Word, imagem, TXT, CSV…) e o GPT-4o vai gerar as atividades automaticamente.
               </p>
 
               {/* Drop zone */}
@@ -1132,18 +1132,21 @@ export default function ProjectDetailPage() {
                 {aiFile ? (
                   <div className="text-center">
                     <p className="text-sm font-medium text-purple-700">{aiFile.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{(aiFile.size / 1024).toFixed(0)} KB</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {aiFile.size >= 1024 * 1024
+                        ? `${(aiFile.size / (1024 * 1024)).toFixed(1)} MB`
+                        : `${(aiFile.size / 1024).toFixed(0)} KB`}
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-sm font-medium">Clique para selecionar o PDF</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Máx. 10 MB</p>
+                    <p className="text-sm font-medium">Clique para selecionar o arquivo</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Máx. 300 MB · PDF, Word, imagem, TXT, CSV e mais</p>
                   </div>
                 )}
                 <input
                   id="ai-pdf-input"
                   type="file"
-                  accept="application/pdf"
                   className="hidden"
                   onChange={(e) => setAiFile(e.target.files?.[0] ?? null)}
                 />

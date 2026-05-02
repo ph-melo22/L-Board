@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+const MAX_BYTES = 300 * 1024 * 1024 // 300 MB
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 export interface AITask {
@@ -9,49 +11,51 @@ export interface AITask {
   subtasks: { title: string }[]
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File | null
-    const membersRaw = formData.get('members') as string | null
+async function extractContent(file: File): Promise<
+  | { kind: 'text'; text: string }
+  | { kind: 'image'; base64: string; mimeType: string }
+> {
+  const mime = file.type.toLowerCase()
+  const name = file.name.toLowerCase()
 
-    if (!file || file.type !== 'application/pdf') {
-      return NextResponse.json({ error: 'Envie um arquivo PDF válido.' }, { status: 400 })
-    }
-
-    // Extract text from PDF
+  // ── PDF ──────────────────────────────────────────────────────────────────
+  if (mime === 'application/pdf' || name.endsWith('.pdf')) {
     const buffer = Buffer.from(await file.arrayBuffer())
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfMod = await import('pdf-parse') as any
     const pdfParse = pdfMod.default ?? pdfMod
     const parsed = await pdfParse(buffer)
-    const text = parsed.text?.trim()
+    return { kind: 'text', text: parsed.text?.trim() ?? '' }
+  }
 
-    if (!text || text.length < 20) {
-      return NextResponse.json({ error: 'Não foi possível extrair texto do PDF. O arquivo pode ser uma imagem ou estar protegido.' }, { status: 422 })
-    }
+  // ── DOCX / DOC ────────────────────────────────────────────────────────────
+  if (
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mime === 'application/msword' ||
+    name.endsWith('.docx') || name.endsWith('.doc')
+  ) {
+    const buffer = Buffer.from(await file.arrayBuffer())
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mammoth = await import('mammoth') as any
+    const result = await mammoth.extractRawText({ buffer })
+    return { kind: 'text', text: result.value?.trim() ?? '' }
+  }
 
-    // Truncate to avoid token limit (~12k chars ≈ ~3k tokens, leaving room for response)
-    const truncated = text.slice(0, 12000)
+  // ── Images → GPT-4o vision ────────────────────────────────────────────────
+  if (mime.startsWith('image/')) {
+    const buffer = Buffer.from(await file.arrayBuffer())
+    return { kind: 'image', base64: buffer.toString('base64'), mimeType: mime }
+  }
 
-    const membersContext = membersRaw
-      ? `\n\nMembros disponíveis para delegação: ${membersRaw}. Quando o documento mencionar explicitamente uma pessoa ou papel que corresponda a um membro, preencha "assigned_to_hint" com o nome exato do membro.`
-      : ''
+  // ── Everything else: try as UTF-8 text (txt, csv, md, json, xml, html…) ──
+  const buffer = Buffer.from(await file.arrayBuffer())
+  return { kind: 'text', text: buffer.toString('utf-8').trim() }
+}
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `Você é um gerente de projetos experiente. Analise documentos e extraia tarefas acionáveis de forma estruturada. Responda APENAS com JSON válido, sem texto adicional.`,
-        },
-        {
-          role: 'user',
-          content: `Analise o documento abaixo e extraia todas as tarefas e sub-tarefas que precisam ser executadas.${membersContext}
+const SYSTEM_PROMPT =
+  'Você é um gerente de projetos experiente. Analise documentos e extraia tarefas acionáveis de forma estruturada. Responda APENAS com JSON válido, sem texto adicional.'
 
-Retorne EXATAMENTE neste formato JSON:
+const TASK_FORMAT = `Retorne EXATAMENTE neste formato JSON:
 {
   "tasks": [
     {
@@ -72,24 +76,78 @@ Regras:
 - Máximo 25 tarefas
 - Subtarefas apenas quando a tarefa tiver passos claros
 - Foco em ações concretas, não em contexto ou descrição do documento
-- Títulos em português, imperativos (ex: "Criar wireframes", "Revisar contrato")
+- Títulos em português, imperativos (ex: "Criar wireframes", "Revisar contrato")`
 
-Documento:
----
-${truncated}
----`,
-        },
-      ],
-    })
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+    const membersRaw = formData.get('members') as string | null
+
+    if (!file) {
+      return NextResponse.json({ error: 'Nenhum arquivo enviado.' }, { status: 400 })
+    }
+
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'Arquivo muito grande. O limite é 300 MB.' }, { status: 400 })
+    }
+
+    const membersCtx = membersRaw
+      ? `\n\nMembros disponíveis para delegação: ${membersRaw}. Quando o documento mencionar explicitamente uma pessoa ou papel que corresponda a um membro, preencha "assigned_to_hint" com o nome exato do membro.`
+      : ''
+
+    const content = await extractContent(file)
+
+    let completion: Awaited<ReturnType<typeof openai.chat.completions.create>>
+
+    if (content.kind === 'image') {
+      completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: `data:${content.mimeType};base64,${content.base64}` } },
+              { type: 'text', text: `Analise a imagem e extraia todas as tarefas e sub-tarefas que precisam ser executadas.${membersCtx}\n\n${TASK_FORMAT}` },
+            ],
+          },
+        ],
+      })
+    } else {
+      if (!content.text || content.text.length < 20) {
+        return NextResponse.json(
+          { error: 'Não foi possível extrair texto do arquivo. Verifique se o arquivo tem conteúdo legível.' },
+          { status: 422 }
+        )
+      }
+
+      const truncated = content.text.slice(0, 12000)
+
+      completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Analise o documento abaixo e extraia todas as tarefas e sub-tarefas que precisam ser executadas.${membersCtx}\n\n${TASK_FORMAT}\n\nDocumento:\n---\n${truncated}\n---`,
+          },
+        ],
+      })
+    }
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
-    const parsed2 = JSON.parse(raw) as { tasks: AITask[] }
+    const parsed = JSON.parse(raw) as { tasks: AITask[] }
 
-    if (!Array.isArray(parsed2.tasks)) {
+    if (!Array.isArray(parsed.tasks)) {
       return NextResponse.json({ error: 'Resposta inesperada da IA.' }, { status: 500 })
     }
 
-    return NextResponse.json({ tasks: parsed2.tasks })
+    return NextResponse.json({ tasks: parsed.tasks })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro interno'
     return NextResponse.json({ error: message }, { status: 500 })
