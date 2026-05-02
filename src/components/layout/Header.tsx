@@ -6,6 +6,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   '/dashboard': { title: 'Dashboard', description: 'Visão geral do negócio' },
   '/clients': { title: 'Clientes', description: 'Gestão da base de clientes' },
   '/financial': { title: 'Financeiro', description: 'Receitas, despesas e fluxo de caixa' },
+  '/contador': { title: 'Contador', description: 'Dashboard financeiro executivo' },
   '/demands': { title: 'Demandas', description: 'Tarefas e entregas do time' },
   '/founder': { title: 'Founder Board', description: 'OKRs, projetos e notas estratégicas' },
   '/docs': { title: 'Documentação', description: 'Relatório técnico v0.1 beta' },

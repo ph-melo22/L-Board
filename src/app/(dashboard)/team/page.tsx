@@ -220,7 +220,7 @@ export default function TeamPage() {
 
       {/* Invite Dialog */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-4 w-4" />

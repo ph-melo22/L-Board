@@ -138,7 +138,7 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
 
       {/* KR Dialog */}
       <Dialog open={krOpen} onOpenChange={setKrOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingKr ? 'Editar Key Result' : 'Novo Key Result'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
@@ -344,8 +344,8 @@ export default function FounderPage() {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="okrs">
-        <div className="flex items-center justify-between">
-          <TabsList>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="okrs">OKRs ({okrs.length})</TabsTrigger>
             <TabsTrigger value="projects">Projetos ({projects.length})</TabsTrigger>
             <TabsTrigger value="notes">Notas ({notes.length})</TabsTrigger>
@@ -531,7 +531,7 @@ export default function FounderPage() {
 
       {/* OKR Dialog */}
       <Dialog open={okrOpen} onOpenChange={setOkrOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingOkr ? 'Editar OKR' : 'Novo OKR'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
@@ -566,7 +566,7 @@ export default function FounderPage() {
 
       {/* Project Dialog */}
       <Dialog open={projectOpen} onOpenChange={setProjectOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingProject ? 'Editar Projeto' : 'Novo Projeto'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
@@ -616,7 +616,7 @@ export default function FounderPage() {
 
       {/* Note Dialog */}
       <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingNote ? 'Editar Nota' : 'Nova Nota'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
@@ -674,7 +674,7 @@ export default function FounderPage() {
 
       {/* Invite Team Member */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>Convidar Funcionário</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">

@@ -199,7 +199,7 @@ export default function ClientDetailPage() {
           {tasks.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">Nenhuma tarefa vinculada.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground">
                   <th className="px-4 py-2 text-left font-medium">Título</th>
@@ -222,7 +222,7 @@ export default function ClientDetailPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </CardContent>
       </Card>
@@ -230,7 +230,7 @@ export default function ClientDetailPage() {
       {/* Edit Dialog */}
       {form && (
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
             <DialogHeader><DialogTitle>Editar Cliente</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="grid grid-cols-2 gap-4">

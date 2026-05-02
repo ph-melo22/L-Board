@@ -271,7 +271,7 @@ export default function ClientsPage() {
 
       {/* Dialog Create/Edit */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid grid-cols-2 gap-4">

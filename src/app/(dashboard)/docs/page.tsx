@@ -5,9 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.7.0'
+const VERSION = '0.7.1'
 
 const CHANGELOG = [
+  {
+    version: '0.7.1',
+    date: '2026-05-02',
+    changes: [
+      'Otimiza toda a aplicação para acesso mobile',
+      'Adiciona overflow-y-auto max-h-[90vh] em todos os DialogContent com formulários longos (contador, financial, demands, clients, projects, team, founder)',
+      'Corrige toolbar das abas internas de Lançamentos e Contas no contador para layout flex-col em mobile (sm:flex-row no desktop)',
+      'Corrige toolbar das abas do Financeiro para empilhar verticalmente em mobile',
+      'Corrige toolbar das abas do Founder Board para empilhar verticalmente; TabsList com h-auto flex-wrap para 4 abas',
+      'Adiciona overflow-x-auto na tabela de Demandas do cliente em clients/[id]',
+      'Dialogs de task, subtask e IA em projects/[id] recebem max-h-[90vh]',
+    ],
+  },
   {
     version: '0.7.0',
     date: '2026-05-02',

@@ -230,7 +230,7 @@ export default function ProjectsPage() {
 
       {/* New Project Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>Novo Projeto</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">

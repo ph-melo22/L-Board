@@ -211,7 +211,7 @@ export default function FinancialPage() {
       )}
 
       <Tabs defaultValue="entries">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <TabsList>
             <TabsTrigger value="entries">Entradas ({filteredEntries.length})</TabsTrigger>
             <TabsTrigger value="expenses">Despesas ({filteredExpenses.length})</TabsTrigger>
@@ -345,7 +345,7 @@ export default function FinancialPage() {
 
       {/* Entry Dialog */}
       <Dialog open={entryOpen} onOpenChange={setEntryOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingEntry ? 'Editar Entrada' : 'Nova Entrada'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
@@ -415,7 +415,7 @@ export default function FinancialPage() {
 
       {/* Expense Dialog */}
       <Dialog open={expenseOpen} onOpenChange={setExpenseOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingExpense ? 'Editar Despesa' : 'Nova Despesa'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">

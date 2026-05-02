@@ -1008,7 +1008,7 @@ export default function ProjectDetailPage() {
 
       {/* ── Task Dialog ── */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingTask ? 'Editar Atividade' : 'Nova Atividade'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
@@ -1045,7 +1045,7 @@ export default function ProjectDetailPage() {
 
       {/* ── Subtask Dialog ── */}
       <Dialog open={subtaskDialogOpen} onOpenChange={setSubtaskDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{editingSubtask ? 'Editar Sub-Atividade' : 'Nova Sub-Atividade'}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
@@ -1109,7 +1109,7 @@ export default function ProjectDetailPage() {
 
       {/* ── AI Import Dialog ── */}
       <Dialog open={aiDialogOpen} onOpenChange={(o) => { if (!aiLoading && !aiCreating) setAiDialogOpen(o) }}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg overflow-y-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-600" />

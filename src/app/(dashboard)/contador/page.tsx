@@ -612,7 +612,7 @@ export default function ContadorPage() {
         {/* ── TAB: LANÇAMENTOS ─────────────────────────────────────────────── */}
         <TabsContent value="lancamentos" className="pt-4">
           <Tabs value={lancTab} onValueChange={setLancTab}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
               <TabsList>
                 <TabsTrigger value="receitas">Receitas ({entries.length})</TabsTrigger>
                 <TabsTrigger value="despesas">Despesas ({expenses.length})</TabsTrigger>
@@ -745,7 +745,7 @@ export default function ContadorPage() {
         {/* ── TAB: CONTAS ──────────────────────────────────────────────────── */}
         <TabsContent value="contas" className="pt-4">
           <Tabs value={contasTab} onValueChange={setContasTab}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
               <TabsList>
                 <TabsTrigger value="pagar">A Pagar ({contasPagar.length})</TabsTrigger>
                 <TabsTrigger value="receber">A Receber ({contasReceber.length})</TabsTrigger>
@@ -896,7 +896,7 @@ export default function ContadorPage() {
 
       {/* Receita Dialog */}
       <Dialog open={entryModal.open} onOpenChange={(o) => !o && setEntryModal({ open: false, item: null })}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{entryModal.item ? 'Editar Receita' : 'Nova Receita'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
@@ -966,7 +966,7 @@ export default function ContadorPage() {
 
       {/* Despesa Dialog */}
       <Dialog open={expenseModal.open} onOpenChange={(o) => !o && setExpenseModal({ open: false, item: null })}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{expenseModal.item ? 'Editar Despesa' : 'Nova Despesa'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
@@ -1036,7 +1036,7 @@ export default function ContadorPage() {
 
       {/* Imposto Dialog */}
       <Dialog open={impostoModal.open} onOpenChange={(o) => !o && setImpostoModal({ open: false, item: null })}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{impostoModal.item ? 'Editar Imposto' : 'Novo Imposto'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
@@ -1086,7 +1086,7 @@ export default function ContadorPage() {
 
       {/* Conta a Pagar Dialog */}
       <Dialog open={contaPagarModal.open} onOpenChange={(o) => !o && setContaPagarModal({ open: false, item: null })}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{contaPagarModal.item ? 'Editar Conta a Pagar' : 'Nova Conta a Pagar'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
@@ -1140,7 +1140,7 @@ export default function ContadorPage() {
 
       {/* Conta a Receber Dialog */}
       <Dialog open={contaReceberModal.open} onOpenChange={(o) => !o && setContaReceberModal({ open: false, item: null })}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>{contaReceberModal.item ? 'Editar Conta a Receber' : 'Nova Conta a Receber'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
