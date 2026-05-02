@@ -278,6 +278,7 @@ export interface Indicadores {
   burnRate: number
   runway: number
   receitaPorColaborador: number
+  receitaPorCliente: number
   custoPorCliente: number
   receitaAcumulada: number
   despesaAcumulada: number
@@ -335,11 +336,12 @@ export function calcIndicadores(
   const runway = burnRate > 0 && resultado > 0 ? resultado / burnRate : 0
 
   const receitaPorColaborador = teamCount > 0 ? curRevenue / teamCount : 0
+  const receitaPorCliente = activeClients.length > 0 ? receitaAcumulada / activeClients.length : 0
   const custoPorCliente = activeClients.length > 0 && burnRate > 0 ? burnRate / activeClients.length : 0
 
   return {
     mrr, ticketMedio, crescimentoMensal, cac, ltv, ltvCac,
-    burnRate, runway, receitaPorColaborador, custoPorCliente,
+    burnRate, runway, receitaPorColaborador, receitaPorCliente, custoPorCliente,
     receitaAcumulada, despesaAcumulada,
   }
 }
