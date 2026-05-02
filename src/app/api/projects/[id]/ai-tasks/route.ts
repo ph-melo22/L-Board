@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import pdf from 'pdf-parse'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -22,7 +21,10 @@ export async function POST(request: NextRequest) {
 
     // Extract text from PDF
     const buffer = Buffer.from(await file.arrayBuffer())
-    const parsed = await pdf(buffer)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfMod = await import('pdf-parse') as any
+    const pdfParse = pdfMod.default ?? pdfMod
+    const parsed = await pdfParse(buffer)
     const text = parsed.text?.trim()
 
     if (!text || text.length < 20) {

@@ -5,9 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.6.0 beta'
+const VERSION = '0.6.1'
 
 const CHANGELOG = [
+  {
+    version: '0.6.1',
+    date: '2026-05-01',
+    changes: [
+      'Corrige falha de build no Vercel: import estático de pdf-parse substituído por import dinâmico dentro do handler',
+      'API route /api/projects/[id]/ai-tasks agora carrega pdf-parse apenas em runtime, evitando erro de bundling em build',
+    ],
+  },
   {
     version: '0.6.0 beta',
     date: '2026-05-01',
