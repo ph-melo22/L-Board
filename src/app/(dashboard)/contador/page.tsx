@@ -151,7 +151,7 @@ function DRERow({
   label, value, indent = 0, bold = false, separator = false, margin,
   highlight = false, sub = false,
 }: {
-  label: string; value?: number; indent?: number
+  label?: string; value?: number; indent?: number
   bold?: boolean; separator?: boolean; margin?: number
   highlight?: boolean; sub?: boolean
 }) {
