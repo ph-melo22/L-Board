@@ -5,8 +5,8 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000'],
       bodySizeLimit: '300mb',
     },
+    serverComponentsExternalPackages: ['pdf-parse', 'mammoth'],
   },
-  serverExternalPackages: ['pdf-parse', 'mammoth'],
 }
 
 export default nextConfig
