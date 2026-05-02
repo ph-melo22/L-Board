@@ -636,14 +636,13 @@ export default function ProjectDetailPage() {
           )}
         </div>
         <div className="flex shrink-0 gap-1.5">
-          <Button size="sm" variant="outline" onClick={openAiDialog} className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
-            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Importar via IA
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleExport} className="text-muted-foreground">
+          <Button size="sm" variant="outline" onClick={handleExport} className="text-muted-foreground hidden sm:flex">
             <FileDown className="mr-1.5 h-3.5 w-3.5" /> Exportar
           </Button>
           <Button variant="outline" size="sm" onClick={openEditProject}>
-            <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar
+            <Pencil className="mr-1.5 h-3.5 w-3.5 hidden sm:block" />
+            <span className="hidden sm:inline">Editar</span>
+            <Pencil className="h-3.5 w-3.5 sm:hidden" />
           </Button>
           <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteProjectOpen(true)}>
             <Trash2 className="h-3.5 w-3.5" />
@@ -761,11 +760,16 @@ export default function ProjectDetailPage() {
         <div className="order-last lg:order-first lg:col-span-2 space-y-3">
           <Card className="shadow-none">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <CardTitle className="text-sm">Atividades</CardTitle>
-                <Button size="sm" onClick={openNewTask}>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova Atividade
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={openAiDialog} className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Importar via IA
+                  </Button>
+                  <Button size="sm" onClick={openNewTask}>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova Atividade
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-2">
