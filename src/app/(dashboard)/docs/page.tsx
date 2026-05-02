@@ -5,9 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.6.2'
+const VERSION = '0.6.3'
 
 const CHANGELOG = [
+  {
+    version: '0.6.3',
+    date: '2026-05-02',
+    changes: [
+      'Corrige erro "Error sending invite email" ao convidar membros da equipe',
+      'Rota /api/team/invite migrada de inviteUserByEmail para generateLink + envio manual via Resend HTTP API',
+      'E-mail de convite agora usa template HTML com identidade visual do L Board',
+      'Convite inclui o nome do convidado no corpo do e-mail',
+    ],
+  },
   {
     version: '0.6.2',
     date: '2026-05-02',
