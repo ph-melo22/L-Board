@@ -58,6 +58,7 @@ export type ExpenseCategory =
   | 'office'
   | 'taxes'
   | 'other'
+export type ExpenseNature = 'cogs' | 'opex' | 'da'
 
 export interface FinancialExpense {
   id: string
@@ -66,6 +67,7 @@ export interface FinancialExpense {
   cost_center: string | null
   value: number
   type: ExpenseType
+  nature?: ExpenseNature
   date: string
   description: string | null
   created_at: string

@@ -5,9 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.6.3'
+const VERSION = '0.7.0'
 
 const CHANGELOG = [
+  {
+    version: '0.7.0',
+    date: '2026-05-02',
+    changes: [
+      'Adiciona módulo completo de gestão financeira na rota /contador (founder only)',
+      'Visão Geral: KPIs executivos em 4 seções (Saúde, Caixa, Eficiência, Riscos) com alertas visuais automáticos',
+      'DRE: Demonstrativo de Resultado auto-calculado com filtro por período (mês, ano, acumulado)',
+      'Caixa: gráfico de Entradas vs Saídas (8 meses), projeção de 30/60/90 dias baseada em tendência',
+      'Lançamentos: CRUD completo para Receitas, Despesas (com campo Natureza DRE) e Impostos',
+      'Contas: CRUD para Contas a Pagar e Contas a Receber com status automático de vencimento',
+      'Indicadores: CAC, LTV, LTV/CAC, Ticket Médio, Burn Rate, Runway, Receita/Colaborador, Custo/Cliente',
+      'Sistema de alertas: detecta margem bruta crítica, impostos vencidos, contas vencidas, runway baixo, LTV/CAC desfavorável',
+      'Novas tabelas Supabase: impostos, contas_pagar, contas_receber',
+      'Nova coluna nature (cogs/opex/da) em financial_expenses para classificação no DRE',
+      'Novo serviço src/services/contador.ts com calcDRE, calcFluxoCaixa, calcIndicadores, calcAlertas',
+      'Sidebar atualizada: aba Contador adicionada ao founderNav com ícone Calculator',
+      'Middleware: /contador adicionado às rotas permitidas para founder',
+    ],
+  },
   {
     version: '0.6.3',
     date: '2026-05-02',

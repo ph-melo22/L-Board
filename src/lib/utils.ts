@@ -51,6 +51,10 @@ export function getStatusColor(status: string): string {
     confirmed: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     pending: 'text-amber-600 bg-amber-50 border-amber-200',
     cancelled: 'text-red-600 bg-red-50 border-red-200',
+    pago: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    atrasado: 'text-red-600 bg-red-50 border-red-200',
+    recebido: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    inadimplente: 'text-red-600 bg-red-50 border-red-200',
     // OKR
     on_track: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     at_risk: 'text-amber-600 bg-amber-50 border-amber-200',
@@ -110,6 +114,13 @@ export function getLabelByStatus(status: string): string {
     office: 'Escritório',
     taxes: 'Impostos',
     planning: 'Planejando',
+    pago: 'Pago',
+    atrasado: 'Atrasado',
+    recebido: 'Recebido',
+    inadimplente: 'Inadimplente',
+    cogs: 'CMV/CPV',
+    opex: 'Despesa Operacional',
+    da: 'Depr./Amort.',
   }
   return labels[status] ?? status
 }
