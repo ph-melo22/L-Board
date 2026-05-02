@@ -24,8 +24,15 @@ async function extractContent(file: File): Promise<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfMod = await import('pdf-parse') as any
     const pdfParse = pdfMod.default ?? pdfMod
-    const parsed = await pdfParse(buffer)
-    return { kind: 'text', text: parsed.text?.trim() ?? '' }
+    try {
+      const parsed = await pdfParse(buffer, { max: 0 })
+      return { kind: 'text', text: parsed.text?.trim() ?? '' }
+    } catch (pdfErr) {
+      const msg = pdfErr instanceof Error ? pdfErr.message : ''
+      throw new Error(
+        `Não foi possível ler este PDF (${msg}). O arquivo pode estar corrompido ou ter sido gerado por software não padrão. Tente converter para imagem (JPG/PNG) ou exportar novamente como PDF.`
+      )
+    }
   }
 
   // ── DOCX / DOC ────────────────────────────────────────────────────────────
