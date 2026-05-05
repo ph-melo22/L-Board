@@ -5,9 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.8.0'
+const VERSION = '0.8.1'
 
 const CHANGELOG = [
+  {
+    version: '0.8.1',
+    date: '2026-05-05',
+    changes: [
+      'Domínio lboard.com.br configurado e validado na Vercel com nameservers ns1/ns2.vercel-dns.com',
+      'Resend: domínio lboard.com.br verificado com registros DKIM, SPF (MX + TXT) adicionados na Vercel DNS',
+      'Remetente de e-mail atualizado de onboarding@resend.dev para noreply@lboard.com.br',
+      'Supabase SMTP configurado para usar Resend (smtp.resend.com) como provedor de e-mail transacional',
+      'Supabase: Site URL e Redirect URL atualizados para https://lboard.com.br',
+      'Vercel: NEXT_PUBLIC_APP_URL atualizado para https://lboard.com.br',
+    ],
+  },
   {
     version: '0.8.0',
     date: '2026-05-04',
@@ -198,13 +210,14 @@ const CHANGELOG = [
 const STACK = [
   { name: 'Next.js 14', role: 'Framework React (App Router)' },
   { name: 'TypeScript', role: 'Tipagem estática' },
-  { name: 'Supabase', role: 'Banco de dados (PostgreSQL) + Auth' },
+  { name: 'Supabase', role: 'Banco de dados (PostgreSQL) + Auth + SMTP' },
   { name: 'Tailwind CSS', role: 'Estilização utilitária' },
   { name: 'shadcn/ui', role: 'Componentes de interface' },
   { name: 'Recharts', role: 'Gráficos e visualizações' },
   { name: 'OpenAI GPT-4o', role: 'IA para geração de tarefas a partir de PDF' },
   { name: 'pdf-parse', role: 'Extração de texto de PDFs (server-side)' },
-  { name: 'Vercel', role: 'Hospedagem e deploy contínuo' },
+  { name: 'Resend', role: 'Envio de e-mails transacionais via noreply@lboard.com.br' },
+  { name: 'Vercel', role: 'Hospedagem, deploy contínuo e DNS (lboard.com.br)' },
 ]
 
 const ROLES = [
@@ -236,7 +249,9 @@ const PAGES = [
   { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Inclui indicador de força de senha e confirmação.', type: 'público' },
   { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
   { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo. Tabela com scroll horizontal no mobile.', type: 'founder' },
-  { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações e tarefas vinculadas.', type: 'founder' },
+  { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações, tarefas vinculadas e card de Integrações (API Keys).', type: 'founder' },
+  { route: '/api/clients/api-keys', file: 'src/app/api/clients/api-keys/route.ts', description: 'GET (lista keys do cliente) e POST (cria key com criptografia AES-256-GCM). Requer ENCRYPTION_KEY no ambiente.', type: 'api' },
+  { route: '/api/clients/api-keys/[id]', file: 'src/app/api/clients/api-keys/[id]/route.ts', description: 'PATCH (toggle is_active ou label) e DELETE (remove key). Opera via createAdminClient.', type: 'api' },
   { route: '/financial', file: 'src/app/(dashboard)/financial/page.tsx', description: 'Entradas e despesas com gráfico PieChart. CRUD completo. Tabelas com scroll horizontal no mobile.', type: 'founder' },
   { route: '/demands', file: 'src/app/(dashboard)/demands/page.tsx', description: 'Kanban 5 colunas com filtros avançados. Scroll horizontal no mobile. Prioridade crítica destacada.', type: 'privado' },
   { route: '/projects', file: 'src/app/(dashboard)/projects/page.tsx', description: 'Lista de projetos com cards de progresso. CRUD de projetos com dialog de criação.', type: 'founder' },
@@ -323,6 +338,16 @@ const SERVICES = [
     ],
   },
   {
+    file: 'src/services/apiKeys.ts',
+    tabela: 'client_api_keys (via API Route)',
+    funcoes: [
+      { name: 'getClientApiKeys(client_id)', desc: 'Lista todas as keys do cliente (sem dados criptografados — retorna apenas key_hint, provider, label, is_active).' },
+      { name: 'createClientApiKey(formData)', desc: 'Envia key para /api/clients/api-keys que criptografa com AES-256-GCM e salva no banco.' },
+      { name: 'updateClientApiKey(id, updates)', desc: 'Atualiza is_active ou label via PATCH /api/clients/api-keys/[id].' },
+      { name: 'deleteClientApiKey(id)', desc: 'Remove a key permanentemente via DELETE /api/clients/api-keys/[id].' },
+    ],
+  },
+  {
     file: 'src/services/team.ts',
     tabela: 'profiles',
     funcoes: [
@@ -345,6 +370,8 @@ const MODELS = [
   { name: 'StrategicProject', tabela: 'strategic_projects', campos: ['id', 'title', 'description', 'status', 'priority', 'due_date', 'created_at'] },
   { name: 'StrategicNote', tabela: 'strategic_notes', campos: ['id', 'title', 'content', 'tags[]', 'created_at', 'updated_at'] },
   { name: 'Profile', tabela: 'profiles', campos: ['id', 'full_name', 'email', 'role', 'created_at'] },
+  { name: 'ClientApiKey', tabela: 'client_api_keys', campos: ['id', 'client_id', 'provider', 'label', 'key_hint', 'is_active', 'created_at', 'updated_at'] },
+  { name: 'ClientApiKeyFormData', tabela: '—', campos: ['client_id', 'provider', 'label', 'api_key (plaintext — nunca persiste)'] },
   { name: 'Project / ProjectWithDetails / ProjectListItem', tabela: 'projects', campos: ['id', 'title', 'description', 'objectives', 'scope', 'deliverables', 'risks', 'status', 'priority', 'start_date', 'end_date', 'owner_id', 'created_at', '+project_members', '+project_tasks'] },
   { name: 'ProjectMember', tabela: 'project_members', campos: ['id', 'project_id', 'user_id', 'created_at'] },
   { name: 'ProjectTask', tabela: 'project_tasks', campos: ['id', 'project_id', 'title', 'description', 'assigned_to', 'due_date', 'position', 'completed', 'created_at', '+project_subtasks'] },
@@ -362,7 +389,7 @@ const INFRA = [
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
   { file: 'supabase/projects_schema.sql', desc: 'SQL do módulo Projetos: 4 tabelas (projects, project_members, project_tasks, project_subtasks) + RLS. Executar separadamente no Supabase.' },
-  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY (opcional), RESEND_FROM (opcional). Nunca commitar no git.' },
+  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, ENCRYPTION_KEY (32 bytes hex — AES-256 para API Keys), NEXT_PUBLIC_APP_URL. Nunca commitar no git.' },
   { file: 'next.config.mjs', desc: 'serverExternalPackages: [\'pdf-parse\'] para evitar problemas de bundling no Next.js 14. serverActions com allowedOrigins.' },
 ]
 
@@ -411,7 +438,7 @@ export default function DocsPage() {
           <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.6
+          BETA 0.8
         </span>
       </div>
 
@@ -602,6 +629,7 @@ export default function DocsPage() {
             { table: 'project_members', desc: 'Membros de cada projeto. FK para projects e profiles. Unique por (project_id, user_id).' },
             { table: 'project_tasks', desc: 'Atividades do projeto com responsável, prazo, posição e flag de conclusão.' },
             { table: 'project_subtasks', desc: 'Sub-atividades de cada atividade com responsável, prazo e flag de conclusão. Cascata ao deletar task.' },
+            { table: 'client_api_keys', desc: 'Chaves de API por cliente. Armazena encrypted_key, iv e auth_tag (AES-256-GCM). Expõe apenas key_hint (últimos 4 chars) na UI. Cascata ao deletar cliente.' },
           ].map((db) => (
             <Card key={db.table} className="shadow-none">
               <CardContent className="p-3 flex gap-3">
