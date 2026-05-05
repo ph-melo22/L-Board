@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${resendKey}`,
       },
       body: JSON.stringify({
-        from: 'L Board <onboarding@resend.dev>',
+        from: 'L Board <noreply@lboard.com.br>',
         to: email,
         subject: 'Você foi convidado para o L Board',
         html: INVITE_HTML(full_name, inviteUrl),
