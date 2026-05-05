@@ -5,9 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.7.1'
+const VERSION = '0.8.0'
 
 const CHANGELOG = [
+  {
+    version: '0.8.0',
+    date: '2026-05-04',
+    changes: [
+      'Adiciona módulo de Integrações (API Keys) por cliente em clients/[id]',
+      'Nova tabela Supabase: client_api_keys (client_id, provider, encrypted_key, iv, auth_tag, key_hint, is_active)',
+      'Suporte a 6 provedores: OpenAI, Anthropic, Google Gemini, Grok (xAI), DeepSeek e Outro',
+      'Criptografia AES-256-GCM server-side via API Route /api/clients/api-keys; chave nunca exposta no client',
+      'UI: card Integrações em clients/[id] com lista de chaves mascaradas (••••xxxx), toggle ativo/inativo e exclusão',
+      'Novo serviço src/services/apiKeys.ts com getClientApiKeys, createClientApiKey, updateClientApiKey, deleteClientApiKey',
+      'Novas rotas: POST/GET /api/clients/api-keys e PATCH/DELETE /api/clients/api-keys/[id]',
+      'Nova variável de ambiente ENCRYPTION_KEY (32 bytes hex) adicionada ao .env.local e necessária em produção',
+      'Novos tipos: ApiKeyProvider, ClientApiKey, ClientApiKeyFormData em src/types/index.ts',
+    ],
+  },
   {
     version: '0.7.1',
     date: '2026-05-02',

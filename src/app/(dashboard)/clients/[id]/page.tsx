@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, AlertTriangle, Plus, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -17,8 +17,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast'
 import { getClientById, updateClient, deleteClient } from '@/services/clients'
 import { getTasks } from '@/services/demands'
+import { getClientApiKeys, createClientApiKey, updateClientApiKey, deleteClientApiKey } from '@/services/apiKeys'
 import { formatCurrency, formatDate, formatPercent, getLabelByStatus, getStatusColor, getPriorityColor } from '@/lib/utils'
-import type { ClientWithProfit, ClientFormData, ClientStatus, Task } from '@/types'
+import type { ClientWithProfit, ClientFormData, ClientStatus, Task, ClientApiKey, ClientApiKeyFormData, ApiKeyProvider } from '@/types'
+
+const PROVIDER_CONFIG: Record<ApiKeyProvider, { name: string; placeholder: string }> = {
+  openai:    { name: 'OpenAI',        placeholder: 'sk-proj-...' },
+  anthropic: { name: 'Anthropic',     placeholder: 'sk-ant-...' },
+  gemini:    { name: 'Google Gemini', placeholder: 'AIza...' },
+  grok:      { name: 'Grok (xAI)',    placeholder: 'xai-...' },
+  deepseek:  { name: 'DeepSeek',      placeholder: 'sk-...' },
+  other:     { name: 'Outro',         placeholder: 'Chave de API...' },
+}
+
+const PROVIDERS = Object.entries(PROVIDER_CONFIG) as [ApiKeyProvider, { name: string; placeholder: string }][]
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -34,12 +46,21 @@ export default function ClientDetailPage() {
   const [form, setForm] = useState<ClientFormData | null>(null)
   const [saving, setSaving] = useState(false)
 
+  const [apiKeys, setApiKeys] = useState<ClientApiKey[]>([])
+  const [keyFormOpen, setKeyFormOpen] = useState(false)
+  const [keyForm, setKeyForm] = useState<{ provider: ApiKeyProvider; label: string; api_key: string }>({
+    provider: 'openai', label: '', api_key: '',
+  })
+  const [keyLoading, setKeyLoading] = useState(false)
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null)
+
   async function load() {
     setLoading(true)
     try {
-      const [c, allTasks] = await Promise.all([getClientById(id), getTasks()])
+      const [c, allTasks, keys] = await Promise.all([getClientById(id), getTasks(), getClientApiKeys(id)])
       setClient(c)
       setTasks(allTasks.filter((t) => t.client_id === id))
+      setApiKeys(keys)
       setError(false)
     } catch { setError(true) }
     finally { setLoading(false) }
@@ -87,6 +108,48 @@ export default function ClientDetailPage() {
     }
   }
 
+  async function handleAddKey() {
+    if (!keyForm.api_key || !keyForm.provider) return
+    setKeyLoading(true)
+    try {
+      const newKey = await createClientApiKey({
+        client_id: id,
+        provider: keyForm.provider,
+        label: keyForm.label || null,
+        api_key: keyForm.api_key,
+      } as ClientApiKeyFormData)
+      setApiKeys((prev) => [newKey, ...prev])
+      toast({ title: 'Chave adicionada' })
+      setKeyFormOpen(false)
+      setKeyForm({ provider: 'openai', label: '', api_key: '' })
+    } catch {
+      toast({ title: 'Erro ao adicionar chave', variant: 'destructive' })
+    } finally {
+      setKeyLoading(false)
+    }
+  }
+
+  async function handleToggleKey(keyId: string, is_active: boolean) {
+    try {
+      const updated = await updateClientApiKey(keyId, { is_active })
+      setApiKeys((prev) => prev.map((k) => k.id === keyId ? { ...k, is_active: updated.is_active } : k))
+    } catch {
+      toast({ title: 'Erro ao atualizar chave', variant: 'destructive' })
+    }
+  }
+
+  async function handleDeleteKey() {
+    if (!deleteKeyId) return
+    try {
+      await deleteClientApiKey(deleteKeyId)
+      setApiKeys((prev) => prev.filter((k) => k.id !== deleteKeyId))
+      toast({ title: 'Chave removida' })
+      setDeleteKeyId(null)
+    } catch {
+      toast({ title: 'Erro ao remover chave', variant: 'destructive' })
+    }
+  }
+
   if (error) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
@@ -119,6 +182,7 @@ export default function ClientDetailPage() {
         </div>
         <div className="h-32 animate-pulse rounded-lg bg-muted" />
         <div className="h-48 animate-pulse rounded-lg bg-muted" />
+        <div className="h-32 animate-pulse rounded-lg bg-muted" />
       </div>
     )
   }
@@ -227,6 +291,58 @@ export default function ClientDetailPage() {
         </CardContent>
       </Card>
 
+      {/* API Keys */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-muted-foreground" />
+            Integrações ({apiKeys.length})
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => setKeyFormOpen(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {apiKeys.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">Nenhuma chave de API configurada.</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {apiKeys.map((key) => (
+                <div key={key.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">{PROVIDER_CONFIG[key.provider].name}</span>
+                      {key.label && <span className="text-xs text-muted-foreground">{key.label}</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-mono mt-0.5">••••••••{key.key_hint}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleToggleKey(key.id, !key.is_active)}
+                      className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-colors ${
+                        key.is_active
+                          ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/50 dark:text-green-400'
+                          : 'border-muted bg-muted/40 text-muted-foreground'
+                      }`}
+                    >
+                      {key.is_active ? 'Ativa' : 'Inativa'}
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeleteKeyId(key.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit Dialog */}
       {form && (
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -282,7 +398,70 @@ export default function ClientDetailPage() {
         </Dialog>
       )}
 
-      {/* Delete Confirm */}
+      {/* Add Key Dialog */}
+      <Dialog open={keyFormOpen} onOpenChange={setKeyFormOpen}>
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> Adicionar Chave de API</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Provedor</Label>
+              <Select
+                value={keyForm.provider}
+                onValueChange={(v) => setKeyForm({ ...keyForm, provider: v as ApiKeyProvider })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PROVIDERS.map(([value, cfg]) => (
+                    <SelectItem key={value} value={value}>{cfg.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Label <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Input
+                placeholder="Ex: Produção, Staging..."
+                value={keyForm.label}
+                onChange={(e) => setKeyForm({ ...keyForm, label: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Chave de API</Label>
+              <Input
+                type="password"
+                placeholder={PROVIDER_CONFIG[keyForm.provider].placeholder}
+                value={keyForm.api_key}
+                onChange={(e) => setKeyForm({ ...keyForm, api_key: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">Armazenada com criptografia AES-256-GCM.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKeyFormOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddKey} disabled={keyLoading || !keyForm.api_key}>
+              {keyLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Key Confirm */}
+      <AlertDialog open={!!deleteKeyId} onOpenChange={(o) => !o && setDeleteKeyId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover chave?</AlertDialogTitle>
+            <AlertDialogDescription>A chave será excluída permanentemente. Essa ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteKey} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Client Confirm */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

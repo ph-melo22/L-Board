@@ -259,6 +259,28 @@ export type ProjectFormData = Omit<Project, 'id' | 'created_at'>
 export type ProjectTaskFormData = Omit<ProjectTask, 'id' | 'created_at' | 'project_subtasks'>
 export type ProjectSubtaskFormData = Omit<ProjectSubtask, 'id' | 'created_at'>
 
+// ─── Client API Keys ──────────────────────────────────────────────────────────
+
+export type ApiKeyProvider = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'deepseek' | 'other'
+
+export interface ClientApiKey {
+  id: string
+  client_id: string
+  provider: ApiKeyProvider
+  label: string | null
+  key_hint: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ClientApiKeyFormData {
+  client_id: string
+  provider: ApiKeyProvider
+  label: string | null
+  api_key: string
+}
+
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
