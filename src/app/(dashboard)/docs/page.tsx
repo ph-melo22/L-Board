@@ -5,9 +5,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.8.1'
+const VERSION = '0.9.1'
 
 const CHANGELOG = [
+  {
+    version: '0.9.1',
+    date: '2026-05-05',
+    changes: [
+      'Adiciona Landing Page pública em lboard.com.br (rota /)',
+      'Design dark e moderno inspirado em Vercel: grid background, glow radial, gradient text, glassmorphism cards',
+      'Seções: Navbar fixed com blur, Hero fullscreen, Stats strip, Features grid 3x2, CTA final, Footer',
+      'Destaques: Financeiro, Clientes com Margem, IA, Kanban Financeiro, Roles, API Keys',
+      'Middleware atualizado: / liberado para usuários não autenticados; autenticados redirecionados para /dashboard',
+      'src/app/page.tsx convertido de redirect para landing page (Server Component)',
+    ],
+  },
+  {
+    version: '0.9.0',
+    date: '2026-05-05',
+    changes: [
+      'Adiciona Security Headers em next.config.mjs: X-Frame-Options, HSTS, nosniff, XSS-Protection, Referrer-Policy, Permissions-Policy',
+      'Adiciona Rate Limiting: /api/team/invite (5/min), /api/clients/api-keys POST (20/min), /api/projects/ai-tasks (10/min)',
+      'Adiciona Session Validation (requireAuth) em todas as API routes privilegiadas',
+      'PWA: manifest.ts, icon.tsx (32x32) e apple-icon.tsx (180x180) gerados dinamicamente via next/og',
+      'Vercel Analytics: @vercel/analytics instalado e <Analytics /> adicionado ao layout raiz',
+      'allowedOrigins em next.config.mjs atualizado para incluir lboard.com.br',
+      'Novo utilitário src/lib/rateLimit.ts e src/lib/requireAuth.ts',
+    ],
+  },
   {
     version: '0.8.1',
     date: '2026-05-05',
@@ -242,7 +267,7 @@ const ROLES = [
 ]
 
 const PAGES = [
-  { route: '/', file: 'src/app/page.tsx', description: 'Rota raiz — redireciona para /dashboard.', type: 'redirect' },
+  { route: '/', file: 'src/app/page.tsx', description: 'Landing page pública. Dark e moderno com hero, features grid, stats e CTA. Usuário autenticado é redirecionado para /dashboard pelo middleware.', type: 'público' },
   { route: '/auth/login', file: 'src/app/auth/login/page.tsx', description: 'Tela de login com e-mail e senha. Link "Esqueci minha senha" abaixo do campo de senha.', type: 'público' },
   { route: '/auth/forgot-password', file: 'src/app/auth/forgot-password/page.tsx', description: 'Formulário para recuperação de senha. Envia e-mail com link via Supabase e exibe confirmação visual.', type: 'público' },
   { route: '/auth/callback', file: 'src/app/auth/callback/route.ts', description: 'Route handler que recebe o redirect do Supabase (convite ou recuperação). Troca o code por sessão (PKCE) e redireciona para /auth/reset-password.', type: 'público' },
@@ -438,7 +463,7 @@ export default function DocsPage() {
           <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.8
+          BETA 0.9
         </span>
       </div>
 

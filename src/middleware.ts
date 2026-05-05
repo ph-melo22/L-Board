@@ -40,6 +40,12 @@ export async function middleware(request: NextRequest) {
 
   const isAuthUtility = AUTH_UTILITY_PATHS.some((p) => pathname.startsWith(p))
 
+  // Landing page is public
+  if (pathname === '/') {
+    if (user) return NextResponse.redirect(new URL('/dashboard', request.url))
+    return supabaseResponse
+  }
+
   // Unauthenticated → login (except auth pages)
   if (!user && !pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
