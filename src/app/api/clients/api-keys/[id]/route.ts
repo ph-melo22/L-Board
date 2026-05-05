@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAuth } from '@/lib/requireAuth'
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const supabase = createAdminClient()
@@ -21,6 +25,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   try {
     const supabase = createAdminClient()
     const { error } = await supabase

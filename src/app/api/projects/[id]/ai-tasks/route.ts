@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { requireAuth } from '@/lib/requireAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 const MAX_BYTES = 300 * 1024 * 1024 // 300 MB
 
@@ -86,6 +88,14 @@ Regras:
 - Títulos em português, imperativos (ex: "Criar wireframes", "Revisar contrato")`
 
 export async function POST(request: NextRequest) {
+  const { user, error: authError } = await requireAuth()
+  if (authError) return authError
+
+  const ip = request.headers.get('x-forwarded-for') ?? user!.id
+  if (!rateLimit(`ai-tasks:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Limite de análises via IA atingido. Aguarde 1 minuto.' }, { status: 429 })
+  }
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null

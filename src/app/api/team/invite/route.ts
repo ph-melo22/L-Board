@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAuth } from '@/lib/requireAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 const INVITE_HTML = (name: string, inviteUrl: string) => `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -40,6 +42,14 @@ const INVITE_HTML = (name: string, inviteUrl: string) => `<!DOCTYPE html>
 </html>`
 
 export async function POST(request: NextRequest) {
+  const { user, error: authError } = await requireAuth()
+  if (authError) return authError
+
+  const ip = request.headers.get('x-forwarded-for') ?? user!.id
+  if (!rateLimit(`invite:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Limite de convites atingido. Aguarde 1 minuto.' }, { status: 429 })
+  }
+
   try {
     const { full_name, email, role } = await request.json()
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAuth } from '@/lib/requireAuth'
+import { rateLimit } from '@/lib/rateLimit'
 import crypto from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
@@ -23,6 +25,9 @@ function encrypt(text: string) {
 }
 
 export async function GET(request: NextRequest) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   try {
     const client_id = request.nextUrl.searchParams.get('client_id')
     if (!client_id) return NextResponse.json({ error: 'client_id obrigatório' }, { status: 400 })
@@ -43,6 +48,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { user, error: authError } = await requireAuth()
+  if (authError) return authError
+
+  const ip = request.headers.get('x-forwarded-for') ?? user!.id
+  if (!rateLimit(`api-keys:${ip}`, 20, 60_000)) {
+    return NextResponse.json({ error: 'Muitas requisições. Tente novamente em instantes.' }, { status: 429 })
+  }
+
   try {
     const { client_id, provider, label, api_key } = await request.json()
 
