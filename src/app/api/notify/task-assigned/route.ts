@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return NextResponse.json({ ok: false, reason: 'no_key' })
+  if (!process.env.RESEND_API_KEY) return NextResponse.json({ ok: false, reason: 'no_key' })
 
   try {
     const { assigneeName, assigneeEmail, taskTitle, projectTitle, taskType } = await request.json()
@@ -29,27 +29,15 @@ export async function POST(request: NextRequest) {
       </div>
     `
 
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM ?? 'L Board <onboarding@resend.dev>',
-        to: [assigneeEmail],
-        subject: `Nova ${label}: ${taskTitle} — ${projectTitle}`,
-        html,
-      }),
+    await sendEmail({
+      to: assigneeEmail,
+      subject: `Nova ${label}: ${taskTitle} — ${projectTitle}`,
+      html,
     })
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      return NextResponse.json({ ok: false, reason: (err as { message?: string }).message ?? 'resend_error' })
-    }
-
     return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ ok: false, reason: 'internal_error' })
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'internal_error'
+    return NextResponse.json({ ok: false, reason })
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { sendEmail } from '@/lib/email'
 
 const INVITE_HTML = (name: string, inviteUrl: string) => `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -85,30 +86,13 @@ export async function POST(request: NextRequest) {
     })
     if (profileError) throw profileError
 
-    // Envia o e-mail via Resend diretamente
-    const resendKey = process.env.RESEND_API_KEY
-    if (!resendKey) throw new Error('RESEND_API_KEY não configurada')
-
     const inviteUrl = linkData.properties.action_link
 
-    const emailRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${resendKey}`,
-      },
-      body: JSON.stringify({
-        from: 'L Board <noreply@lboard.com.br>',
-        to: email,
-        subject: 'Você foi convidado para o L Board',
-        html: INVITE_HTML(full_name, inviteUrl),
-      }),
+    await sendEmail({
+      to: email,
+      subject: 'Você foi convidado para o L Board',
+      html: INVITE_HTML(full_name, inviteUrl),
     })
-
-    if (!emailRes.ok) {
-      const err = await emailRes.json()
-      throw new Error(err.message ?? 'Erro ao enviar e-mail')
-    }
 
     return NextResponse.json({ success: true })
   } catch (err: unknown) {

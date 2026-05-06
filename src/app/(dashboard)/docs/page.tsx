@@ -5,9 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.0.0'
+const VERSION = '1.1.0'
 
 const CHANGELOG = [
+  {
+    version: '1.1.0',
+    date: '2026-05-06',
+    changes: [
+      'Instala SDK oficial do Resend (resend@6) substituindo chamadas raw fetch para envio de e-mails',
+      'Cria src/lib/email.ts: utilitário central sendEmail() com FROM_ADDRESS configurável via RESEND_FROM',
+      'Rota /api/team/invite atualizada: usa sendEmail() do utilitário; from address controlado por variável de ambiente',
+      'Rota /api/notify/task-assigned atualizada: usa sendEmail() com melhor tratamento de erros',
+      'Registro agora envia e-mail de boas-vindas (fire-and-forget) via sendEmail()',
+      'Variável RESEND_FROM padroniza o remetente em todos os fluxos; fallback onboarding@resend.dev para ambiente de desenvolvimento',
+    ],
+  },
   {
     version: '1.0.0',
     date: '2026-05-05',
