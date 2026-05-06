@@ -5,9 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.1.0'
+const VERSION = '1.2.0'
 
 const CHANGELOG = [
+  {
+    version: '1.2.0',
+    date: '2026-05-06',
+    changes: [
+      'Adiciona monitoramento de erros com Sentry (@sentry/nextjs)',
+      'Cria sentry.client.config.ts, sentry.server.config.ts e sentry.edge.config.ts',
+      'next.config.mjs atualizado com withSentryConfig: source maps ocultos, tunnel em /monitoring, telemetria desativada',
+      'Session Replay habilitado no client: grava sessão apenas quando há erro (maskAllText + blockAllMedia)',
+      'Variáveis necessárias: NEXT_PUBLIC_SENTRY_DSN, SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN',
+    ],
+  },
   {
     version: '1.1.0',
     date: '2026-05-06',

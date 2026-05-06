@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -24,4 +26,25 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Upload source maps silenciosamente no build
+  silent: !process.env.CI,
+
+  // Desativa telemetria do Sentry CLI
+  telemetry: false,
+
+  // Esconde source maps do bundle final (segurança)
+  hideSourceMaps: true,
+
+  // Não alarga o bundle com logging do Sentry no client
+  disableLogger: true,
+
+  // Compatibilidade com Vercel (tunnel de eventos)
+  tunnelRoute: '/monitoring',
+
+  // Não roda a checagem de auth no build local sem token
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+})
