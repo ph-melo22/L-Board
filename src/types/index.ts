@@ -178,6 +178,27 @@ export interface GrowthProjection {
   clients: number
 }
 
+// ─── Organizations ────────────────────────────────────────────────────────────
+
+export interface Organization {
+  id: string
+  name: string
+  created_at: string
+}
+
+export type OrgApiKeyProvider = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'deepseek' | 'other'
+
+export interface OrgApiKey {
+  id: string
+  organization_id: string
+  provider: OrgApiKeyProvider
+  label: string | null
+  key_hint: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // ─── Team / Profiles ──────────────────────────────────────────────────────────
 
 export type UserRole = 'founder' | 'manager' | 'financial' | 'developer' | 'employee'
@@ -187,6 +208,7 @@ export interface Profile {
   full_name: string
   email: string
   role: UserRole
+  organization_id: string | null
   created_at: string
 }
 

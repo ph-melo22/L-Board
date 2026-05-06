@@ -68,12 +68,20 @@ export async function POST(request: NextRequest) {
     })
     if (linkError) throw linkError
 
-    // Cria o perfil com o role correto
+    // Get inviter's organization_id
+    const { data: inviterProfile } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user!.id)
+      .single()
+
+    // Cria o perfil com o role correto e na mesma organização do convidante
     const { error: profileError } = await supabase.from('profiles').insert({
       id: linkData.user.id,
       email,
       full_name,
       role: role ?? 'employee',
+      organization_id: inviterProfile?.organization_id ?? null,
     })
     if (profileError) throw profileError
 

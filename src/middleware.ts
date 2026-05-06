@@ -4,7 +4,7 @@ import type { CookieMethodsServer } from '@supabase/ssr'
 
 // Access control per role
 const ROLE_ALLOWED: Record<string, string[]> = {
-  founder:   ['/dashboard', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects'],
+  founder:   ['/dashboard', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects', '/settings'],
   manager:   ['/dashboard', '/clients', '/demands', '/projects'],
   financial: ['/dashboard', '/financial', '/contador', '/clients'],
   developer: ['/dashboard', '/demands', '/docs', '/projects'],
@@ -14,6 +14,9 @@ const ROLE_ALLOWED: Record<string, string[]> = {
 // Auth pages that stay accessible even when authenticated
 // (used for invite acceptance and password recovery flows)
 const AUTH_UTILITY_PATHS = ['/auth/reset-password', '/auth/callback', '/auth/forgot-password']
+
+// Public auth pages (registration — never redirect away even if logged in)
+const AUTH_PUBLIC_PATHS = ['/auth/register']
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -41,12 +44,16 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthUtility = AUTH_UTILITY_PATHS.some((p) => pathname.startsWith(p))
+  const isAuthPublic = AUTH_PUBLIC_PATHS.some((p) => pathname.startsWith(p))
 
   // Landing page is public
   if (pathname === '/') {
     if (user) return NextResponse.redirect(new URL('/dashboard', request.url))
     return supabaseResponse
   }
+
+  // /auth/register is always accessible (unauthenticated users sign up here)
+  if (isAuthPublic) return supabaseResponse
 
   // Unauthenticated → login (except auth pages)
   if (!user && !pathname.startsWith('/auth')) {
@@ -66,21 +73,6 @@ export async function middleware(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
-
-    // Auto-create profile on first login
-    if (!profile) {
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-
-      const role = (count ?? 0) === 0 ? 'founder' : 'employee'
-      await supabase.from('profiles').insert({
-        id: user.id,
-        email: user.email ?? '',
-        full_name: user.user_metadata?.full_name ?? user.email ?? 'Usuário',
-        role,
-      })
-    }
 
     // Restrict access based on role
     const role = profile?.role ?? 'employee'

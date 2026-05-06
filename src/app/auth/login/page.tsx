@@ -95,6 +95,15 @@ function LoginForm() {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Não tem conta?{' '}
+            <Link
+              href="/auth/register"
+              className="text-foreground underline-offset-4 hover:underline"
+            >
+              Criar conta
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

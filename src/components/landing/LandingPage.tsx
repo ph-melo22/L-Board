@@ -202,8 +202,8 @@ export default function LandingPage() {
             </motion.p>
 
             <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/auth/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', padding: '13px 26px', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 40px rgba(255,255,255,0.08)' }}>
-                Começar agora <ArrowRight size={14} />
+              <Link href="/auth/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', padding: '13px 26px', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 40px rgba(255,255,255,0.08)' }}>
+                Criar conta <ArrowRight size={14} />
               </Link>
               <a href="#como-funciona" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${BORDER}`, color: TEXT2, padding: '13px 26px', borderRadius: 10, fontSize: 14, fontWeight: 500, textDecoration: 'none', background: 'rgba(255,255,255,0.03)' }}>
                 Ver como funciona
@@ -438,8 +438,8 @@ export default function LandingPage() {
             <p style={{ color: TEXT2, fontSize: 16, marginBottom: 40, maxWidth: 420, margin: '0 auto 40px' }}>
               Junte-se a equipes que pararam de usar 4 ferramentas diferentes e passaram a enxergar o negócio de verdade.
             </p>
-            <Link href="/auth/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', padding: '15px 36px', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 60px rgba(255,255,255,0.12)' }}>
-              Entrar no L Board <ArrowRight size={16} />
+            <Link href="/auth/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', padding: '15px 36px', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 60px rgba(255,255,255,0.12)' }}>
+              Criar conta grátis <ArrowRight size={16} />
             </Link>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginTop: 28, flexWrap: 'wrap' }}>
               {['✓ Sem custo de setup', '✓ Dados 100% seguros', '✓ Cancele quando quiser'].map((t) => (

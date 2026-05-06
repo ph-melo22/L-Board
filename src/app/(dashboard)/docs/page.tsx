@@ -5,9 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.9.2'
+const VERSION = '1.0.0'
 
 const CHANGELOG = [
+  {
+    version: '1.0.0',
+    date: '2026-05-05',
+    changes: [
+      'Multi-tenancy completo: cada conta tem seu próprio espaço isolado com organização, equipe e dados independentes',
+      'Página /auth/register: cadastro com nome, e-mail, senha e nome da empresa — cria organização e perfil founder automaticamente',
+      'API POST /api/auth/register: cria usuário via admin (sem confirmação de e-mail), organização e perfil com role=founder em transação',
+      'Convite atualizado: convidados entram na organização do convidante (organization_id propagado no perfil)',
+      'Chaves de IA por organização: founders configuram suas próprias chaves OpenAI/Anthropic/Gemini em /settings',
+      'Importação via IA usa a chave OpenAI ativa da organização; fallback para variável de ambiente OPENAI_API_KEY',
+      'Página /settings: editar nome da organização + gerenciar chaves de IA (AES-256-GCM, nunca exibidas novamente)',
+      'APIs /api/settings (GET/PATCH) e /api/settings/ai-keys (GET/POST) e /api/settings/ai-keys/[id] (PATCH/DELETE)',
+      'Sidebar: link "Configurações" adicionado ao founderNav',
+      'Login: link "Criar conta" aponta para /auth/register',
+      'Landing page: CTAs "Criar conta" e "Criar conta grátis" apontam para /auth/register',
+      'Middleware: /auth/register acessível sem autenticação; /settings permitido para founder',
+      'Middleware: lógica de auto-criação de perfil removida (registro e convite criam perfis explicitamente)',
+      'Utilitário src/lib/crypto.ts: encrypt/decrypt compartilhados entre client e organization api keys',
+      'Tipos: Organization, OrgApiKey, OrgApiKeyProvider adicionados; Profile agora inclui organization_id',
+      'SQL necessário: tabelas organizations e organization_api_keys; coluna organization_id em todas as tabelas de dados; função get_user_org_id(); RLS por organização',
+    ],
+  },
   {
     version: '0.9.2',
     date: '2026-05-05',

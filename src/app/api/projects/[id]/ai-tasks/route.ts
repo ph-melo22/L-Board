@@ -2,10 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { requireAuth } from '@/lib/requireAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { decrypt } from '@/lib/crypto'
 
 const MAX_BYTES = 300 * 1024 * 1024 // 300 MB
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+async function getOpenAIClient(userId: string): Promise<OpenAI> {
+  try {
+    const supabase = createAdminClient()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', userId)
+      .single()
+
+    if (profile?.organization_id) {
+      const { data: orgKey } = await supabase
+        .from('organization_api_keys')
+        .select('encrypted_key, iv, auth_tag')
+        .eq('organization_id', profile.organization_id)
+        .eq('provider', 'openai')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (orgKey) {
+        const apiKey = decrypt(orgKey.encrypted_key, orgKey.iv, orgKey.auth_tag)
+        return new OpenAI({ apiKey })
+      }
+    }
+  } catch {
+    // Fall through to env var
+  }
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 export interface AITask {
   title: string
@@ -114,6 +145,7 @@ export async function POST(request: NextRequest) {
       : ''
 
     const content = await extractContent(file)
+    const openai = await getOpenAIClient(user!.id)
 
     let completion: Awaited<ReturnType<typeof openai.chat.completions.create>>
 
