@@ -21,10 +21,18 @@ const founderNav = [
   { href: '/team', label: 'Equipe', icon: UsersRound },
 ]
 
-const employeeNav = [
+const managerNav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/clients', label: 'Clientes', icon: Users },
   { href: '/demands', label: 'Demandas', icon: ListTodo },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
+]
+
+const financialNav = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/clients', label: 'Clientes', icon: Users },
+  { href: '/financial', label: 'Financeiro', icon: DollarSign },
+  { href: '/contador', label: 'Contador', icon: Calculator },
 ]
 
 const developerNav = [
@@ -32,6 +40,12 @@ const developerNav = [
   { href: '/demands', label: 'Demandas', icon: ListTodo },
   { href: '/projects', label: 'Projetos', icon: FolderKanban },
   { href: '/docs', label: 'Documentação', icon: FileText },
+]
+
+const employeeNav = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/demands', label: 'Demandas', icon: ListTodo },
+  { href: '/projects', label: 'Projetos', icon: FolderKanban },
 ]
 
 interface SidebarProps {
@@ -55,7 +69,12 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     fetchRole()
   }, [])
 
-  const navItems = role === 'founder' ? founderNav : role === 'developer' ? developerNav : employeeNav
+  const navItems =
+    role === 'founder'   ? founderNav   :
+    role === 'manager'   ? managerNav   :
+    role === 'financial' ? financialNav :
+    role === 'developer' ? developerNav :
+    employeeNav
 
   async function handleLogout() {
     const supabase = createClient()
@@ -80,7 +99,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         <div>
           <p className="text-sm font-semibold tracking-tight">L Board</p>
           <p className="text-xs text-muted-foreground capitalize">
-            {role === 'founder' ? 'Hub Operacional' : role === 'developer' ? 'Dev / TI' : 'Funcionário'}
+            {role === 'founder' ? 'Hub Operacional' : role === 'manager' ? 'Gestão' : role === 'financial' ? 'Financeiro' : role === 'developer' ? 'Dev / TI' : 'Funcionário'}
           </p>
         </div>
       </div>

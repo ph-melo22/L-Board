@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Shield, User, Code2, AlertTriangle, Mail } from 'lucide-react'
+import { Plus, Trash2, Shield, User, Code2, AlertTriangle, Mail, Briefcase, BarChart2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -24,15 +24,19 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 const ROLE_CONFIG: Record<UserRole, { label: string; icon: React.ElementType; color: string }> = {
-  founder:  { label: 'Founder', icon: Shield, color: 'text-primary' },
-  developer:{ label: 'Developer', icon: Code2, color: 'text-blue-600' },
-  employee: { label: 'Funcionário', icon: User, color: 'text-muted-foreground' },
+  founder:   { label: 'Founder',   icon: Shield,    color: 'text-primary' },
+  manager:   { label: 'Gestor',    icon: Briefcase, color: 'text-orange-500' },
+  financial: { label: 'Financeiro',icon: BarChart2, color: 'text-emerald-500' },
+  developer: { label: 'Developer', icon: Code2,     color: 'text-blue-500' },
+  employee:  { label: 'Funcionário',icon: User,     color: 'text-muted-foreground' },
 }
 
-const INVITE_ROLES: { value: UserRole; label: string }[] = [
-  { value: 'founder', label: 'Founder' },
-  { value: 'developer', label: 'Developer / TI' },
-  { value: 'employee', label: 'Funcionário' },
+const INVITE_ROLES: { value: UserRole; label: string; desc: string }[] = [
+  { value: 'founder',   label: 'Founder',        desc: 'Acesso total ao sistema.' },
+  { value: 'manager',   label: 'Gestor',          desc: 'Acesso a Dashboard, Clientes, Demandas e Projetos.' },
+  { value: 'financial', label: 'Financeiro',      desc: 'Acesso a Dashboard, Clientes, Financeiro e Contador.' },
+  { value: 'developer', label: 'Developer / TI',  desc: 'Acesso a Dashboard, Demandas, Projetos e Documentação.' },
+  { value: 'employee',  label: 'Funcionário',     desc: 'Acesso a Dashboard, Demandas e Projetos.' },
 ]
 
 export default function TeamPage() {
@@ -262,9 +266,7 @@ export default function TeamPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                {inviteForm.role === 'founder' && 'Acesso total ao sistema.'}
-                {inviteForm.role === 'developer' && 'Acesso a Dashboard, Demandas e Documentação.'}
-                {inviteForm.role === 'employee' && 'Acesso a Dashboard e Demandas.'}
+                {INVITE_ROLES.find((r) => r.value === inviteForm.role)?.desc}
               </p>
             </div>
 

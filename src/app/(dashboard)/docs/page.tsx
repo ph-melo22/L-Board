@@ -5,9 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '0.9.1'
+const VERSION = '0.9.2'
 
 const CHANGELOG = [
+  {
+    version: '0.9.2',
+    date: '2026-05-05',
+    changes: [
+      'Adiciona perfis "Gestor" (manager) e "Financeiro" (financial) ao sistema de roles',
+      'Middleware: manager acessa /dashboard, /clients, /demands, /projects; financial acessa /dashboard, /financial, /contador, /clients',
+      'Sidebar: managerNav e financialNav com navegação específica por perfil; labels "Gestão" e "Financeiro" na barra lateral',
+      'Página /team: ROLE_CONFIG e INVITE_ROLES atualizados com ícones Briefcase e BarChart2; descrição de acesso dinâmica por role',
+      'UserRole em src/types/index.ts atualizado: founder | manager | financial | developer | employee',
+    ],
+  },
   {
     version: '0.9.1',
     date: '2026-05-05',
@@ -250,19 +261,31 @@ const ROLES = [
     role: 'founder',
     label: 'Founder',
     color: 'text-amber-700 bg-amber-50 border-amber-200',
-    acesso: 'Acesso total: Dashboard, Clientes, Financeiro, Demandas, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
+    acesso: 'Acesso total: Dashboard, Clientes, Financeiro, Contador, Demandas, Projetos, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
+  },
+  {
+    role: 'manager',
+    label: 'Gestor',
+    color: 'text-orange-700 bg-orange-50 border-orange-200',
+    acesso: 'Dashboard, Clientes, Demandas, Projetos. Gerencia entregas e clientes sem acesso ao financeiro interno.',
+  },
+  {
+    role: 'financial',
+    label: 'Financeiro',
+    color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    acesso: 'Dashboard, Clientes, Financeiro, Contador. Visão financeira completa sem acesso a demandas ou projetos.',
   },
   {
     role: 'developer',
     label: 'Dev / TI',
     color: 'text-blue-700 bg-blue-50 border-blue-200',
-    acesso: 'Dashboard, Demandas, Documentação',
+    acesso: 'Dashboard, Demandas, Projetos, Documentação.',
   },
   {
     role: 'employee',
     label: 'Funcionário',
     color: 'text-muted-foreground bg-muted border-border',
-    acesso: 'Dashboard, Demandas',
+    acesso: 'Dashboard, Demandas, Projetos.',
   },
 ]
 

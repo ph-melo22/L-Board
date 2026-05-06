@@ -5,6 +5,8 @@ import type { CookieMethodsServer } from '@supabase/ssr'
 // Access control per role
 const ROLE_ALLOWED: Record<string, string[]> = {
   founder:   ['/dashboard', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects'],
+  manager:   ['/dashboard', '/clients', '/demands', '/projects'],
+  financial: ['/dashboard', '/financial', '/contador', '/clients'],
   developer: ['/dashboard', '/demands', '/docs', '/projects'],
   employee:  ['/dashboard', '/demands', '/projects'],
 }

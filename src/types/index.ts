@@ -180,7 +180,7 @@ export interface GrowthProjection {
 
 // ─── Team / Profiles ──────────────────────────────────────────────────────────
 
-export type UserRole = 'founder' | 'employee' | 'developer'
+export type UserRole = 'founder' | 'manager' | 'financial' | 'developer' | 'employee'
 
 export interface Profile {
   id: string
