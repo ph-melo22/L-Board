@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email'
+import { rateLimit } from '@/lib/rateLimit'
+
+function escapeHtml(s: string) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  if (!rateLimit(`register:${ip}`, 5, 15 * 60_000)) {
+    return NextResponse.json(
+      { error: 'Muitas tentativas de cadastro. Aguarde 15 minutos.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const { full_name, email, password, company_name } = await request.json()
 
@@ -55,6 +73,9 @@ export async function POST(request: NextRequest) {
       throw profileError
     }
 
+    const safeName    = escapeHtml(full_name)
+    const safeCompany = escapeHtml(company_name)
+
     // Welcome email (fire-and-forget — não bloqueia o registro)
     sendEmail({
       to: email,
@@ -66,8 +87,8 @@ export async function POST(request: NextRequest) {
             <p style="color:#94a3b8;margin:4px 0 0;font-size:13px;">Hub Operacional</p>
           </div>
           <div style="background:#fff;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;padding:32px;">
-            <p style="margin:0 0 16px;">Olá, <strong>${full_name}</strong>!</p>
-            <p style="margin:0 0 16px;color:#374151;">Sua conta foi criada com sucesso. A empresa <strong>${company_name}</strong> já está configurada no L Board.</p>
+            <p style="margin:0 0 16px;">Olá, <strong>${safeName}</strong>!</p>
+            <p style="margin:0 0 16px;color:#374151;">Sua conta foi criada com sucesso. A empresa <strong>${safeCompany}</strong> já está configurada no L Board.</p>
             <p style="margin:0 0 24px;color:#374151;">Acesse o dashboard para começar a gerenciar seus clientes, projetos e equipe.</p>
             <hr style="border:none;border-top:1px solid #f4f4f5;margin:0 0 16px;"/>
             <p style="margin:0;font-size:12px;color:#9ca3af;">L Board · Se você não criou esta conta, ignore este e-mail.</p>
