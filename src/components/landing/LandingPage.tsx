@@ -3,67 +3,72 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, BarChart3, Users, Sparkles, Kanban, Shield, KeyRound, ChevronDown, TrendingUp, Zap, Globe } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-const ACCENT = '#6366f1'
+const ACCENT  = '#6366f1'
 const ACCENT2 = '#a855f7'
-const BORDER = 'rgba(255,255,255,0.07)'
-const TEXT2 = 'rgba(255,255,255,0.5)'
-const TEXT3 = 'rgba(255,255,255,0.25)'
+const BORDER  = 'rgba(255,255,255,0.07)'
+const TEXT2   = 'rgba(255,255,255,0.5)'
+const TEXT3   = 'rgba(255,255,255,0.25)'
 
-// ── Animation variants ────────────────────────────────────────────────────────
+// ── Animations ────────────────────────────────────────────────────────────────
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
-}
+const fadeUp  = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } } }
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.09 } } }
-const fadeIn = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.5 } } }
+const fadeIn  = { hidden: { opacity: 0 },        visible: { opacity: 1,   transition: { duration: 0.5 } } }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const FEATURES = [
-  { icon: BarChart3, title: 'Financeiro em tempo real', desc: 'MRR, DRE, Runway, Burn Rate e CAC calculados automaticamente. Alertas inteligentes quando algo sai da rota.', color: '#60a5fa', glow: 'rgba(96,165,250,0.13)' },
-  { icon: Users, title: 'Clientes com margem real', desc: 'Receita, custo, lucro e margem por cliente em tempo real. Saiba exatamente quem gera — e quem consome — valor.', color: '#a78bfa', glow: 'rgba(167,139,250,0.13)' },
-  { icon: Sparkles, title: 'IA que trabalha por você', desc: 'Importa qualquer documento — PDF, Word, imagem — e a IA estrutura todas as tarefas do projeto em segundos.', color: '#34d399', glow: 'rgba(52,211,153,0.13)' },
-  { icon: Kanban, title: 'Kanban com impacto financeiro', desc: 'Cada tarefa tem valor. Veja o risco financeiro das demandas antes que virem problema real.', color: '#fb923c', glow: 'rgba(251,146,60,0.13)' },
-  { icon: Shield, title: 'Acesso por perfil', desc: 'Founder vê tudo. Dev vê o que precisa. Colaborador só o dele. Controle total, sem complexidade.', color: '#f472b6', glow: 'rgba(244,114,182,0.13)' },
-  { icon: KeyRound, title: 'API Keys por cliente', desc: 'Cada cliente registra suas próprias chaves de IA. Criptografia AES-256-GCM. Segurança enterprise.', color: '#22d3ee', glow: 'rgba(34,211,238,0.13)' },
+  { icon: BarChart3, title: 'Financeiro em tempo real',      desc: 'MRR, DRE, Runway, Burn Rate e CAC calculados automaticamente. Alertas inteligentes quando algo sai da rota.',                              color: '#60a5fa', glow: 'rgba(96,165,250,0.12)'  },
+  { icon: Users,     title: 'Clientes com margem real',      desc: 'Receita, custo, lucro e margem por cliente em tempo real. Saiba exatamente quem gera — e quem consome — valor.',                          color: '#a78bfa', glow: 'rgba(167,139,250,0.12)' },
+  { icon: Sparkles,  title: 'IA que trabalha por você',      desc: 'Importa qualquer documento — PDF, Word, imagem — e a IA estrutura todas as tarefas do projeto em segundos.',                               color: '#34d399', glow: 'rgba(52,211,153,0.12)'  },
+  { icon: Kanban,    title: 'Kanban com impacto financeiro', desc: 'Cada tarefa tem valor. Veja o risco financeiro das demandas antes que virem problema real.',                                                color: '#fb923c', glow: 'rgba(251,146,60,0.12)'  },
+  { icon: Shield,    title: 'Acesso por perfil',             desc: 'Founder vê tudo. Dev vê o que precisa. Colaborador só o dele. Controle total, sem complexidade.',                                          color: '#f472b6', glow: 'rgba(244,114,182,0.12)' },
+  { icon: KeyRound,  title: 'API Keys por cliente',          desc: 'Cada cliente registra suas próprias chaves de IA. Criptografia AES-256-GCM. Segurança enterprise.',                                        color: '#22d3ee', glow: 'rgba(34,211,238,0.12)'  },
 ]
 
 const STEPS = [
-  { num: '01', title: 'Configure sua equipe', desc: 'Convide colaboradores e defina o nível de acesso de cada um. Founder, dev ou funcionário — cada perfil vê o que precisa e nada mais.', icon: Users },
-  { num: '02', title: 'Cadastre clientes e projetos', desc: 'Adicione clientes com metas financeiras, projetos com atividades e vincule tudo ao financeiro em tempo real.', icon: TrendingUp },
-  { num: '03', title: 'Deixe a IA e os dados trabalharem', desc: 'Importe documentos, gere tarefas automaticamente com IA e acompanhe tudo em um só lugar. O L Board faz o pesado.', icon: Sparkles },
+  { num: '01', title: 'Configure sua equipe',              desc: 'Convide colaboradores e defina o nível de acesso de cada um. Founder, dev ou funcionário — cada perfil vê o que precisa e nada mais.',   icon: Users      },
+  { num: '02', title: 'Cadastre clientes e projetos',      desc: 'Adicione clientes com metas financeiras, projetos com atividades e vincule tudo ao financeiro em tempo real.',                             icon: TrendingUp },
+  { num: '03', title: 'Deixe a IA e os dados trabalharem', desc: 'Importe documentos, gere tarefas automaticamente com IA e acompanhe tudo em um só lugar. O L Board faz o pesado.',                        icon: Sparkles   },
 ]
 
 const TESTIMONIALS = [
-  { name: 'Mariana Costa', role: 'CEO · Agência Pixel', text: 'O L Board substituiu 4 ferramentas que usávamos. Agora temos tudo em um lugar e a equipe parou de reclamar de sistemas.', avatar: 'MC', color: '#6366f1' },
-  { name: 'Rafael Mendes', role: 'Founder · TechFlow', text: 'A visão de DRE em tempo real mudou como tomamos decisões. Antes dependíamos de planilhas que atrasavam 15 dias.', avatar: 'RM', color: '#a855f7' },
-  { name: 'Juliana Alves', role: 'Gestora · Studio Criativo', text: 'A IA que gera tarefas a partir de briefings economiza horas por projeto. Implementamos em uma tarde.', avatar: 'JA', color: '#22d3ee' },
+  { name: 'Mariana Costa', role: 'CEO · Agência Pixel',     text: 'O L Board substituiu 4 ferramentas que usávamos. Agora temos tudo em um lugar e a equipe parou de reclamar de sistemas.', avatar: 'MC', color: '#6366f1' },
+  { name: 'Rafael Mendes', role: 'Founder · TechFlow',      text: 'A visão de DRE em tempo real mudou como tomamos decisões. Antes dependíamos de planilhas que atrasavam 15 dias.',           avatar: 'RM', color: '#a855f7' },
+  { name: 'Juliana Alves', role: 'Gestora · Studio Criativo', text: 'A IA que gera tarefas a partir de briefings economiza horas por projeto. Implementamos em uma tarde.',                    avatar: 'JA', color: '#22d3ee' },
 ]
 
 const FAQ_ITEMS = [
   { q: 'O L Board funciona para qualquer tipo de negócio?', a: 'Sim. Foi projetado para ser flexível. Funciona para agências, startups, consultorias, empresas de serviços e qualquer negócio que precise gerenciar clientes, financeiro e equipes.' },
-  { q: 'Minha equipe precisa de treinamento?', a: 'Não. A interface é intuitiva e cada membro vê apenas o que é relevante para seu perfil. A maioria está operando no mesmo dia.' },
-  { q: 'Os dados ficam seguros?', a: 'Completamente. Utilizamos Supabase com Row Level Security, criptografia AES-256-GCM para dados sensíveis e HTTPS em todo o tráfego.' },
-  { q: 'Tem versão mobile?', a: 'Sim. O L Board é totalmente responsivo e pode ser instalado como PWA na tela inicial do iPhone ou Android.' },
-  { q: 'Como funciona o controle de acesso?', a: 'Por perfis. Founder tem acesso total. Developer acessa dashboard, demandas e docs. Colaborador acessa dashboard e demandas. Cada convite define o perfil.' },
+  { q: 'Minha equipe precisa de treinamento?',              a: 'Não. A interface é intuitiva e cada membro vê apenas o que é relevante para seu perfil. A maioria está operando no mesmo dia.' },
+  { q: 'Os dados ficam seguros?',                           a: 'Completamente. Utilizamos Supabase com Row Level Security, criptografia AES-256-GCM para dados sensíveis e HTTPS em todo o tráfego.' },
+  { q: 'Tem versão mobile?',                                a: 'Sim. O L Board é totalmente responsivo e pode ser instalado como PWA na tela inicial do iPhone ou Android.' },
+  { q: 'Como funciona o controle de acesso?',               a: 'Por perfis. Founder tem acesso total. Developer acessa dashboard, demandas e docs. Colaborador acessa dashboard e demandas. Cada convite define o perfil.' },
 ]
 
 const LOGOS = ['Agência Pixel', 'TechFlow', 'Studio Criativo', 'Consulta Express', 'GrupoTech', 'StartupBR', 'Criativa Co', 'Nexus Digital']
 
 const STATS = [
-  { value: '6+', label: 'Módulos nativos' },
-  { value: 'GPT-4o', label: 'IA integrada' },
-  { value: 'AES-256', label: 'Criptografia' },
-  { value: '100%', label: 'Mobile ready' },
+  { value: '6+',     label: 'Módulos nativos' },
+  { value: 'GPT-4o', label: 'IA integrada'    },
+  { value: 'AES-256', label: 'Criptografia'   },
+  { value: '100%',   label: 'Mobile ready'    },
+]
+
+// Stats border classes per index: 2×2 on mobile → 4×1 on sm+
+const STATS_BORDER = [
+  'border-r border-b sm:border-b-0',
+  'border-b sm:border-r sm:border-b-0',
+  'border-r sm:border-r',
+  '',
 ]
 
 // ── Dashboard Mockup ──────────────────────────────────────────────────────────
 function DashboardMockup() {
   return (
     <div style={{ background: '#0a0a0a', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', userSelect: 'none' }}>
-      {/* Titlebar */}
       <div style={{ background: '#111', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ display: 'flex', gap: 5 }}>
           {['#ef4444', '#f59e0b', '#22c55e'].map((c) => <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />)}
@@ -72,9 +77,7 @@ function DashboardMockup() {
           <span style={{ fontSize: 8, color: TEXT3 }}>lboard.com.br/dashboard</span>
         </div>
       </div>
-      {/* App */}
       <div style={{ display: 'flex', height: 280 }}>
-        {/* Sidebar */}
         <div style={{ width: 120, borderRight: `1px solid ${BORDER}`, padding: '10px 6px', flexShrink: 0 }}>
           <div style={{ padding: '3px 8px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 16, height: 16, background: '#fff', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -88,7 +91,6 @@ function DashboardMockup() {
             </div>
           ))}
         </div>
-        {/* Main */}
         <div style={{ flex: 1, padding: 10, overflow: 'hidden' }}>
           <div style={{ fontSize: 10, fontWeight: 700, marginBottom: 10 }}>Dashboard</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5, marginBottom: 10 }}>
@@ -128,7 +130,7 @@ function DashboardMockup() {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [openFaq, setOpenFaq]   = useState<number | null>(null)
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 30)
@@ -137,161 +139,150 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div style={{ background: '#000', color: '#fff', overflowX: 'hidden', fontFamily: 'var(--font-inter, system-ui, sans-serif)' }}>
+    <div className="bg-black text-white overflow-x-hidden" style={{ fontFamily: 'var(--font-geist-sans, system-ui, sans-serif)' }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        borderBottom: scrolled ? `1px solid ${BORDER}` : '1px solid transparent',
-        backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        background: scrolled ? 'rgba(0,0,0,0.85)' : 'transparent',
-        transition: 'all 0.4s cubic-bezier(0.22,1,0.36,1)',
-      }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 28px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg, #6366f1, #a855f7)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>L</div>
-            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.3px' }}>Board</span>
+      <nav
+        className="fixed top-0 inset-x-0 z-[100]"
+        style={{
+          borderBottom: `1px solid ${scrolled ? BORDER : 'transparent'}`,
+          backdropFilter: scrolled ? 'blur(20px)' : 'none',
+          background: scrolled ? 'rgba(0,0,0,0.85)' : 'transparent',
+          transition: 'background 0.4s cubic-bezier(0.22,1,0.36,1), backdrop-filter 0.4s, border-color 0.4s',
+        }}
+      >
+        <div className="max-w-[1120px] mx-auto px-5 sm:px-7 h-16 flex items-center justify-between gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm" style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})` }}>L</div>
+            <span className="font-bold text-[15px] tracking-tight">Board</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+
+          {/* Nav links — desktop only */}
+          <div className="hidden md:flex items-center gap-8">
             {['Funcionalidades', 'Como funciona', 'Depoimentos'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} style={{ fontSize: 13, color: TEXT2, textDecoration: 'none', transition: 'color 0.2s' }}>
-                {item}
-              </a>
+              <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="text-[13px] no-underline transition-colors duration-200" style={{ color: TEXT2 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = TEXT2)}
+              >{item}</a>
             ))}
           </div>
-          <Link href="/auth/login" style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: '#fff', color: '#000',
-            padding: '8px 20px', borderRadius: 8,
-            fontSize: 13, fontWeight: 700, textDecoration: 'none',
-          }}>
+
+          {/* CTA */}
+          <Link href="/auth/login" className="flex items-center gap-1.5 bg-white text-black px-4 py-2 rounded-lg text-[13px] font-bold no-underline shrink-0 hover:bg-white/90" style={{ transition: 'background 0.2s' }}>
             Entrar <ArrowRight size={13} />
           </Link>
         </div>
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────── */}
-      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '120px 28px 80px', position: 'relative', overflow: 'hidden' }}>
-        {/* Grid */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${BORDER} 1px, transparent 1px), linear-gradient(90deg, ${BORDER} 1px, transparent 1px)`, backgroundSize: '64px 64px', zIndex: 0 }} />
+      <section className="min-h-screen flex items-center pt-24 pb-16 px-5 sm:px-7 relative overflow-hidden">
+        {/* Grid bg */}
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(${BORDER} 1px,transparent 1px),linear-gradient(90deg,${BORDER} 1px,transparent 1px)`, backgroundSize: '64px 64px' }} />
         {/* Glows */}
-        <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: 900, height: 600, background: `radial-gradient(ellipse 70% 60% at 50% 0%, rgba(99,102,241,0.25), transparent)`, zIndex: 0, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '30%', left: '-5%', width: 400, height: 400, background: `radial-gradient(circle, rgba(168,85,247,0.12), transparent 70%)`, zIndex: 0, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '20%', right: '-5%', width: 400, height: 400, background: `radial-gradient(circle, rgba(34,211,238,0.08), transparent 70%)`, zIndex: 0, pointerEvents: 'none' }} />
+        <div className="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[min(900px,150vw)] h-[500px] pointer-events-none" style={{ background: `radial-gradient(ellipse 70% 60% at 50% 0%,rgba(99,102,241,0.25),transparent)` }} />
+        <div className="absolute top-[30%] -left-[5%] w-72 h-72 pointer-events-none" style={{ background: 'radial-gradient(circle,rgba(168,85,247,0.12),transparent 70%)' }} />
+        <div className="absolute top-[20%] -right-[5%] w-72 h-72 pointer-events-none" style={{ background: 'radial-gradient(circle,rgba(34,211,238,0.08),transparent 70%)' }} />
 
-        <div style={{ maxWidth: 1120, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: 60, position: 'relative', zIndex: 1 }}>
-          {/* Left */}
-          <motion.div style={{ flex: 1, minWidth: 0 }} initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid rgba(99,102,241,0.3)`, borderRadius: 100, padding: '5px 14px', fontSize: 12, color: '#a5b4fc', background: 'rgba(99,102,241,0.08)', marginBottom: 28 }}>
-              <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', display: 'inline-block' }} />
+        <div className="max-w-[1120px] mx-auto w-full flex flex-col lg:flex-row items-center gap-12 lg:gap-16 relative z-[1]">
+
+          {/* Left — text */}
+          <motion.div className="flex-1 min-w-0 text-center lg:text-left" initial="hidden" animate="visible" variants={stagger}>
+
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] mb-6 sm:mb-7" style={{ border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.08)', color: '#a5b4fc' }}>
+              <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
               Hub Operacional · Novo jeito de gerir
             </motion.div>
 
-            <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(38px, 6vw, 76px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-2.5px', margin: '0 0 20px' }}>
-              <span style={{ background: 'linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <motion.h1 variants={fadeUp} className="font-black leading-[1.05] tracking-[-2px] sm:tracking-[-2.5px] mb-4 sm:mb-5" style={{ fontSize: 'clamp(34px, 8vw, 76px)' }}>
+              <span style={{ background: 'linear-gradient(180deg,#fff 30%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 Tudo que o seu negócio precisa.
               </span>
               <br />
-              <span style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 Em um só lugar.
               </span>
             </motion.h1>
 
-            <motion.p variants={fadeUp} style={{ fontSize: 'clamp(15px, 1.8vw, 18px)', color: TEXT2, lineHeight: 1.7, margin: '0 0 36px', maxWidth: 480 }}>
+            <motion.p variants={fadeUp} className="leading-[1.7] mb-8 max-w-[480px] mx-auto lg:mx-0" style={{ fontSize: 'clamp(14px,1.8vw,18px)', color: TEXT2 }}>
               L Board reúne financeiro, clientes, projetos e IA em uma plataforma que funciona de verdade — para qualquer tipo de negócio.
             </motion.p>
 
-            <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/auth/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', padding: '13px 26px', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 40px rgba(255,255,255,0.08)' }}>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+              <Link href="/auth/register" className="inline-flex items-center justify-center gap-2 bg-white text-black px-6 py-3.5 rounded-xl text-[14px] font-bold no-underline" style={{ boxShadow: '0 0 40px rgba(255,255,255,0.08)', transition: 'opacity 0.2s' }}>
                 Criar conta <ArrowRight size={14} />
               </Link>
-              <a href="#como-funciona" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${BORDER}`, color: TEXT2, padding: '13px 26px', borderRadius: 10, fontSize: 14, fontWeight: 500, textDecoration: 'none', background: 'rgba(255,255,255,0.03)' }}>
+              <a href="#como-funciona" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-[14px] font-medium no-underline" style={{ border: `1px solid ${BORDER}`, color: TEXT2, background: 'rgba(255,255,255,0.03)', transition: 'background 0.2s' }}>
                 Ver como funciona
               </a>
             </motion.div>
 
-            <motion.div variants={fadeUp} style={{ display: 'flex', gap: 24, marginTop: 36, flexWrap: 'wrap' }}>
-              {[['✓ Sem cartão de crédito'], ['✓ Setup em minutos'], ['✓ 100% Mobile']].map(([t]) => (
-                <span key={t} style={{ fontSize: 12, color: TEXT3 }}>{t}</span>
+            <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center lg:justify-start gap-5 mt-7">
+              {['✓ Sem cartão de crédito', '✓ Setup em minutos', '✓ 100% Mobile'].map((t) => (
+                <span key={t} className="text-[12px]" style={{ color: TEXT3 }}>{t}</span>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Right — Mockup */}
+          {/* Right — mockup, hidden on mobile */}
           <motion.div
-            style={{ flex: '0 0 480px', maxWidth: 480 }}
+            className="hidden lg:block flex-none w-[480px]"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              style={{ position: 'relative' }}
-            >
-              <div style={{ position: 'absolute', inset: -40, background: `radial-gradient(ellipse, rgba(99,102,241,0.2), transparent 70%)`, zIndex: 0, pointerEvents: 'none' }} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <DashboardMockup />
-              </div>
+            <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} className="relative">
+              <div className="absolute inset-[-40px] pointer-events-none" style={{ background: 'radial-gradient(ellipse,rgba(99,102,241,0.2),transparent 70%)' }} />
+              <div className="relative"><DashboardMockup /></div>
             </motion.div>
           </motion.div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 140, background: 'linear-gradient(to bottom, transparent, #000)', zIndex: 1 }} />
+        <div className="absolute bottom-0 inset-x-0 h-36 pointer-events-none" style={{ background: 'linear-gradient(to bottom,transparent,#000)' }} />
       </section>
 
       {/* ── Stats ──────────────────────────────────────────────────── */}
-      <motion.section
-        initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeIn}
-        style={{ borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}
-      >
-        <div style={{ maxWidth: 1120, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeIn} style={{ borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+        <div className="max-w-[1120px] mx-auto grid grid-cols-2 sm:grid-cols-4" style={{ borderColor: BORDER }}>
           {STATS.map((s, i) => (
-            <div key={s.label} style={{ padding: '26px 24px', textAlign: 'center', borderRight: i < 3 ? `1px solid ${BORDER}` : 'none' }}>
-              <p style={{ fontSize: 22, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.5px', background: `linear-gradient(135deg, #fff, rgba(255,255,255,0.7))`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{s.value}</p>
-              <p style={{ fontSize: 11, color: TEXT3, margin: 0 }}>{s.label}</p>
+            <div key={s.label} className={cn('py-6 px-4 sm:py-7 text-center', STATS_BORDER[i])} style={{ borderColor: BORDER }}>
+              <p className="text-[22px] font-black mb-1 tracking-tight" style={{ background: 'linear-gradient(135deg,#fff,rgba(255,255,255,0.7))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.value}</p>
+              <p className="text-[11px]" style={{ color: TEXT3 }}>{s.label}</p>
             </div>
           ))}
         </div>
       </motion.section>
 
       {/* ── Logos strip ────────────────────────────────────────────── */}
-      <section style={{ padding: '48px 0', overflow: 'hidden', borderBottom: `1px solid ${BORDER}` }}>
-        <p style={{ textAlign: 'center', fontSize: 11, color: TEXT3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 28 }}>
-          Confiado por equipes de todos os tamanhos
-        </p>
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 120, background: 'linear-gradient(to right, #000, transparent)', zIndex: 1 }} />
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 120, background: 'linear-gradient(to left, #000, transparent)', zIndex: 1 }} />
-          <motion.div
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
-            style={{ display: 'flex', gap: 48, width: 'max-content' }}
-          >
+      <section className="py-10 sm:py-12 overflow-hidden" style={{ borderBottom: `1px solid ${BORDER}` }}>
+        <p className="text-center text-[11px] tracking-[0.1em] uppercase mb-7" style={{ color: TEXT3 }}>Confiado por equipes de todos os tamanhos</p>
+        <div className="relative overflow-hidden">
+          <div className="absolute left-0 inset-y-0 w-16 sm:w-24 z-[1] pointer-events-none" style={{ background: 'linear-gradient(to right,#000,transparent)' }} />
+          <div className="absolute right-0 inset-y-0 w-16 sm:w-24 z-[1] pointer-events-none" style={{ background: 'linear-gradient(to left,#000,transparent)' }} />
+          <motion.div animate={{ x: ['0%', '-50%'] }} transition={{ duration: 22, repeat: Infinity, ease: 'linear' }} className="flex gap-10 sm:gap-12 w-max">
             {[...LOGOS, ...LOGOS].map((logo, i) => (
-              <span key={i} style={{ fontSize: 14, fontWeight: 700, color: TEXT3, letterSpacing: '-0.3px', whiteSpace: 'nowrap', padding: '0 8px' }}>
-                {logo}
-              </span>
+              <span key={i} className="text-[14px] font-bold whitespace-nowrap px-2" style={{ color: TEXT3 }}>{logo}</span>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* ── Features Grid ──────────────────────────────────────────── */}
-      <section id="funcionalidades" style={{ padding: '100px 28px', maxWidth: 1120, margin: '0 auto' }}>
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} style={{ textAlign: 'center', marginBottom: 64 }}>
-          <motion.p variants={fadeUp} style={{ fontSize: 12, color: ACCENT, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Funcionalidades</motion.p>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 'clamp(28px, 4vw, 50px)', fontWeight: 900, letterSpacing: '-1.5px', margin: '0 0 16px', background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      {/* ── Features ───────────────────────────────────────────────── */}
+      <section id="funcionalidades" className="py-16 sm:py-24 px-5 sm:px-7 max-w-[1120px] mx-auto">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12 sm:mb-16">
+          <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: ACCENT }}>Funcionalidades</motion.p>
+          <motion.h2 variants={fadeUp} className="font-black tracking-tight mb-4" style={{ fontSize: 'clamp(26px,4vw,50px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             Tudo que você precisa.<br />Nada que não precisa.
           </motion.h2>
-          <motion.p variants={fadeUp} style={{ color: TEXT2, fontSize: 16, maxWidth: 440, margin: '0 auto', lineHeight: 1.65 }}>
+          <motion.p variants={fadeUp} className="text-[15px] sm:text-[16px] leading-[1.65] max-w-[440px] mx-auto" style={{ color: TEXT2 }}>
             Cada módulo foi pensado para times que precisam de clareza e resultado, não de dashboards bonitos.
           </motion.p>
         </motion.div>
 
         <motion.div
           initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 1, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden' }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-2xl overflow-hidden"
+          style={{ border: `1px solid ${BORDER}`, gap: 1, background: BORDER }}
         >
           {FEATURES.map((f) => {
             const Icon = f.icon
@@ -299,15 +290,17 @@ export default function LandingPage() {
               <motion.div
                 key={f.title}
                 variants={fadeUp}
-                whileHover={{ background: 'rgba(255,255,255,0.04)' }}
-                style={{ padding: '36px 30px', background: 'rgba(255,255,255,0.015)', borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, position: 'relative', overflow: 'hidden', transition: 'background 0.3s' }}
+                className="p-7 sm:p-8 relative overflow-hidden"
+                style={{ background: '#080808', transition: 'background 0.3s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#080808' }}
               >
-                <div style={{ position: 'absolute', top: -50, left: -30, width: 180, height: 180, background: f.glow, borderRadius: '50%', filter: 'blur(50px)', pointerEvents: 'none' }} />
-                <div style={{ width: 42, height: 42, borderRadius: 10, border: `1px solid rgba(255,255,255,0.08)`, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, color: f.color, position: 'relative' }}>
+                <div className="absolute -top-12 -left-8 w-44 h-44 rounded-full pointer-events-none" style={{ background: f.glow, filter: 'blur(48px)' }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5 relative" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: f.color }}>
                   <Icon size={18} />
                 </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 10px', letterSpacing: '-0.3px', position: 'relative' }}>{f.title}</h3>
-                <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.65, margin: 0, position: 'relative' }}>{f.desc}</p>
+                <h3 className="text-[15px] font-bold mb-2.5 tracking-tight relative">{f.title}</h3>
+                <p className="text-[13px] leading-[1.65] relative" style={{ color: TEXT2 }}>{f.desc}</p>
               </motion.div>
             )
           })}
@@ -315,31 +308,28 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works ───────────────────────────────────────────── */}
-      <section id="como-funciona" style={{ padding: '100px 28px', background: 'rgba(255,255,255,0.01)', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} style={{ textAlign: 'center', marginBottom: 72 }}>
-            <motion.p variants={fadeUp} style={{ fontSize: 12, color: ACCENT2, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Como funciona</motion.p>
-            <motion.h2 variants={fadeUp} style={{ fontSize: 'clamp(28px, 4vw, 50px)', fontWeight: 900, letterSpacing: '-1.5px', margin: 0, background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <section id="como-funciona" className="py-16 sm:py-24 px-5 sm:px-7" style={{ background: 'rgba(255,255,255,0.01)', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+        <div className="max-w-[1120px] mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12 sm:mb-16">
+            <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: ACCENT2 }}>Como funciona</motion.p>
+            <motion.h2 variants={fadeUp} className="font-black tracking-tight" style={{ fontSize: 'clamp(26px,4vw,50px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               Simples de começar.<br />Poderoso pra crescer.
             </motion.h2>
           </motion.div>
 
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32 }}>
-            {STEPS.map((step, i) => {
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger} className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
+            {STEPS.map((step) => {
               const Icon = step.icon
               return (
-                <motion.div key={step.num} variants={fadeUp} style={{ position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2))`, border: `1px solid rgba(99,102,241,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a5b4fc', flexShrink: 0 }}>
+                <motion.div key={step.num} variants={fadeUp}>
+                  <div className="flex items-center gap-3.5 mb-5">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(168,85,247,0.2))', border: '1px solid rgba(99,102,241,0.3)', color: '#a5b4fc' }}>
                       <Icon size={20} />
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: TEXT3, letterSpacing: '0.1em' }}>{step.num}</span>
+                    <span className="text-[11px] font-bold tracking-[0.1em]" style={{ color: TEXT3 }}>{step.num}</span>
                   </div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px', letterSpacing: '-0.4px' }}>{step.title}</h3>
-                  <p style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, margin: 0 }}>{step.desc}</p>
-                  {i < STEPS.length - 1 && (
-                    <div style={{ display: 'none' }} className="md:block" />
-                  )}
+                  <h3 className="text-[17px] font-bold mb-3 tracking-tight">{step.title}</h3>
+                  <p className="text-[14px] leading-[1.7]" style={{ color: TEXT2 }}>{step.desc}</p>
                 </motion.div>
               )
             })}
@@ -348,31 +338,32 @@ export default function LandingPage() {
       </section>
 
       {/* ── Testimonials ───────────────────────────────────────────── */}
-      <section id="depoimentos" style={{ padding: '100px 28px', maxWidth: 1120, margin: '0 auto' }}>
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} style={{ textAlign: 'center', marginBottom: 64 }}>
-          <motion.p variants={fadeUp} style={{ fontSize: 12, color: '#34d399', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Depoimentos</motion.p>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 'clamp(28px, 4vw, 50px)', fontWeight: 900, letterSpacing: '-1.5px', margin: 0, background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <section id="depoimentos" className="py-16 sm:py-24 px-5 sm:px-7 max-w-[1120px] mx-auto">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12 sm:mb-16">
+          <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: '#34d399' }}>Depoimentos</motion.p>
+          <motion.h2 variants={fadeUp} className="font-black tracking-tight" style={{ fontSize: 'clamp(26px,4vw,50px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             Quem usa, não abre mão.
           </motion.h2>
         </motion.div>
 
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {TESTIMONIALS.map((t) => (
             <motion.div
               key={t.name}
               variants={fadeUp}
               whileHover={{ y: -4 }}
-              style={{ padding: '28px', border: `1px solid ${BORDER}`, borderRadius: 16, background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)', transition: 'transform 0.3s' }}
+              className="p-6 sm:p-7 rounded-2xl"
+              style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)', transition: 'transform 0.3s' }}
             >
-              <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
-                {[...Array(5)].map((_, i) => <span key={i} style={{ color: '#fbbf24', fontSize: 13 }}>★</span>)}
+              <div className="flex gap-1 mb-5">
+                {[...Array(5)].map((_, i) => <span key={i} className="text-amber-400 text-[13px]">★</span>)}
               </div>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: '0 0 24px', fontStyle: 'italic' }}>"{t.text}"</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg, ${t.color}, ${t.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{t.avatar}</div>
+              <p className="text-[14px] leading-[1.7] mb-6 italic" style={{ color: 'rgba(255,255,255,0.75)' }}>"{t.text}"</p>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0" style={{ background: `linear-gradient(135deg,${t.color},${t.color}88)` }}>{t.avatar}</div>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{t.name}</p>
-                  <p style={{ fontSize: 11, color: TEXT3, margin: 0 }}>{t.role}</p>
+                  <p className="text-[13px] font-semibold">{t.name}</p>
+                  <p className="text-[11px]" style={{ color: TEXT3 }}>{t.role}</p>
                 </div>
               </div>
             </motion.div>
@@ -381,37 +372,31 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ────────────────────────────────────────────────────── */}
-      <section style={{ padding: '100px 28px', borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.01)' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} style={{ textAlign: 'center', marginBottom: 56 }}>
-            <motion.p variants={fadeUp} style={{ fontSize: 12, color: '#fb923c', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>FAQ</motion.p>
-            <motion.h2 variants={fadeUp} style={{ fontSize: 'clamp(26px, 4vw, 44px)', fontWeight: 900, letterSpacing: '-1.5px', margin: 0, background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <section className="py-16 sm:py-24 px-5 sm:px-7" style={{ borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.01)' }}>
+        <div className="max-w-[680px] mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-10 sm:mb-14">
+            <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: '#fb923c' }}>FAQ</motion.p>
+            <motion.h2 variants={fadeUp} className="font-black tracking-tight" style={{ fontSize: 'clamp(24px,4vw,44px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               Dúvidas frequentes
             </motion.h2>
           </motion.div>
 
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="flex flex-col gap-2">
             {FAQ_ITEMS.map((item, i) => (
-              <motion.div key={i} variants={fadeUp} style={{ border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
+              <motion.div key={i} variants={fadeUp} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${BORDER}` }}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  style={{ width: '100%', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', cursor: 'pointer', color: '#fff', textAlign: 'left', gap: 16 }}
+                  className="w-full px-5 py-4 sm:px-6 sm:py-[18px] flex items-center justify-between gap-4 text-left cursor-pointer bg-transparent border-none text-white"
                 >
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{item.q}</span>
-                  <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.25 }} style={{ flexShrink: 0 }}>
+                  <span className="text-[14px] font-semibold leading-snug">{item.q}</span>
+                  <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.25 }} className="shrink-0">
                     <ChevronDown size={16} color={TEXT2} />
                   </motion.div>
                 </button>
                 <AnimatePresence>
                   {openFaq === i && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <p style={{ padding: '0 22px 18px', fontSize: 13, color: TEXT2, lineHeight: 1.7, margin: 0 }}>{item.a}</p>
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: EASE }} style={{ overflow: 'hidden' }}>
+                      <p className="px-5 pb-4 sm:px-6 sm:pb-[18px] text-[13px] leading-[1.7]" style={{ color: TEXT2 }}>{item.a}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -422,28 +407,29 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA Final ──────────────────────────────────────────────── */}
-      <section style={{ padding: '0 28px 100px', maxWidth: 1120, margin: '0 auto' }}>
+      <section className="px-5 sm:px-7 pb-16 sm:pb-24 max-w-[1120px] mx-auto">
         <motion.div
           initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-          style={{ borderRadius: 24, overflow: 'hidden', position: 'relative', padding: '90px 40px', textAlign: 'center', border: `1px solid rgba(99,102,241,0.2)`, background: 'rgba(99,102,241,0.04)' }}
+          className="rounded-2xl sm:rounded-3xl relative overflow-hidden py-16 sm:py-[90px] px-6 sm:px-10 text-center"
+          style={{ border: '1px solid rgba(99,102,241,0.2)', background: 'rgba(99,102,241,0.04)' }}
         >
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 700, height: 400, background: `radial-gradient(ellipse, rgba(99,102,241,0.18), transparent 70%)`, pointerEvents: 'none' }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid rgba(99,102,241,0.3)`, borderRadius: 100, padding: '5px 14px', fontSize: 12, color: '#a5b4fc', background: 'rgba(99,102,241,0.08)', marginBottom: 24 }}>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] pointer-events-none" style={{ background: 'radial-gradient(ellipse,rgba(99,102,241,0.18),transparent 70%)' }} />
+          <div className="relative z-[1]">
+            <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] mb-6" style={{ border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.08)', color: '#a5b4fc' }}>
               <Zap size={11} /> Pronto para começar?
             </div>
-            <h2 style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, letterSpacing: '-1.5px', margin: '0 0 16px', background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h2 className="font-black tracking-tight mb-4" style={{ fontSize: 'clamp(24px,4vw,52px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.6) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               Controle total do seu negócio.<br />Começa hoje.
             </h2>
-            <p style={{ color: TEXT2, fontSize: 16, marginBottom: 40, maxWidth: 420, margin: '0 auto 40px' }}>
+            <p className="text-[15px] sm:text-[16px] mb-8 sm:mb-10 max-w-[420px] mx-auto" style={{ color: TEXT2 }}>
               Junte-se a equipes que pararam de usar 4 ferramentas diferentes e passaram a enxergar o negócio de verdade.
             </p>
-            <Link href="/auth/register" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', padding: '15px 36px', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 60px rgba(255,255,255,0.12)' }}>
+            <Link href="/auth/register" className="inline-flex items-center justify-center gap-2 bg-white text-black px-7 sm:px-9 py-3.5 sm:py-4 rounded-xl text-[14px] sm:text-[15px] font-bold no-underline w-full sm:w-auto max-w-xs sm:max-w-none" style={{ boxShadow: '0 0 60px rgba(255,255,255,0.12)', transition: 'opacity 0.2s' }}>
               Criar conta grátis <ArrowRight size={16} />
             </Link>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginTop: 28, flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap justify-center gap-5 sm:gap-7 mt-7">
               {['✓ Sem custo de setup', '✓ Dados 100% seguros', '✓ Cancele quando quiser'].map((t) => (
-                <span key={t} style={{ fontSize: 12, color: TEXT3 }}>{t}</span>
+                <span key={t} className="text-[12px]" style={{ color: TEXT3 }}>{t}</span>
               ))}
             </div>
           </div>
@@ -451,36 +437,40 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
-      <footer style={{ borderTop: `1px solid ${BORDER}`, padding: '40px 28px' }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 32, marginBottom: 40 }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13 }}>L</div>
-                <span style={{ fontWeight: 700, fontSize: 14 }}>Board</span>
+      <footer className="px-5 sm:px-7 py-10 sm:py-12" style={{ borderTop: `1px solid ${BORDER}` }}>
+        <div className="max-w-[1120px] mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between gap-10 sm:gap-8 mb-10">
+            {/* Brand */}
+            <div className="shrink-0">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[13px]" style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT2})` }}>L</div>
+                <span className="font-bold text-[14px]">Board</span>
               </div>
-              <p style={{ fontSize: 12, color: TEXT3, maxWidth: 220, lineHeight: 1.6, margin: 0 }}>Hub operacional para qualquer tipo de negócio.</p>
+              <p className="text-[12px] leading-[1.6] max-w-[200px]" style={{ color: TEXT3 }}>Hub operacional para qualquer tipo de negócio.</p>
             </div>
-            <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
+
+            {/* Links */}
+            <div className="grid grid-cols-3 gap-6 sm:flex sm:gap-12">
               {[
-                { title: 'Produto', links: ['Funcionalidades', 'Segurança', 'Mobile'] },
-                { title: 'Empresa', links: ['Sobre', 'Documentação', 'Contato'] },
-                { title: 'Acesso', links: ['Entrar', 'Criar conta'] },
+                { title: 'Produto',  links: ['Funcionalidades', 'Segurança', 'Mobile'] },
+                { title: 'Empresa',  links: ['Sobre', 'Documentação', 'Contato'] },
+                { title: 'Acesso',   links: ['Entrar', 'Criar conta'] },
               ].map((col) => (
                 <div key={col.title}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: TEXT3, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>{col.title}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] mb-3" style={{ color: TEXT3 }}>{col.title}</p>
                   {col.links.map((l) => (
-                    <p key={l} style={{ fontSize: 13, color: TEXT2, margin: '0 0 8px', cursor: 'pointer' }}>{l}</p>
+                    <p key={l} className="text-[13px] mb-2 cursor-pointer" style={{ color: TEXT2 }}>{l}</p>
                   ))}
                 </div>
               ))}
             </div>
           </div>
-          <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <p style={{ fontSize: 12, color: TEXT3, margin: 0 }}>© {new Date().getFullYear()} L Board · lboard.com.br</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+
+          <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style={{ borderTop: `1px solid ${BORDER}` }}>
+            <p className="text-[12px]" style={{ color: TEXT3 }}>© {new Date().getFullYear()} L Board · lboard.com.br</p>
+            <div className="flex items-center gap-1.5">
               <Globe size={11} color={TEXT3} />
-              <span style={{ fontSize: 12, color: TEXT3 }}>Feito no Brasil</span>
+              <span className="text-[12px]" style={{ color: TEXT3 }}>Feito no Brasil</span>
             </div>
           </div>
         </div>

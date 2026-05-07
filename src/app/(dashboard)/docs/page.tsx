@@ -5,9 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.3.0'
+const VERSION = '1.4.0'
 
 const CHANGELOG = [
+  {
+    version: '1.4.0',
+    date: '2026-05-07',
+    changes: [
+      'Landing page totalmente reescrita para mobile: layout responsivo com Tailwind, breakpoints sm/lg em todas as seções',
+      'Hero: hero em coluna única no mobile com texto centralizado; mockup do dashboard oculto no mobile (visível apenas em lg+)',
+      'Stats: grid 2×2 no mobile → 4×1 em sm+; bordas condicionais por índice para manter o visual de grade',
+      'Features: grid 1→2→3 colunas com gap-px e background de borda; minmax substituído por grid responsivo',
+      'How it works e Testimonials: 1 coluna no mobile, 3 no sm+',
+      'CTA final: botão full-width no mobile; padding reduzido para telas pequenas',
+      'Footer: coluna única no mobile, flex-row em sm+; links em grid 3 colunas no mobile',
+      'Navbar: links de navegação ocultos no mobile; apenas logo e botão "Entrar" visíveis',
+      'Transição de tema fluida: removido disableTransitionOnChange do ThemeProvider',
+      'globals.css: transition-property em * para color, background-color, border-color com 180ms ease; SVG e elementos framer excluídos',
+    ],
+  },
   {
     version: '1.3.0',
     date: '2026-05-06',
