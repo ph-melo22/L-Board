@@ -118,16 +118,18 @@ Regras:
 - Foco em ações concretas, não em contexto ou descrição do documento
 - Títulos em português, imperativos (ex: "Criar wireframes", "Revisar contrato")`
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
+
+  const { id: projectId } = await params
 
   // Verify the project belongs to caller's organization
   const supabaseCheck = createAdminClient()
   const { data: project } = await supabaseCheck
     .from('projects')
     .select('id')
-    .eq('id', params.id)
+    .eq('id', projectId)
     .eq('organization_id', profile.organization_id)
     .single()
 

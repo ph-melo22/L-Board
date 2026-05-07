@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
@@ -13,12 +15,13 @@ export async function DELETE(
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
   }
 
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!UUID_RE.test(params.id)) {
+  const { id } = await params
+
+  if (!UUID_RE.test(id)) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
   }
 
-  if (params.id === user.id) {
+  if (id === user.id) {
     return NextResponse.json({ error: 'Não é possível remover a própria conta' }, { status: 400 })
   }
 
@@ -28,14 +31,14 @@ export async function DELETE(
     const { data: target } = await supabase
       .from('profiles')
       .select('organization_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (!target || target.organization_id !== profile.organization_id) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
     }
 
-    const { error } = await supabase.auth.admin.deleteUser(params.id)
+    const { error } = await supabase.auth.admin.deleteUser(id)
     if (error) throw error
 
     return NextResponse.json({ success: true })

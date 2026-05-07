@@ -22,16 +22,17 @@ async function verifyKeyOwnership(keyId: string, organizationId: string | null) 
   return !!client
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { profile, error: authError } = await requireAuth()
   if (authError) return authError
 
+  const { id } = await params
+
   try {
-    const owned = await verifyKeyOwnership(params.id, profile.organization_id)
+    const owned = await verifyKeyOwnership(id, profile.organization_id)
     if (!owned) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
     const body = await request.json()
-    // Whitelist allowed fields
     const allowed: Record<string, unknown> = {}
     if ('label' in body) allowed.label = body.label
     if ('is_active' in body) allowed.is_active = body.is_active
@@ -40,7 +41,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { data, error } = await supabase
       .from('client_api_keys')
       .update({ ...allowed, updated_at: new Date().toISOString() })
-      .eq('id', params.id)
+      .eq('id', id)
       .select('id, client_id, provider, label, key_hint, is_active, created_at, updated_at')
       .single()
 
@@ -51,19 +52,21 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { profile, error: authError } = await requireAuth()
   if (authError) return authError
 
+  const { id } = await params
+
   try {
-    const owned = await verifyKeyOwnership(params.id, profile.organization_id)
+    const owned = await verifyKeyOwnership(id, profile.organization_id)
     if (!owned) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
     const supabase = createAdminClient()
     const { error } = await supabase
       .from('client_api_keys')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) throw error
     return NextResponse.json({ success: true })
