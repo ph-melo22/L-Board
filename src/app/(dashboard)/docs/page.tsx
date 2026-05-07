@@ -5,9 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.4.0'
+const VERSION = '1.5.0'
 
 const CHANGELOG = [
+  {
+    version: '1.5.0',
+    date: '2026-05-07',
+    changes: [
+      'Substitui DashboardMockup estático por InteractiveMockup interativo na landing page (src/components/landing/LandingPage.tsx)',
+      'InteractiveMockup: 5 telas animadas (Dashboard, Clientes, Financeiro, Demandas, Projetos) com auto-play de 4s e pausa no hover/touch',
+      'Adiciona progress bar animada com gradiente indigo→purple que reinicia a cada troca de tela',
+      'Sidebar clicável com motion.button animado (background/color suave) e indicador de dot ativo com layoutId',
+      'AnimatePresence com direção (dir state) para transição slide+fade bidirecional entre telas',
+      'Dot indicators animados: largura expande de 6px → 20px no item ativo com cor de destaque',
+      'URL bar no browser chrome anima texto para a rota da tela ativa',
+      'Scaling responsivo por JS (containerRef.offsetWidth / 480) para exibir mockup em qualquer largura de tela',
+      'Mockup agora visível em mobile (w-full sm:max-w-[480px]) e não apenas em lg+',
+      'Tela Dashboard: gráfico de barras com gradiente, legendas, cards KPI com deltas coloridos',
+      'Tela Clientes: tabela com progress bar de margem por linha e badge de status colorido',
+      'Tela Financeiro: cards de receita/despesas/lucro + lista de transações recentes',
+      'Tela Demandas: 3 colunas kanban (Backlog, Em Progresso, Revisão) com cards e badge de prioridade',
+      'Tela Projetos: cards de resumo + linhas com progress bar animada e badge de status',
+    ],
+  },
   {
     version: '1.4.0',
     date: '2026-05-07',
