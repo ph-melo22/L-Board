@@ -43,8 +43,12 @@ const INVITE_HTML = (name: string, inviteUrl: string) => `<!DOCTYPE html>
 </html>`
 
 export async function POST(request: NextRequest) {
-  const { user, error: authError } = await requireAuth()
+  const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
+
+  if (profile.role !== 'founder') {
+    return NextResponse.json({ error: 'Apenas founders podem convidar membros' }, { status: 403 })
+  }
 
   const ip = request.headers.get('x-forwarded-for') ?? user!.id
   if (!rateLimit(`invite:${ip}`, 5, 60_000)) {
@@ -69,20 +73,13 @@ export async function POST(request: NextRequest) {
     })
     if (linkError) throw linkError
 
-    // Get inviter's organization_id
-    const { data: inviterProfile } = await supabase
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user!.id)
-      .single()
-
     // Cria o perfil com o role correto e na mesma organização do convidante
     const { error: profileError } = await supabase.from('profiles').insert({
       id: linkData.user.id,
       email,
       full_name,
       role: role ?? 'employee',
-      organization_id: inviterProfile?.organization_id ?? null,
+      organization_id: profile.organization_id,
     })
     if (profileError) throw profileError
 
@@ -95,8 +92,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido'
-    return NextResponse.json({ error: message }, { status: 400 })
+  } catch {
+    return NextResponse.json({ error: 'Erro ao processar convite' }, { status: 400 })
   }
 }

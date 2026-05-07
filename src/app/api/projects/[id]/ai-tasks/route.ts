@@ -118,9 +118,20 @@ Regras:
 - Foco em ações concretas, não em contexto ou descrição do documento
 - Títulos em português, imperativos (ex: "Criar wireframes", "Revisar contrato")`
 
-export async function POST(request: NextRequest) {
-  const { user, error: authError } = await requireAuth()
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
+
+  // Verify the project belongs to caller's organization
+  const supabaseCheck = createAdminClient()
+  const { data: project } = await supabaseCheck
+    .from('projects')
+    .select('id')
+    .eq('id', params.id)
+    .eq('organization_id', profile.organization_id)
+    .single()
+
+  if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
 
   const ip = request.headers.get('x-forwarded-for') ?? user!.id
   if (!rateLimit(`ai-tasks:${ip}`, 10, 60_000)) {

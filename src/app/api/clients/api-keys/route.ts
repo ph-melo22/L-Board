@@ -25,7 +25,7 @@ function encrypt(text: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const { error: authError } = await requireAuth()
+  const { profile, error: authError } = await requireAuth()
   if (authError) return authError
 
   try {
@@ -33,6 +33,17 @@ export async function GET(request: NextRequest) {
     if (!client_id) return NextResponse.json({ error: 'client_id obrigatório' }, { status: 400 })
 
     const supabase = createAdminClient()
+
+    // Verify the client belongs to caller's organization
+    const { data: clientCheck } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', client_id)
+      .eq('organization_id', profile.organization_id)
+      .single()
+
+    if (!clientCheck) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
+
     const { data, error } = await supabase
       .from('client_api_keys')
       .select('id, client_id, provider, label, key_hint, is_active, created_at, updated_at')
@@ -41,17 +52,16 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
     return NextResponse.json(data ?? [])
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido'
-    return NextResponse.json({ error: message }, { status: 400 })
+  } catch {
+    return NextResponse.json({ error: 'Erro ao buscar chaves' }, { status: 400 })
   }
 }
 
 export async function POST(request: NextRequest) {
-  const { user, error: authError } = await requireAuth()
+  const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
 
-  const ip = request.headers.get('x-forwarded-for') ?? user!.id
+  const ip = request.headers.get('x-forwarded-for') ?? user.id
   if (!rateLimit(`api-keys:${ip}`, 20, 60_000)) {
     return NextResponse.json({ error: 'Muitas requisições. Tente novamente em instantes.' }, { status: 429 })
   }
@@ -63,10 +73,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'client_id, provider e api_key são obrigatórios' }, { status: 400 })
     }
 
+    const supabase = createAdminClient()
+
+    // Verify the client belongs to caller's organization
+    const { data: clientCheck } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', client_id)
+      .eq('organization_id', profile.organization_id)
+      .single()
+
+    if (!clientCheck) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
+
     const { encrypted_key, iv, auth_tag } = encrypt(api_key)
     const key_hint = String(api_key).slice(-4)
 
-    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from('client_api_keys')
       .insert({ client_id, provider, label: label || null, encrypted_key, iv, auth_tag, key_hint })
@@ -75,8 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
     return NextResponse.json(data)
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido'
-    return NextResponse.json({ error: message }, { status: 400 })
+  } catch {
+    return NextResponse.json({ error: 'Erro ao salvar chave' }, { status: 400 })
   }
 }

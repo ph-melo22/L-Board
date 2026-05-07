@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
+import { requireAuth } from '@/lib/requireAuth'
 
 export async function POST(request: NextRequest) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   if (!process.env.RESEND_API_KEY) return NextResponse.json({ ok: false, reason: 'no_key' })
 
   try {
@@ -36,8 +40,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ ok: true })
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : 'internal_error'
-    return NextResponse.json({ ok: false, reason })
+  } catch {
+    return NextResponse.json({ ok: false, reason: 'internal_error' })
   }
 }
