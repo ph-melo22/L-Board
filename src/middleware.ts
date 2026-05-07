@@ -11,15 +11,34 @@ const ROLE_ALLOWED: Record<string, string[]> = {
   employee:  ['/dashboard', '/demands', '/projects'],
 }
 
-// Auth pages that stay accessible even when authenticated
-// (used for invite acceptance and password recovery flows)
 const AUTH_UTILITY_PATHS = ['/auth/reset-password', '/auth/callback', '/auth/forgot-password']
+const AUTH_PUBLIC_PATHS  = ['/auth/register']
 
-// Public auth pages (registration — never redirect away even if logged in)
-const AUTH_PUBLIC_PATHS = ['/auth/register']
+function buildCSP(nonce: string) {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://vercel.live",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+}
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  // Generate a unique nonce per request for CSP
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const csp   = buildCSP(nonce)
+
+  // Forward nonce to server components via request header
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+
+  let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
+  supabaseResponse.headers.set('Content-Security-Policy', csp)
 
   const cookieMethods: CookieMethodsServer = {
     getAll() {
@@ -27,7 +46,8 @@ export async function middleware(request: NextRequest) {
     },
     setAll(cookiesToSet) {
       cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-      supabaseResponse = NextResponse.next({ request })
+      supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
+      supabaseResponse.headers.set('Content-Security-Policy', csp)
       cookiesToSet.forEach(({ name, value, options }) =>
         supabaseResponse.cookies.set(name, value, options)
       )
@@ -44,29 +64,27 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthUtility = AUTH_UTILITY_PATHS.some((p) => pathname.startsWith(p))
-  const isAuthPublic = AUTH_PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  const isAuthPublic  = AUTH_PUBLIC_PATHS.some((p) => pathname.startsWith(p))
 
-  // Landing page is public
   if (pathname === '/') {
     if (user) return NextResponse.redirect(new URL('/dashboard', request.url))
+    supabaseResponse.headers.set('Content-Security-Policy', csp)
     return supabaseResponse
   }
 
-  // /auth/register is always accessible (unauthenticated users sign up here)
-  if (isAuthPublic) return supabaseResponse
+  if (isAuthPublic) {
+    supabaseResponse.headers.set('Content-Security-Policy', csp)
+    return supabaseResponse
+  }
 
-  // Unauthenticated → login (except auth pages)
   if (!user && !pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Authenticated + login page → dashboard
-  // (but allow reset-password, callback, and forgot-password so invite/recovery flows work)
   if (user && pathname.startsWith('/auth') && !isAuthUtility) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Role-based access for authenticated users on dashboard routes
   if (user && !pathname.startsWith('/auth')) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -74,10 +92,9 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Restrict access based on role
     const role = profile?.role ?? 'employee'
     if (role !== 'founder') {
-      const allowed = ROLE_ALLOWED[role] ?? ROLE_ALLOWED['employee']
+      const allowed   = ROLE_ALLOWED[role] ?? ROLE_ALLOWED['employee']
       const isAllowed = allowed.some((p) => pathname.startsWith(p))
       if (!isAllowed) {
         return NextResponse.redirect(new URL('/demands', request.url))
@@ -85,6 +102,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  supabaseResponse.headers.set('Content-Security-Policy', csp)
   return supabaseResponse
 }
 
