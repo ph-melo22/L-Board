@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTranslations } from 'next-intl'
 
 function LoginForm() {
-  const router = useRouter()
+  const router  = useRouter()
+  const t       = useTranslations('auth.login')
   const searchParams = useSearchParams()
-  const [email, setEmail] = useState('')
+  const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const linkError = searchParams.get('error')
@@ -27,7 +29,7 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError('E-mail ou senha inválidos.')
+      setError(t('invalidCredentials'))
       setLoading(false)
       return
     }
@@ -43,25 +45,23 @@ function LoginForm() {
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <span className="text-lg font-bold text-primary-foreground">L</span>
           </div>
-          <CardTitle className="text-xl">L Board</CardTitle>
-          <CardDescription>Entre com sua conta para continuar</CardDescription>
+          <CardTitle className="text-xl">{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
         <CardContent>
           {linkError === 'link_invalido' && (
             <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
-              <p className="text-sm text-destructive">
-                O link é inválido ou expirou. Solicite um novo.
-              </p>
+              <p className="text-sm text-destructive">{t('invalidLink')}</p>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="voce@exemplo.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -70,12 +70,12 @@ function LoginForm() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <Link
                   href="/auth/forgot-password"
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
                 >
-                  Esqueci minha senha
+                  {t('forgotPassword')}
                 </Link>
               </div>
               <Input
@@ -88,20 +88,15 @@ function LoginForm() {
                 autoComplete="current-password"
               />
             </div>
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? t('submitting') : t('submit')}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Não tem conta?{' '}
-            <Link
-              href="/auth/register"
-              className="text-foreground underline-offset-4 hover:underline"
-            >
-              Criar conta
+            {t('noAccount')}{' '}
+            <Link href="/auth/register" className="text-foreground underline-offset-4 hover:underline">
+              {t('createAccount')}
             </Link>
           </p>
         </CardContent>

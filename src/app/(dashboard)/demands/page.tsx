@@ -17,7 +17,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { getTasks, createTask, updateTask, deleteTask, updateTaskStatus } from '@/services/demands'
 import { getClientOptions } from '@/services/clients'
-import { formatCurrency, formatDate, getLabelByStatus, getStatusColor, getPriorityColor } from '@/lib/utils'
+import { formatCurrency, formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 import type { Task, TaskFormData, TaskPriority, TaskStatus } from '@/types'
 
 const STATUSES: TaskStatus[] = ['backlog', 'todo', 'in_progress', 'review', 'done']
@@ -33,27 +34,27 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function DemandsPage() {
   const { toast } = useToast()
-  const [tasks, setTasks] = useState<Task[]>([])
+  const t  = useTranslations('demands')
+  const tc = useTranslations('common')
+  const [tasks, setTasks]               = useState<Task[]>([])
   const [clientOptions, setClientOptions] = useState<{ id: string; name: string }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editing, setEditing] = useState<Task | null>(null)
-  const [form, setForm] = useState<TaskFormData>(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-
-  // Filters
-  const [search, setSearch] = useState('')
+  const [loading, setLoading]           = useState(true)
+  const [error, setError]               = useState(false)
+  const [dialogOpen, setDialogOpen]     = useState(false)
+  const [editing, setEditing]           = useState<Task | null>(null)
+  const [form, setForm]                 = useState<TaskFormData>(EMPTY_FORM)
+  const [saving, setSaving]             = useState(false)
+  const [deleteId, setDeleteId]         = useState<string | null>(null)
+  const [search, setSearch]             = useState('')
   const [filterClient, setFilterClient] = useState('all')
   const [filterResponsible, setFilterResponsible] = useState('')
-  const [filterSquad, setFilterSquad] = useState('')
+  const [filterSquad, setFilterSquad]   = useState('')
 
   async function load() {
     setLoading(true)
     try {
-      const [t, co] = await Promise.all([getTasks(), getClientOptions()])
-      setTasks(t); setClientOptions(co); setError(false)
+      const [tk, co] = await Promise.all([getTasks(), getClientOptions()])
+      setTasks(tk); setClientOptions(co); setError(false)
     } catch { setError(true) }
     finally { setLoading(false) }
   }
@@ -63,44 +64,44 @@ export default function DemandsPage() {
   function openNew(status: TaskStatus = 'backlog') {
     setEditing(null); setForm({ ...EMPTY_FORM, status }); setDialogOpen(true)
   }
-  function openEdit(t: Task) {
-    setEditing(t)
-    setForm({ title: t.title, description: t.description, client_id: t.client_id, squad: t.squad, responsible: t.responsible, priority: t.priority, impacts_revenue: t.impacts_revenue, revenue_impact_value: t.revenue_impact_value, due_date: t.due_date, status: t.status })
+  function openEdit(tk: Task) {
+    setEditing(tk)
+    setForm({ title: tk.title, description: tk.description, client_id: tk.client_id, squad: tk.squad, responsible: tk.responsible, priority: tk.priority, impacts_revenue: tk.impacts_revenue, revenue_impact_value: tk.revenue_impact_value, due_date: tk.due_date, status: tk.status })
     setDialogOpen(true)
   }
 
   async function handleSave() {
     setSaving(true)
     try {
-      if (editing) { await updateTask(editing.id, form); toast({ title: 'Tarefa atualizada' }) }
-      else { await createTask(form); toast({ title: 'Tarefa criada' }) }
+      if (editing) { await updateTask(editing.id, form); toast({ title: t('toast.updated') }) }
+      else { await createTask(form); toast({ title: t('toast.created') }) }
       setDialogOpen(false); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
   async function handleDelete() {
     if (!deleteId) return
-    try { await deleteTask(deleteId); toast({ title: 'Tarefa removida' }); load() }
-    catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+    try { await deleteTask(deleteId); toast({ title: t('toast.deleted') }); load() }
+    catch { toast({ title: t('toast.deleteError'), variant: 'destructive' }) }
     finally { setDeleteId(null) }
   }
 
   async function handleMoveStatus(task: Task, newStatus: TaskStatus) {
     try {
       await updateTaskStatus(task.id, newStatus)
-      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatus } : t))
-    } catch { toast({ title: 'Erro ao mover', variant: 'destructive' }) }
+      setTasks((prev) => prev.map((tk) => tk.id === task.id ? { ...tk, status: newStatus } : tk))
+    } catch { toast({ title: t('toast.moveError'), variant: 'destructive' }) }
   }
 
   const hasFilters = search || filterClient !== 'all' || filterResponsible || filterSquad
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((t) => {
-      if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
-      if (filterClient !== 'all' && t.client_id !== filterClient) return false
-      if (filterResponsible && !t.responsible?.toLowerCase().includes(filterResponsible.toLowerCase())) return false
-      if (filterSquad && !t.squad?.toLowerCase().includes(filterSquad.toLowerCase())) return false
+    return tasks.filter((tk) => {
+      if (search && !tk.title.toLowerCase().includes(search.toLowerCase())) return false
+      if (filterClient !== 'all' && tk.client_id !== filterClient) return false
+      if (filterResponsible && !tk.responsible?.toLowerCase().includes(filterResponsible.toLowerCase())) return false
+      if (filterSquad && !tk.squad?.toLowerCase().includes(filterSquad.toLowerCase())) return false
       return true
     })
   }, [tasks, search, filterClient, filterResponsible, filterSquad])
@@ -109,63 +110,60 @@ export default function DemandsPage() {
     setSearch(''); setFilterClient('all'); setFilterResponsible(''); setFilterSquad('')
   }
 
-  const byStatus = (status: TaskStatus) => filteredTasks.filter((t) => t.status === status)
-  const criticalCount = tasks.filter((t) => t.priority === 'critical' && t.status !== 'done').length
+  const byStatus = (status: TaskStatus) => filteredTasks.filter((tk) => tk.status === status)
+  const criticalCount = tasks.filter((tk) => tk.priority === 'critical' && tk.status !== 'done').length
 
   if (error) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao carregar tarefas.</p>
-        <Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      {/* Contador crítico */}
       {criticalCount > 0 && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-800/50 dark:bg-red-950/40">
           <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 dark:text-red-400" />
           <p className="text-sm font-medium text-red-800 dark:text-red-300">
-            {criticalCount} tarefa{criticalCount > 1 ? 's' : ''} crítica{criticalCount > 1 ? 's' : ''} em aberto
+            {t('criticalCount', { count: criticalCount })}
           </p>
         </div>
       )}
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[160px] flex-1 sm:flex-none sm:min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar tarefa..." className="pl-8 h-9 text-sm w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={t('searchPlaceholder')} className="pl-8 h-9 text-sm w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={filterClient} onValueChange={setFilterClient}>
-          <SelectTrigger className="flex-1 sm:flex-none sm:w-40 h-9 text-sm"><SelectValue placeholder="Cliente" /></SelectTrigger>
+          <SelectTrigger className="flex-1 sm:flex-none sm:w-40 h-9 text-sm"><SelectValue placeholder={t('allClients')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os clientes</SelectItem>
+            <SelectItem value="all">{t('allClients')}</SelectItem>
             {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Input placeholder="Responsável..." className="w-36 h-9 text-sm hidden sm:block" value={filterResponsible} onChange={(e) => setFilterResponsible(e.target.value)} />
-        <Input placeholder="Squad..." className="w-32 h-9 text-sm hidden sm:block" value={filterSquad} onChange={(e) => setFilterSquad(e.target.value)} />
+        <Input placeholder={t('responsiblePlaceholder')} className="w-36 h-9 text-sm hidden sm:block" value={filterResponsible} onChange={(e) => setFilterResponsible(e.target.value)} />
+        <Input placeholder={t('squadPlaceholder')} className="w-32 h-9 text-sm hidden sm:block" value={filterSquad} onChange={(e) => setFilterSquad(e.target.value)} />
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-muted-foreground">
-            <X className="mr-1 h-3.5 w-3.5" /> Limpar
+            <X className="mr-1 h-3.5 w-3.5" /> {t('clearFilters')}
           </Button>
         )}
         <div className="ml-auto">
-          <Button size="sm" onClick={() => openNew()}><Plus className="mr-1.5 h-4 w-4" /> Nova Tarefa</Button>
+          <Button size="sm" onClick={() => openNew()}><Plus className="mr-1.5 h-4 w-4" /> {t('newTask')}</Button>
         </div>
       </div>
 
       {hasFilters && (
         <p className="text-xs text-muted-foreground">
-          {filteredTasks.length} tarefa{filteredTasks.length !== 1 ? 's' : ''} encontrada{filteredTasks.length !== 1 ? 's' : ''}
+          {t('taskCount', { count: filteredTasks.length })}
         </p>
       )}
 
-      {/* Kanban */}
       {loading ? (
         <div className="flex gap-3 overflow-x-auto pb-2">
           {STATUSES.map((s) => <Skeleton key={s} className="h-48 min-w-[200px] flex-shrink-0" />)}
@@ -176,7 +174,7 @@ export default function DemandsPage() {
             <div key={status} className="flex flex-col gap-2 min-w-[200px] flex-shrink-0 w-[calc(85vw)] sm:w-auto sm:flex-1">
               <div className="flex items-center justify-between px-1">
                 <span className={`text-xs font-semibold uppercase tracking-wide ${getStatusColor(status).split(' ')[0]}`}>
-                  {getLabelByStatus(status)}
+                  {t(`status.${status}`)}
                 </span>
                 <span className="text-xs text-muted-foreground">{byStatus(status).length}</span>
               </div>
@@ -192,13 +190,13 @@ export default function DemandsPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        <span className={`text-xs font-medium ${getPriorityColor(task.priority)}`}>{getLabelByStatus(task.priority)}</span>
+                        <span className={`text-xs font-medium ${getPriorityColor(task.priority)}`}>{t(`priority.${task.priority}`)}</span>
                         {task.clients && <span className="text-xs text-muted-foreground truncate">{task.clients.name}</span>}
                         {task.responsible && <span className="text-xs text-muted-foreground">· {task.responsible}</span>}
                         {task.impacts_revenue && (
                           <span className="flex items-center gap-0.5 text-xs text-amber-600">
                             <DollarSign className="h-3 w-3" />
-                            {task.revenue_impact_value ? formatCurrency(task.revenue_impact_value) : 'risco'}
+                            {task.revenue_impact_value ? formatCurrency(task.revenue_impact_value) : tc('risk')}
                           </span>
                         )}
                       </div>
@@ -215,7 +213,7 @@ export default function DemandsPage() {
                   </Card>
                 ))}
                 <button onClick={() => openNew(status)} className="w-full rounded border border-dashed border-border py-1.5 text-xs text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
-                  + Adicionar
+                  {t('addCard')}
                 </button>
               </div>
             </div>
@@ -223,83 +221,84 @@ export default function DemandsPage() {
         </div>
       )}
 
-      {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editing ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t('editTask') : t('newTask')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
-              <Label>Título</Label>
+              <Label>{t('form.title')}</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Descrição</Label>
+              <Label>{t('form.description')}</Label>
               <Textarea rows={2} value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Prioridade</Label>
+              <Label>{t('form.priority')}</Label>
               <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as TaskPriority })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                  <SelectItem value="critical">Crítica</SelectItem>
+                  {(['low', 'medium', 'high', 'critical'] as const).map((p) => (
+                    <SelectItem key={p} value={p}>{t(`priority.${p}`)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{t('form.status')}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TaskStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{getLabelByStatus(s)}</SelectItem>)}
+                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{t(`status.${s}`)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Cliente</Label>
+              <Label>{t('form.client')}</Label>
               <Select value={form.client_id ?? 'none'} onValueChange={(v) => setForm({ ...form, client_id: v === 'none' ? null : v })}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tc('none')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
+                  <SelectItem value="none">{tc('none')}</SelectItem>
                   {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo</Label>
+              <Label>{t('form.dueDate')}</Label>
               <Input type="date" value={form.due_date ?? ''} onChange={(e) => setForm({ ...form, due_date: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Squad</Label>
+              <Label>{t('form.squad')}</Label>
               <Input value={form.squad ?? ''} onChange={(e) => setForm({ ...form, squad: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Responsável</Label>
+              <Label>{t('form.responsible')}</Label>
               <Input value={form.responsible ?? ''} onChange={(e) => setForm({ ...form, responsible: e.target.value || null })} />
             </div>
             <div className="col-span-2 flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">
               <input type="checkbox" id="impacts_revenue" checked={form.impacts_revenue} onChange={(e) => setForm({ ...form, impacts_revenue: e.target.checked, revenue_impact_value: e.target.checked ? form.revenue_impact_value : null })} className="h-4 w-4" />
-              <Label htmlFor="impacts_revenue" className="cursor-pointer">Impacta receita</Label>
+              <Label htmlFor="impacts_revenue" className="cursor-pointer">{t('form.impactsRevenue')}</Label>
               {form.impacts_revenue && (
-                <Input type="number" placeholder="Valor em risco (R$)" className="w-full sm:w-40 sm:ml-auto mt-2 sm:mt-0" value={form.revenue_impact_value ?? ''} onChange={(e) => setForm({ ...form, revenue_impact_value: e.target.value ? Number(e.target.value) : null })} />
+                <Input type="number" placeholder={t('form.revenueImpact')} className="w-full sm:w-40 sm:ml-auto mt-2 sm:mt-0" value={form.revenue_impact_value ?? ''} onChange={(e) => setForm({ ...form, revenue_impact_value: e.target.value ? Number(e.target.value) : null })} />
               )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving || !form.title}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{tc('cancel')}</Button>
+            <Button onClick={handleSave} disabled={saving || !form.title}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Remover tarefa?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{tc('delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -5,6 +5,8 @@ import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-geist-sans' })
 
@@ -25,16 +27,20 @@ export const viewport: Viewport = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nonce = (await headers()).get('x-nonce') ?? ''
+  const nonce    = (await headers()).get('x-nonce') ?? ''
+  const locale   = await getLocale()
+  const messages = await getMessages()
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`} {...(nonce ? { nonce } : {})}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem nonce={nonce}>
-          {children}
-          <Toaster />
-          <Analytics />
-        </ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem nonce={nonce}>
+            {children}
+            <Toaster />
+            <Analytics />
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

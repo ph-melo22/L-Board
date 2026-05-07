@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('')
+  const t = useTranslations('auth.forgotPassword')
+  const [email, setEmail]     = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent]       = useState(false)
+  const [error, setError]     = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,7 +29,7 @@ export default function ForgotPasswordPage() {
     })
 
     if (error) {
-      setError('Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.')
+      setError(t('error'))
       setLoading(false)
       return
     }
@@ -43,11 +45,9 @@ export default function ForgotPasswordPage() {
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <span className="text-lg font-bold text-primary-foreground">L</span>
           </div>
-          <CardTitle className="text-xl">Recuperar senha</CardTitle>
+          <CardTitle className="text-xl">{t('title')}</CardTitle>
           <CardDescription>
-            {sent
-              ? 'Verifique sua caixa de entrada'
-              : 'Enviaremos um link para você criar uma nova senha'}
+            {sent ? t('descriptionSent') : t('description')}
           </CardDescription>
         </CardHeader>
 
@@ -56,27 +56,26 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4 text-center">
               <CheckCircle className="mx-auto h-12 w-12 text-emerald-500" />
               <div className="space-y-1">
-                <p className="text-sm font-medium">E-mail enviado!</p>
+                <p className="text-sm font-medium">{t('emailSent')}</p>
                 <p className="text-xs text-muted-foreground">
-                  Um link de recuperação foi enviado para <strong>{email}</strong>.
-                  Verifique também a pasta de spam.
+                  {t('emailSentDescription', { email })}
                 </p>
               </div>
               <Link href="/auth/login">
                 <Button variant="outline" className="w-full mt-2">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar ao login
+                  {t('backToLogin')}
                 </Button>
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="voce@exemplo.com"
+                  placeholder={t('emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -87,13 +86,13 @@ export default function ForgotPasswordPage() {
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar link de recuperação'}
+                {loading ? t('submitting') : t('submit')}
               </Button>
 
               <Link href="/auth/login">
                 <Button variant="ghost" className="w-full" type="button">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar ao login
+                  {t('backToLogin')}
                 </Button>
               </Link>
             </form>

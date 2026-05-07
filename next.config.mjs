@@ -1,4 +1,7 @@
 import { withSentryConfig } from '@sentry/nextjs'
+import createNextIntlPlugin from 'next-intl/plugin'
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -27,7 +30,7 @@ const nextConfig = {
   },
 }
 
-export default withSentryConfig(nextConfig, {
+export default withNextIntl(withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
@@ -48,4 +51,4 @@ export default withSentryConfig(nextConfig, {
 
   // Não roda a checagem de auth no build local sem token
   authToken: process.env.SENTRY_AUTH_TOKEN,
-})
+}))

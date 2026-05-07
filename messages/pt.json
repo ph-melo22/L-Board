@@ -1,0 +1,438 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "clients": "Clientes",
+    "financial": "Financeiro",
+    "contador": "Contador",
+    "demands": "Demandas",
+    "projects": "Projetos",
+    "founderBoard": "Founder Board",
+    "docs": "Documentação",
+    "team": "Equipe",
+    "settings": "Configurações",
+    "logout": "Sair",
+    "menu": "Menu"
+  },
+  "roleSubtitle": {
+    "founder": "Hub Operacional",
+    "manager": "Gestão",
+    "financial": "Financeiro",
+    "developer": "Dev / TI",
+    "employee": "Funcionário"
+  },
+  "header": {
+    "openMenu": "Abrir menu",
+    "toggleTheme": "Alternar tema",
+    "pages": {
+      "dashboard":  { "title": "Dashboard",      "description": "Visão geral do negócio" },
+      "clients":    { "title": "Clientes",        "description": "Gestão da base de clientes" },
+      "financial":  { "title": "Financeiro",      "description": "Receitas, despesas e fluxo de caixa" },
+      "contador":   { "title": "Contador",        "description": "Dashboard financeiro executivo" },
+      "demands":    { "title": "Demandas",        "description": "Tarefas e entregas do time" },
+      "founder":    { "title": "Founder Board",   "description": "OKRs, projetos e notas estratégicas" },
+      "docs":       { "title": "Documentação",    "description": "Relatório técnico" },
+      "team":       { "title": "Equipe",          "description": "Membros, convites e permissões" },
+      "projects":   { "title": "Projetos",        "description": "Gestão de projetos e atividades" },
+      "settings":   { "title": "Configurações",   "description": "Organização e chaves de IA" }
+    }
+  },
+  "language": {
+    "label": "Idioma",
+    "pt": "Português",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch",
+    "zh": "中文"
+  },
+  "common": {
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "cancel": "Cancelar",
+    "delete": "Remover",
+    "edit": "Editar",
+    "add": "+ Adicionar",
+    "search": "Buscar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "retry": "Tentar novamente",
+    "irreversible": "Essa ação não pode ser desfeita.",
+    "none": "Nenhum",
+    "all": "Todos",
+    "page": "Página",
+    "of": "de",
+    "previous": "Anterior",
+    "next": "Próxima",
+    "you": "(você)",
+    "risk": "risco"
+  },
+  "auth": {
+    "login": {
+      "title": "L Board",
+      "description": "Entre com sua conta para continuar",
+      "email": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "password": "Senha",
+      "forgotPassword": "Esqueci minha senha",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "noAccount": "Não tem conta?",
+      "createAccount": "Criar conta",
+      "invalidLink": "O link é inválido ou expirou. Solicite um novo.",
+      "invalidCredentials": "E-mail ou senha inválidos."
+    },
+    "register": {
+      "title": "Criar conta",
+      "description": "Configure seu espaço de trabalho",
+      "fullName": "Seu nome",
+      "fullNamePlaceholder": "João Silva",
+      "companyName": "Nome da empresa",
+      "companyNamePlaceholder": "Minha Empresa Ltda",
+      "email": "E-mail",
+      "emailPlaceholder": "voce@empresa.com",
+      "password": "Senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "strengthWeak": "fraca",
+      "strengthMedium": "média",
+      "strengthStrong": "forte",
+      "submit": "Criar conta",
+      "submitting": "Criando conta...",
+      "alreadyHaveAccount": "Já tem conta?",
+      "login": "Entrar",
+      "connectionError": "Erro de conexão. Tente novamente."
+    },
+    "forgotPassword": {
+      "title": "Recuperar senha",
+      "description": "Enviaremos um link para você criar uma nova senha",
+      "descriptionSent": "Verifique sua caixa de entrada",
+      "email": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "submit": "Enviar link de recuperação",
+      "submitting": "Enviando...",
+      "backToLogin": "Voltar ao login",
+      "emailSent": "E-mail enviado!",
+      "emailSentDescription": "Um link de recuperação foi enviado para {email}. Verifique também a pasta de spam.",
+      "error": "Não foi possível enviar o e-mail. Verifique o endereço e tente novamente."
+    },
+    "resetPassword": {
+      "title": "Criar senha",
+      "description": "Defina uma senha segura para sua conta",
+      "newPassword": "Nova senha",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPassword": "Confirmar senha",
+      "confirmPlaceholder": "Repita a senha",
+      "strengthWeak": "Fraca",
+      "strengthMedium": "Média",
+      "strengthStrong": "Forte",
+      "submit": "Definir senha e entrar",
+      "submitting": "Salvando...",
+      "success": "Senha definida com sucesso!",
+      "redirecting": "Redirecionando para o dashboard...",
+      "errorMinLength": "A senha deve ter pelo menos 8 caracteres.",
+      "errorMismatch": "As senhas não coincidem.",
+      "errorExpired": "Não foi possível atualizar a senha. O link pode ter expirado."
+    }
+  },
+  "clients": {
+    "searchPlaceholder": "Buscar por nome ou produto...",
+    "newClient": "Novo Cliente",
+    "editClient": "Editar Cliente",
+    "deleteTitle": "Remover cliente?",
+    "errorLoading": "Erro ao carregar clientes.",
+    "notFound": "Nenhum cliente encontrado.",
+    "count": "{count, plural, one {# cliente encontrado} other {# clientes encontrados}}",
+    "countFiltered": "{count, plural, one {# cliente encontrado} other {# clientes encontrados}} para \"{search}\"",
+    "columns": {
+      "client": "Cliente",
+      "product": "Produto",
+      "status": "Status",
+      "revenue": "Receita/mês",
+      "margin": "Margem",
+      "renewal": "Renovação"
+    },
+    "form": {
+      "name": "Nome",
+      "product": "Produto / Plano",
+      "monthlyRevenue": "Receita Mensal (R$)",
+      "operationalCost": "Custo Operacional (R$)",
+      "startDate": "Início",
+      "renewalDate": "Renovação",
+      "status": "Status"
+    },
+    "status": {
+      "all": "Todos",
+      "active": "Ativo",
+      "trial": "Trial",
+      "inactive": "Inativo",
+      "churned": "Churned"
+    },
+    "toast": {
+      "created": "Cliente criado",
+      "updated": "Cliente atualizado",
+      "deleted": "Cliente removido",
+      "saveError": "Erro ao salvar",
+      "deleteError": "Erro ao remover"
+    }
+  },
+  "demands": {
+    "searchPlaceholder": "Buscar tarefa...",
+    "allClients": "Todos os clientes",
+    "responsiblePlaceholder": "Responsável...",
+    "squadPlaceholder": "Squad...",
+    "clearFilters": "Limpar",
+    "newTask": "Nova Tarefa",
+    "editTask": "Editar Tarefa",
+    "deleteTitle": "Remover tarefa?",
+    "addCard": "+ Adicionar",
+    "errorLoading": "Erro ao carregar tarefas.",
+    "criticalCount": "{count, plural, one {# tarefa crítica em aberto} other {# tarefas críticas em aberto}}",
+    "taskCount": "{count, plural, one {# tarefa encontrada} other {# tarefas encontradas}}",
+    "form": {
+      "title": "Título",
+      "description": "Descrição",
+      "priority": "Prioridade",
+      "status": "Status",
+      "client": "Cliente",
+      "dueDate": "Prazo",
+      "squad": "Squad",
+      "responsible": "Responsável",
+      "impactsRevenue": "Impacta receita",
+      "revenueImpact": "Valor em risco (R$)"
+    },
+    "priority": {
+      "low": "Baixa",
+      "medium": "Média",
+      "high": "Alta",
+      "critical": "Crítica"
+    },
+    "status": {
+      "backlog": "Backlog",
+      "todo": "A Fazer",
+      "in_progress": "Em Progresso",
+      "review": "Revisão",
+      "done": "Concluído"
+    },
+    "toast": {
+      "created": "Tarefa criada",
+      "updated": "Tarefa atualizada",
+      "deleted": "Tarefa removida",
+      "saveError": "Erro ao salvar",
+      "deleteError": "Erro ao remover",
+      "moveError": "Erro ao mover"
+    }
+  },
+  "team": {
+    "inviteMember": "Convidar membro",
+    "errorLoading": "Erro ao carregar equipe.",
+    "noMembers": "Nenhum membro encontrado.",
+    "memberCount": "{count, plural, one {# membro} other {# membros}}",
+    "self": "(você)",
+    "removeTitle": "Remover {name}?",
+    "removeDescription": "O acesso ao sistema será revogado imediatamente. Essa ação não pode ser desfeita.",
+    "removing": "Removendo...",
+    "removeAccess": "Remover acesso",
+    "emailInfo": "A pessoa receberá um e-mail com um link para criar a senha e acessar o sistema.",
+    "form": {
+      "fullName": "Nome completo",
+      "fullNamePlaceholder": "João Silva",
+      "email": "E-mail",
+      "emailPlaceholder": "joao@empresa.com",
+      "access": "Acesso"
+    },
+    "invite": {
+      "sending": "Enviando...",
+      "send": "Enviar convite",
+      "successTitle": "Convite enviado!",
+      "successDescription": "Um e-mail foi enviado para {email}.",
+      "errorTitle": "Erro ao convidar"
+    },
+    "roles": {
+      "founder":   { "label": "Founder",       "desc": "Acesso total ao sistema." },
+      "manager":   { "label": "Gestor",         "desc": "Acesso a Dashboard, Clientes, Demandas e Projetos." },
+      "financial": { "label": "Financeiro",     "desc": "Acesso a Dashboard, Clientes, Financeiro e Contador." },
+      "developer": { "label": "Developer / TI", "desc": "Acesso a Dashboard, Demandas, Projetos e Documentação." },
+      "employee":  { "label": "Funcionário",    "desc": "Acesso a Dashboard, Demandas e Projetos." }
+    },
+    "toast": {
+      "memberRemoved": "Membro removido",
+      "removeError": "Erro ao remover membro",
+      "roleUpdated": "Função atualizada",
+      "roleError": "Erro ao atualizar função"
+    }
+  },
+  "dashboard": {
+    "simulator": {
+      "title": "Simulador de Crescimento",
+      "subtitle": "Projeção de MRR com base em crescimento e churn",
+      "currentMRR": "MRR Atual (R$)",
+      "growthRate": "Crescimento/mês (%)",
+      "churnRate": "Churn/mês (%)",
+      "months": "Meses",
+      "avgCost": "Custo médio (%)",
+      "projectedMRR": "MRR projetado",
+      "totalProfit": "Lucro acumulado",
+      "mrr": "MRR",
+      "costs": "Custos",
+      "profit": "Lucro"
+    },
+    "metrics": {
+      "mrr": "MRR",
+      "revenue": "Receita Total",
+      "expenses": "Despesas",
+      "profit": "Lucro",
+      "activeClients": "Clientes Ativos",
+      "churnRate": "Churn Rate",
+      "openTasks": "Tarefas em Aberto",
+      "criticalTasks": "Tarefas Críticas"
+    },
+    "renewals": "Renovações próximas",
+    "renewal30days": "em {days} dias",
+    "noRenewals": "Nenhuma renovação nos próximos 30 dias.",
+    "errorLoading": "Erro ao carregar métricas."
+  },
+  "projects": {
+    "newProject": "Novo Projeto",
+    "editProject": "Editar Projeto",
+    "deleteTitle": "Remover projeto?",
+    "errorLoading": "Erro ao carregar projetos.",
+    "notFound": "Nenhum projeto encontrado.",
+    "searchPlaceholder": "Buscar projeto...",
+    "status": {
+      "all": "Todos",
+      "planning": "Planejando",
+      "active": "Ativo",
+      "paused": "Pausado",
+      "completed": "Concluído"
+    },
+    "form": {
+      "name": "Nome",
+      "description": "Descrição",
+      "client": "Cliente",
+      "status": "Status",
+      "startDate": "Início",
+      "endDate": "Término",
+      "members": "Membros"
+    },
+    "toast": {
+      "created": "Projeto criado",
+      "updated": "Projeto atualizado",
+      "deleted": "Projeto removido",
+      "saveError": "Erro ao salvar",
+      "deleteError": "Erro ao remover"
+    }
+  },
+  "settings": {
+    "orgName": "Nome da organização",
+    "aiKeys": "Chaves de IA",
+    "newKey": "Nova chave",
+    "provider": "Provedor",
+    "label": "Label",
+    "keyHint": "Últimos 4 dígitos",
+    "active": "Ativa",
+    "inactive": "Inativa",
+    "deleteKey": "Remover chave?",
+    "form": {
+      "provider": "Provedor",
+      "label": "Label (opcional)",
+      "apiKey": "Chave de API"
+    },
+    "toast": {
+      "saved": "Configurações salvas",
+      "keyAdded": "Chave adicionada",
+      "keyRemoved": "Chave removida",
+      "error": "Erro ao salvar"
+    }
+  },
+  "financial": {
+    "newEntry": "Nova Receita",
+    "newExpense": "Nova Despesa",
+    "editEntry": "Editar Receita",
+    "editExpense": "Editar Despesa",
+    "deleteEntry": "Remover lançamento?",
+    "errorLoading": "Erro ao carregar dados financeiros.",
+    "tabs": {
+      "overview": "Visão Geral",
+      "entries": "Receitas",
+      "expenses": "Despesas"
+    },
+    "form": {
+      "value": "Valor (R$)",
+      "type": "Tipo",
+      "category": "Categoria",
+      "status": "Status",
+      "date": "Data",
+      "client": "Cliente",
+      "description": "Descrição",
+      "supplier": "Fornecedor",
+      "costCenter": "Centro de Custo"
+    },
+    "toast": {
+      "created": "Lançamento criado",
+      "updated": "Lançamento atualizado",
+      "deleted": "Lançamento removido",
+      "saveError": "Erro ao salvar",
+      "deleteError": "Erro ao remover"
+    }
+  },
+  "founder": {
+    "newOkr": "Novo OKR",
+    "newNote": "Nova Nota",
+    "editOkr": "Editar OKR",
+    "deleteOkr": "Remover OKR?",
+    "errorLoading": "Erro ao carregar dados.",
+    "noData": "Nenhum item encontrado."
+  },
+  "labels": {
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "churned": "Churned",
+    "trial": "Trial",
+    "backlog": "Backlog",
+    "todo": "A fazer",
+    "in_progress": "Em progresso",
+    "review": "Revisão",
+    "done": "Concluído",
+    "confirmed": "Confirmado",
+    "pending": "Pendente",
+    "cancelled": "Cancelado",
+    "on_track": "No prazo",
+    "at_risk": "Em risco",
+    "off_track": "Atrasado",
+    "completed": "Concluído",
+    "low": "Baixa",
+    "medium": "Média",
+    "high": "Alta",
+    "critical": "Crítica",
+    "recurring": "Recorrente",
+    "one_time": "Pontual",
+    "upsell": "Upsell",
+    "fixed": "Fixo",
+    "variable": "Variável",
+    "investment": "Investimento",
+    "subscription": "Assinatura",
+    "consulting": "Consultoria",
+    "implementation": "Implantação",
+    "support": "Suporte",
+    "other": "Outro",
+    "infrastructure": "Infraestrutura",
+    "payroll": "Folha",
+    "marketing": "Marketing",
+    "tools": "Ferramentas",
+    "office": "Escritório",
+    "taxes": "Impostos",
+    "planning": "Planejando",
+    "pago": "Pago",
+    "atrasado": "Atrasado",
+    "recebido": "Recebido",
+    "inadimplente": "Inadimplente",
+    "cogs": "CMV/CPV",
+    "opex": "Despesa Operacional",
+    "da": "Depr./Amort.",
+    "paused": "Pausado"
+  },
+  "months": {
+    "0": "Jan", "1": "Fev", "2": "Mar", "3": "Abr",
+    "4": "Mai", "5": "Jun", "6": "Jul", "7": "Ago",
+    "8": "Set", "9": "Out", "10": "Nov", "11": "Dez"
+  }
+}

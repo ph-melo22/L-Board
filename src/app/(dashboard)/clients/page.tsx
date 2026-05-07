@@ -16,10 +16,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { getClients, createClient_, updateClient, deleteClient } from '@/services/clients'
-import { formatCurrency, formatDate, formatPercent, getLabelByStatus, getStatusColor } from '@/lib/utils'
+import { formatCurrency, formatDate, formatPercent, getStatusColor } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 import type { ClientWithProfit, ClientFormData, ClientStatus } from '@/types'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type SortKey = 'name' | 'monthly_revenue' | 'margin' | 'renewal_date'
 type SortDir = 'asc' | 'desc'
@@ -31,36 +30,26 @@ const EMPTY_FORM: ClientFormData = {
 
 const PAGE_SIZE = 10
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function ClientsPage() {
   const { toast } = useToast()
-  const [clients, setClients] = useState<ClientWithProfit[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-  // Filters
+  const t  = useTranslations('clients')
+  const tc = useTranslations('common')
+  const [clients, setClients]   = useState<ClientWithProfit[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(false)
   const [filterStatus, setFilterStatus] = useState<ClientStatus | 'all'>('all')
-  const [search, setSearch] = useState('')
-
-  // Sort
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
-
-  // Pagination
-  const [page, setPage] = useState(1)
-
-  // Dialog
+  const [search, setSearch]     = useState('')
+  const [sortKey, setSortKey]   = useState<SortKey>('name')
+  const [sortDir, setSortDir]   = useState<SortDir>('asc')
+  const [page, setPage]         = useState(1)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editing, setEditing] = useState<ClientWithProfit | null>(null)
-  const [form, setForm] = useState<ClientFormData>(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
+  const [editing, setEditing]   = useState<ClientWithProfit | null>(null)
+  const [form, setForm]         = useState<ClientFormData>(EMPTY_FORM)
+  const [saving, setSaving]     = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   async function load() {
@@ -82,17 +71,17 @@ export default function ClientsPage() {
   async function handleSave() {
     setSaving(true)
     try {
-      if (editing) { await updateClient(editing.id, form); toast({ title: 'Cliente atualizado' }) }
-      else { await createClient_(form); toast({ title: 'Cliente criado' }) }
+      if (editing) { await updateClient(editing.id, form); toast({ title: t('toast.updated') }) }
+      else { await createClient_(form); toast({ title: t('toast.created') }) }
       setDialogOpen(false); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
   async function handleDelete() {
     if (!deleteId) return
-    try { await deleteClient(deleteId); toast({ title: 'Cliente removido' }); load() }
-    catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+    try { await deleteClient(deleteId); toast({ title: t('toast.deleted') }); load() }
+    catch { toast({ title: t('toast.deleteError'), variant: 'destructive' }) }
     finally { setDeleteId(null) }
   }
 
@@ -102,7 +91,6 @@ export default function ClientsPage() {
     setPage(1)
   }
 
-  // Derived data
   const filtered = useMemo(() => {
     let result = clients
     if (filterStatus !== 'all') result = result.filter((c) => c.status === filterStatus)
@@ -111,8 +99,8 @@ export default function ClientsPage() {
       result = result.filter((c) => c.name.toLowerCase().includes(q) || c.product.toLowerCase().includes(q))
     }
     result = [...result].sort((a, b) => {
-      let av: string | number = a[sortKey] ?? ''
-      let bv: string | number = b[sortKey] ?? ''
+      const av: string | number = a[sortKey] ?? ''
+      const bv: string | number = b[sortKey] ?? ''
       if (typeof av === 'string' && typeof bv === 'string') {
         return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
       }
@@ -122,7 +110,7 @@ export default function ClientsPage() {
   }, [clients, filterStatus, search, sortKey, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col) return <ChevronUp className="h-3 w-3 opacity-20" />
@@ -131,10 +119,7 @@ export default function ClientsPage() {
 
   function SortTh({ col, label }: { col: SortKey; label: string }) {
     return (
-      <th
-        className="px-4 py-3 text-left font-medium cursor-pointer select-none hover:text-foreground transition-colors"
-        onClick={() => handleSort(col)}
-      >
+      <th className="px-4 py-3 text-left font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort(col)}>
         <span className="flex items-center gap-1">{label} <SortIcon col={col} /></span>
       </th>
     )
@@ -144,30 +129,29 @@ export default function ClientsPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao carregar clientes.</p>
-        <Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
       </div>
     )
   }
 
+  const STATUS_FILTERS: (ClientStatus | 'all')[] = ['all', 'active', 'trial', 'inactive', 'churned']
+
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Search */}
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome ou produto..."
+            placeholder={t('searchPlaceholder')}
             className="pl-8"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
 
-        {/* Status filters */}
         <div className="flex gap-1.5 flex-wrap">
-          {(['all', 'active', 'trial', 'inactive', 'churned'] as const).map((s) => (
+          {STATUS_FILTERS.map((s) => (
             <button
               key={s}
               onClick={() => { setFilterStatus(s); setPage(1) }}
@@ -175,25 +159,24 @@ export default function ClientsPage() {
                 filterStatus === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
-              {s === 'all' ? 'Todos' : getLabelByStatus(s)}
+              {t(`status.${s}`)}
             </button>
           ))}
         </div>
 
         <div className="ml-auto">
-          <Button size="sm" onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> Novo Cliente</Button>
+          <Button size="sm" onClick={openNew}><Plus className="mr-1.5 h-4 w-4" /> {t('newClient')}</Button>
         </div>
       </div>
 
-      {/* Count */}
       {!loading && (
         <p className="text-xs text-muted-foreground">
-          {filtered.length} cliente{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
-          {search && ` para "${search}"`}
+          {search
+            ? t('countFiltered', { count: filtered.length, search })
+            : t('count', { count: filtered.length })}
         </p>
       )}
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           {loading ? (
@@ -201,18 +184,18 @@ export default function ClientsPage() {
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
           ) : paginated.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
+            <p className="p-6 text-sm text-muted-foreground">{t('notFound')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">
-                    <SortTh col="name" label="Cliente" />
-                    <th className="px-4 py-3 text-left font-medium">Produto</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <SortTh col="monthly_revenue" label="Receita/mês" />
-                    <SortTh col="margin" label="Margem" />
-                    <SortTh col="renewal_date" label="Renovação" />
+                    <SortTh col="name"            label={t('columns.client')} />
+                    <th className="px-4 py-3 text-left font-medium">{t('columns.product')}</th>
+                    <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
+                    <SortTh col="monthly_revenue" label={t('columns.revenue')} />
+                    <SortTh col="margin"          label={t('columns.margin')} />
+                    <SortTh col="renewal_date"    label={t('columns.renewal')} />
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -223,7 +206,7 @@ export default function ClientsPage() {
                       <td className="px-4 py-3 text-muted-foreground">{c.product}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(c.status)}`}>
-                          {getLabelByStatus(c.status)}
+                          {t(`status.${c.status}`)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">{formatCurrency(c.monthly_revenue)}</td>
@@ -247,85 +230,77 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Página {page} de {totalPages}</span>
+          <span>{tc('page')} {page} {tc('of')} {totalPages}</span>
           <div className="flex gap-1">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Anterior</Button>
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>{tc('previous')}</Button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <Button
-                key={p}
-                variant={p === page ? 'default' : 'outline'}
-                size="sm"
-                className="w-8"
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </Button>
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="w-8" onClick={() => setPage(p)}>{p}</Button>
             ))}
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Próxima</Button>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>{tc('next')}</Button>
           </div>
         </div>
       )}
 
-      {/* Dialog Create/Edit */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t('editClient') : t('newClient')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5 col-span-2">
-                <Label>Nome</Label>
+                <Label>{t('form.name')}</Label>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="space-y-1.5 col-span-2">
-                <Label>Produto / Plano</Label>
+                <Label>{t('form.product')}</Label>
                 <Input value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Receita Mensal (R$)</Label>
+                <Label>{t('form.monthlyRevenue')}</Label>
                 <Input type="number" value={form.monthly_revenue} onChange={(e) => setForm({ ...form, monthly_revenue: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Custo Operacional (R$)</Label>
+                <Label>{t('form.operationalCost')}</Label>
                 <Input type="number" value={form.operational_cost} onChange={(e) => setForm({ ...form, operational_cost: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Início</Label>
+                <Label>{t('form.startDate')}</Label>
                 <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Renovação</Label>
+                <Label>{t('form.renewalDate')}</Label>
                 <Input type="date" value={form.renewal_date ?? ''} onChange={(e) => setForm({ ...form, renewal_date: e.target.value || null })} />
               </div>
               <div className="space-y-1.5 col-span-2">
-                <Label>Status</Label>
+                <Label>{t('form.status')}</Label>
                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ClientStatus })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="trial">Trial</SelectItem>
-                    <SelectItem value="inactive">Inativo</SelectItem>
-                    <SelectItem value="churned">Churned</SelectItem>
+                    {(['active', 'trial', 'inactive', 'churned'] as const).map((s) => (
+                      <SelectItem key={s} value={s}>{t(`status.${s}`)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving || !form.name}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{tc('cancel')}</Button>
+            <Button onClick={handleSave} disabled={saving || !form.name}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Remover cliente?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{tc('delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

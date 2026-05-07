@@ -8,18 +8,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Eye, EyeOff } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ full_name: '', email: '', password: '', company_name: '' })
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const t      = useTranslations('auth.register')
+  const [form, setForm]           = useState({ full_name: '', email: '', password: '', company_name: '' })
+  const [error, setError]         = useState<string | null>(null)
+  const [loading, setLoading]     = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const strength =
     form.password.length === 0 ? null :
-    form.password.length < 8 ? 'fraca' :
-    form.password.length < 12 ? 'média' : 'forte'
+    form.password.length < 8   ? t('strengthWeak')   :
+    form.password.length < 12  ? t('strengthMedium') : t('strengthStrong')
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
@@ -35,12 +37,11 @@ export default function RegisterPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error ?? 'Erro ao criar conta')
+        setError(data.error ?? t('connectionError'))
         setLoading(false)
         return
       }
 
-      // Auto sign in after registration
       const supabase = createClient()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: form.email,
@@ -48,7 +49,6 @@ export default function RegisterPage() {
       })
 
       if (signInError) {
-        setError('Conta criada! Faça login para continuar.')
         router.push('/auth/login')
         return
       }
@@ -56,7 +56,7 @@ export default function RegisterPage() {
       router.push('/dashboard')
       router.refresh()
     } catch {
-      setError('Erro de conexão. Tente novamente.')
+      setError(t('connectionError'))
       setLoading(false)
     }
   }
@@ -68,16 +68,16 @@ export default function RegisterPage() {
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <span className="text-lg font-bold text-primary-foreground">L</span>
           </div>
-          <CardTitle className="text-xl">Criar conta</CardTitle>
-          <CardDescription>Configure seu espaço de trabalho</CardDescription>
+          <CardTitle className="text-xl">{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="full_name">Seu nome</Label>
+              <Label htmlFor="full_name">{t('fullName')}</Label>
               <Input
                 id="full_name"
-                placeholder="João Silva"
+                placeholder={t('fullNamePlaceholder')}
                 value={form.full_name}
                 onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                 required
@@ -86,10 +86,10 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company_name">Nome da empresa</Label>
+              <Label htmlFor="company_name">{t('companyName')}</Label>
               <Input
                 id="company_name"
-                placeholder="Minha Empresa Ltda"
+                placeholder={t('companyNamePlaceholder')}
                 value={form.company_name}
                 onChange={(e) => setForm({ ...form, company_name: e.target.value })}
                 required
@@ -97,11 +97,11 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="voce@empresa.com"
+                placeholder={t('emailPlaceholder')}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
@@ -110,12 +110,12 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder={t('passwordPlaceholder')}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   required
@@ -133,20 +133,20 @@ export default function RegisterPage() {
               {strength && (
                 <div className="flex items-center gap-2">
                   <div className="flex flex-1 gap-1">
-                    {(['fraca', 'média', 'forte'] as const).map((s, i) => (
+                    {(['strengthWeak', 'strengthMedium', 'strengthStrong'] as const).map((s, i) => (
                       <div
                         key={s}
                         className={`h-1 flex-1 rounded-full transition-colors ${
-                          strength === 'fraca' && i === 0 ? 'bg-destructive' :
-                          strength === 'média' && i <= 1 ? 'bg-yellow-400' :
-                          strength === 'forte' ? 'bg-emerald-500' : 'bg-muted'
+                          strength === t('strengthWeak')   && i === 0 ? 'bg-destructive' :
+                          strength === t('strengthMedium') && i <= 1  ? 'bg-yellow-400' :
+                          strength === t('strengthStrong')             ? 'bg-emerald-500' : 'bg-muted'
                         }`}
                       />
                     ))}
                   </div>
                   <span className={`text-xs font-medium ${
-                    strength === 'fraca' ? 'text-destructive' :
-                    strength === 'média' ? 'text-yellow-500' : 'text-emerald-600'
+                    strength === t('strengthWeak')   ? 'text-destructive' :
+                    strength === t('strengthMedium') ? 'text-yellow-500'  : 'text-emerald-600'
                   }`}>
                     {strength}
                   </span>
@@ -157,17 +157,14 @@ export default function RegisterPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Criando conta...' : 'Criar conta'}
+              {loading ? t('submitting') : t('submit')}
             </Button>
           </form>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Já tem conta?{' '}
-            <Link
-              href="/auth/login"
-              className="text-foreground underline-offset-4 hover:underline"
-            >
-              Entrar
+            {t('alreadyHaveAccount')}{' '}
+            <Link href="/auth/login" className="text-foreground underline-offset-4 hover:underline">
+              {t('login')}
             </Link>
           </p>
         </CardContent>
