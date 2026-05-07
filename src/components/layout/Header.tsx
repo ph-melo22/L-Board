@@ -1,6 +1,8 @@
 'use client'
 import { usePathname } from 'next/navigation'
-import { Menu } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
+import { Menu, Sun, Moon } from 'lucide-react'
 
 const pageTitles: Record<string, { title: string; description: string }> = {
   '/dashboard': { title: 'Dashboard', description: 'Visão geral do negócio' },
@@ -9,9 +11,10 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   '/contador': { title: 'Contador', description: 'Dashboard financeiro executivo' },
   '/demands': { title: 'Demandas', description: 'Tarefas e entregas do time' },
   '/founder': { title: 'Founder Board', description: 'OKRs, projetos e notas estratégicas' },
-  '/docs': { title: 'Documentação', description: 'Relatório técnico v0.1 beta' },
+  '/docs': { title: 'Documentação', description: 'Relatório técnico' },
   '/team': { title: 'Equipe', description: 'Membros, convites e permissões' },
   '/projects': { title: 'Projetos', description: 'Gestão de projetos e atividades' },
+  '/settings': { title: 'Configurações', description: 'Organização e chaves de IA' },
 }
 
 interface HeaderProps {
@@ -20,6 +23,10 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const match = Object.entries(pageTitles).find(([path]) =>
     pathname === path || pathname.startsWith(path + '/')
@@ -44,6 +51,17 @@ export function Header({ onMenuClick }: HeaderProps) {
           <p className="text-xs text-muted-foreground truncate">{description}</p>
         )}
       </div>
+
+      {/* Theme toggle */}
+      {mounted && (
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label="Alternar tema"
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+      )}
     </header>
   )
 }

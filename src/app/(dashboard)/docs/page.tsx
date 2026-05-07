@@ -5,9 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.2.0'
+const VERSION = '1.3.0'
 
 const CHANGELOG = [
+  {
+    version: '1.3.0',
+    date: '2026-05-06',
+    changes: [
+      'Adiciona suporte a dark mode e light mode com next-themes; preferência do sistema usada como padrão',
+      'Cria src/components/providers/ThemeProvider.tsx com NextThemesProvider (attribute="class")',
+      'Header: botão Sol/Lua para alternar tema, visível em todas as páginas autenticadas',
+      'getStatusColor em utils.ts atualizado com variantes dark: para todas as cores (emerald, gray, red, blue, amber, purple)',
+      'Alerta de tarefas críticas em /demands atualizado com dark: variants (bg-red-950/40, border-red-800/50, text-red-300)',
+      'Mobile: filtro de período em /financial usa w-full no mobile e flex-col → flex-row responsivo',
+      'Mobile: select de cliente em /demands usa flex-1 no mobile em vez de w-40 fixo',
+      'Mobile: input de valor de risco em /demands usa w-full no mobile com flex-wrap no container',
+    ],
+  },
   {
     version: '1.2.0',
     date: '2026-05-06',

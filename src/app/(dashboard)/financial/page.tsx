@@ -174,10 +174,10 @@ export default function FinancialPage() {
   return (
     <div className="space-y-4">
       {/* Period filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <Label className="text-xs text-muted-foreground shrink-0">Período:</Label>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-52 h-9 text-sm"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-52 h-9 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             {monthOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
           </SelectContent>

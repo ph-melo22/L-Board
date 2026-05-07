@@ -126,9 +126,9 @@ export default function DemandsPage() {
     <div className="space-y-4">
       {/* Contador crítico */}
       {criticalCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5">
-          <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
-          <p className="text-sm font-medium text-red-800">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-800/50 dark:bg-red-950/40">
+          <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 dark:text-red-400" />
+          <p className="text-sm font-medium text-red-800 dark:text-red-300">
             {criticalCount} tarefa{criticalCount > 1 ? 's' : ''} crítica{criticalCount > 1 ? 's' : ''} em aberto
           </p>
         </div>
@@ -141,7 +141,7 @@ export default function DemandsPage() {
           <Input placeholder="Buscar tarefa..." className="pl-8 h-9 text-sm w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={filterClient} onValueChange={setFilterClient}>
-          <SelectTrigger className="w-40 h-9 text-sm"><SelectValue placeholder="Cliente" /></SelectTrigger>
+          <SelectTrigger className="flex-1 sm:flex-none sm:w-40 h-9 text-sm"><SelectValue placeholder="Cliente" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os clientes</SelectItem>
             {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -279,11 +279,11 @@ export default function DemandsPage() {
               <Label>Responsável</Label>
               <Input value={form.responsible ?? ''} onChange={(e) => setForm({ ...form, responsible: e.target.value || null })} />
             </div>
-            <div className="col-span-2 flex items-center gap-3 rounded-lg border border-border p-3">
+            <div className="col-span-2 flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">
               <input type="checkbox" id="impacts_revenue" checked={form.impacts_revenue} onChange={(e) => setForm({ ...form, impacts_revenue: e.target.checked, revenue_impact_value: e.target.checked ? form.revenue_impact_value : null })} className="h-4 w-4" />
               <Label htmlFor="impacts_revenue" className="cursor-pointer">Impacta receita</Label>
               {form.impacts_revenue && (
-                <Input type="number" placeholder="Valor em risco (R$)" className="ml-auto w-40" value={form.revenue_impact_value ?? ''} onChange={(e) => setForm({ ...form, revenue_impact_value: e.target.value ? Number(e.target.value) : null })} />
+                <Input type="number" placeholder="Valor em risco (R$)" className="w-full sm:w-40 sm:ml-auto mt-2 sm:mt-0" value={form.revenue_impact_value ?? ''} onChange={(e) => setForm({ ...form, revenue_impact_value: e.target.value ? Number(e.target.value) : null })} />
               )}
             </div>
           </div>
