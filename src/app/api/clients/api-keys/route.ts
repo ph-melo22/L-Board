@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { auditLog } from '@/lib/auditLog'
 import crypto from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
@@ -95,6 +96,16 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    auditLog({
+      actor_id:        user.id,
+      organization_id: profile.organization_id,
+      action:          'client_api_key.created',
+      target_id:       client_id,
+      metadata:        { provider, key_id: data!.id },
+      ip:              request.headers.get('x-forwarded-for'),
+    })
+
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: 'Erro ao salvar chave' }, { status: 400 })

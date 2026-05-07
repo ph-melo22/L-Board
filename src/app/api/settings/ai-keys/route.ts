@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
 import { rateLimit } from '@/lib/rateLimit'
 import { encrypt } from '@/lib/crypto'
+import { auditLog } from '@/lib/auditLog'
 
 export async function GET(request: NextRequest) {
   const { user, error: authError } = await requireAuth()
@@ -76,5 +77,15 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  auditLog({
+    actor_id:        user!.id,
+    organization_id: profile.organization_id,
+    action:          'org_api_key.created',
+    target_id:       data!.id,
+    metadata:        { provider },
+    ip:              request.headers.get('x-forwarded-for'),
+  })
+
   return NextResponse.json(data)
 }

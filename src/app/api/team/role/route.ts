@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
+import { auditLog } from '@/lib/auditLog'
 
 const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee']
 
 export async function PATCH(request: NextRequest) {
-  const { profile, error: authError } = await requireAuth()
+  const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
 
   if (profile.role !== 'founder') {
@@ -27,7 +28,7 @@ export async function PATCH(request: NextRequest) {
 
     const { data: target } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, role')
       .eq('id', id)
       .single()
 
@@ -35,8 +36,18 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
     }
 
+    const oldRole = target.role
+
     const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
     if (error) throw error
+
+    auditLog({
+      actor_id:        user!.id,
+      organization_id: profile.organization_id,
+      action:          'team.role_changed',
+      target_id:       id,
+      metadata:        { from_role: oldRole, to_role: role },
+    })
 
     return NextResponse.json({ success: true })
   } catch {

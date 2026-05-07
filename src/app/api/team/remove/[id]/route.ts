@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
+import { auditLog } from '@/lib/auditLog'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -40,6 +41,13 @@ export async function DELETE(
 
     const { error } = await supabase.auth.admin.deleteUser(id)
     if (error) throw error
+
+    auditLog({
+      actor_id:        user.id,
+      organization_id: profile.organization_id,
+      action:          'team.member_removed',
+      target_id:       id,
+    })
 
     return NextResponse.json({ success: true })
   } catch {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
+import { auditLog } from '@/lib/auditLog'
 
 async function verifyKeyOwnership(keyId: string, organizationId: string | null) {
   const supabase = createAdminClient()
@@ -53,7 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { profile, error: authError } = await requireAuth()
+  const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
 
   const { id } = await params
@@ -69,6 +70,14 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
       .eq('id', id)
 
     if (error) throw error
+
+    auditLog({
+      actor_id:        user!.id,
+      organization_id: profile.organization_id,
+      action:          'client_api_key.deleted',
+      target_id:       id,
+    })
+
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Erro ao remover chave' }, { status: 400 })

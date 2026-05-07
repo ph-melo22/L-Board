@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email'
 import { rateLimit } from '@/lib/rateLimit'
+import { auditLog } from '@/lib/auditLog'
 
 function escapeHtml(s: string) {
   return String(s)
@@ -72,6 +73,14 @@ export async function POST(request: NextRequest) {
       await supabase.from('organizations').delete().eq('id', org.id)
       throw profileError
     }
+
+    auditLog({
+      actor_id:        userData.user.id,
+      organization_id: org.id,
+      action:          'account.created',
+      target_id:       email,
+      ip,
+    })
 
     const safeName    = escapeHtml(full_name)
     const safeCompany = escapeHtml(company_name)

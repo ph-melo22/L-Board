@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
 import { rateLimit } from '@/lib/rateLimit'
 import { sendEmail } from '@/lib/email'
+import { auditLog } from '@/lib/auditLog'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee']
@@ -108,6 +109,15 @@ export async function POST(request: NextRequest) {
       to: email,
       subject: 'Você foi convidado para o L Board',
       html: INVITE_HTML(escapeHtml(safeName), inviteUrl),
+    })
+
+    auditLog({
+      actor_id:        user!.id,
+      organization_id: profile.organization_id,
+      action:          'team.member_invited',
+      target_id:       email,
+      metadata:        { role: safeRole, name: safeName },
+      ip:              request.headers.get('x-forwarded-for'),
     })
 
     return NextResponse.json({ success: true })

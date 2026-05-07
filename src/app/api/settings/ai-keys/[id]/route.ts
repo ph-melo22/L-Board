@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
+import { auditLog } from '@/lib/auditLog'
 
 export async function PATCH(
   request: NextRequest,
@@ -67,5 +68,13 @@ export async function DELETE(
     .eq('organization_id', profile!.organization_id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  auditLog({
+    actor_id:        user!.id,
+    organization_id: profile!.organization_id,
+    action:          'org_api_key.deleted',
+    target_id:       id,
+  })
+
   return NextResponse.json({ success: true })
 }
