@@ -15,6 +15,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslations } from 'next-intl'
+import { formatDate } from '@/lib/utils'
 
 type Provider = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'deepseek' | 'other'
 
@@ -52,6 +54,8 @@ const PROVIDER_COLORS: Record<Provider, string> = {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings')
+  const tc = useTranslations('common')
   const { toast } = useToast()
 
   // Org state
@@ -100,10 +104,10 @@ export default function SettingsPage() {
       const data = await res.json()
       setOrg(data)
       setEditingName(false)
-      toast({ title: 'Nome atualizado' })
+      toast({ title: t('toast.nameUpdated') })
     } else {
       const err = await res.json()
-      toast({ title: 'Erro', description: err.error, variant: 'destructive' })
+      toast({ title: tc('error'), description: err.error, variant: 'destructive' })
     }
     setSavingName(false)
   }
@@ -123,7 +127,7 @@ export default function SettingsPage() {
     const res = await fetch(`/api/settings/ai-keys/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setKeys((prev) => prev.filter((k) => k.id !== id))
-      toast({ title: 'Chave removida' })
+      toast({ title: t('toast.keyRemoved') })
     }
   }
 
@@ -140,9 +144,9 @@ export default function SettingsPage() {
       setKeys((prev) => [data, ...prev])
       setAddOpen(false)
       setAddForm({ provider: 'openai', label: '', api_key: '' })
-      toast({ title: 'Chave adicionada' })
+      toast({ title: t('toast.keyAdded') })
     } else {
-      toast({ title: 'Erro', description: data.error, variant: 'destructive' })
+      toast({ title: tc('error'), description: data.error, variant: 'destructive' })
     }
     setAdding(false)
   }
@@ -155,7 +159,7 @@ export default function SettingsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Building2 className="h-4 w-4" />
-            Organização
+            {t('orgSection')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -181,11 +185,11 @@ export default function SettingsPage() {
               <div>
                 <p className="font-medium">{org.name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Criada em {new Date(org.created_at).toLocaleDateString('pt-BR')}
+                  {t('createdAt', { date: formatDate(org.created_at) })}
                 </p>
               </div>
               <Button size="sm" variant="outline" onClick={() => setEditingName(true)}>
-                <Settings className="mr-1.5 h-3.5 w-3.5" /> Editar
+                <Settings className="mr-1.5 h-3.5 w-3.5" /> {tc('edit')}
               </Button>
             </div>
           )}
@@ -198,14 +202,14 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
               <KeyRound className="h-4 w-4" />
-              Chaves de IA
+              {t('aiKeys')}
             </CardTitle>
             <Button size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="mr-1.5 h-4 w-4" /> Adicionar
+              <Plus className="mr-1.5 h-4 w-4" /> {t('newKey')}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground pt-1">
-            Chaves usadas pela plataforma ao processar documentos com IA. A chave OpenAI ativa é usada para importar tarefas via arquivo.
+            {t('aiKeysDesc')}
           </p>
         </CardHeader>
         <CardContent>
@@ -216,8 +220,8 @@ export default function SettingsPage() {
           ) : keys.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <AlertTriangle className="h-8 w-8 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">Nenhuma chave configurada.</p>
-              <p className="text-xs text-muted-foreground">Adicione sua chave OpenAI para usar a IA do L Board.</p>
+              <p className="text-sm text-muted-foreground">{t('noKeys')}</p>
+              <p className="text-xs text-muted-foreground">{t('noKeysDesc')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -251,7 +255,7 @@ export default function SettingsPage() {
                           : 'border-border text-muted-foreground hover:bg-accent'
                       }`}
                     >
-                      {key.is_active ? 'Ativa' : 'Inativa'}
+                      {key.is_active ? t('active') : t('inactive')}
                     </button>
                     <Button
                       variant="ghost"
@@ -274,12 +278,12 @@ export default function SettingsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="h-4 w-4" /> Adicionar chave de IA
+              <KeyRound className="h-4 w-4" /> {t('addKeyTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Provedor</Label>
+              <Label>{t('form.provider')}</Label>
               <Select
                 value={addForm.provider}
                 onValueChange={(v) => setAddForm({ ...addForm, provider: v as Provider })}
@@ -293,7 +297,7 @@ export default function SettingsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Label (opcional)</Label>
+              <Label>{t('form.label')}</Label>
               <Input
                 placeholder="Ex: Produção"
                 value={addForm.label}
@@ -301,7 +305,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Chave de API</Label>
+              <Label>{t('form.apiKey')}</Label>
               <div className="relative">
                 <Input
                   type={showKey ? 'text' : 'password'}
@@ -319,14 +323,14 @@ export default function SettingsPage() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Criptografada com AES-256-GCM. Nunca exibida novamente.
+                {t('keyEncrypted')}
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleAdd} disabled={adding || !addForm.api_key}>
-              {adding ? 'Salvando...' : 'Salvar chave'}
+              {adding ? tc('saving') : t('saveKey')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -30,15 +30,9 @@ import type {
   ProjectFormData, ProjectTaskFormData, ProjectSubtaskFormData,
   ProjectStatus, ProjectPriority,
 } from '@/types'
+import { useTranslations, useLocale } from 'next-intl'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  planning: 'Planejamento',
-  active: 'Em Andamento',
-  paused: 'Pausado',
-  completed: 'Concluído',
-}
 
 const STATUS_COLORS: Record<ProjectStatus, string> = {
   planning: 'text-blue-600 bg-blue-50 border-blue-200',
@@ -47,9 +41,8 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
   completed: 'text-muted-foreground bg-muted border-border',
 }
 
-const PRIORITY_LABELS: Record<ProjectPriority, string> = {
-  low: 'Baixa', medium: 'Média', high: 'Alta', critical: 'Crítica',
-}
+const STATUS_KEYS: ProjectStatus[] = ['planning', 'active', 'paused', 'completed']
+const PRIORITY_KEYS: ProjectPriority[] = ['low', 'medium', 'high', 'critical']
 
 const EMPTY_PROJECT_FORM: ProjectFormData = {
   title: '', description: null, objectives: null, scope: null,
@@ -115,6 +108,18 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('projectDetail')
+  const tc = useTranslations('common')
+  const tProjects = useTranslations('projects')
+  const locale = useLocale()
+
+  const STATUS_LABELS = useMemo(() => Object.fromEntries(
+    STATUS_KEYS.map(s => [s, tProjects(`statusLabel.${s}` as never)])
+  ) as Record<ProjectStatus, string>, [tProjects])
+
+  const PRIORITY_LABELS = useMemo(() => Object.fromEntries(
+    PRIORITY_KEYS.map(p => [p, tProjects(`priority.${p}` as never)])
+  ) as Record<ProjectPriority, string>, [tProjects])
 
   const [project, setProject] = useState<ProjectWithDetails | null>(null)
   const [allMembers, setAllMembers] = useState<Profile[]>([])
@@ -210,16 +215,16 @@ export default function ProjectDetailPage() {
     try {
       const updated = await updateProject(project.id, projectForm)
       setProject(prev => prev ? { ...prev, ...updated } : prev)
-      toast({ title: 'Projeto atualizado' })
+      toast({ title: t('toast.updated') })
       setEditProjectOpen(false)
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
   async function handleDeleteProject() {
     if (!project) return
     try { await deleteProject(project.id); router.push('/projects') }
-    catch { toast({ title: 'Erro ao excluir', variant: 'destructive' }) }
+    catch { toast({ title: t('toast.deleteError'), variant: 'destructive' }) }
   }
 
   // ── Member actions ─────────────────────────────────────────────────────────
@@ -232,14 +237,14 @@ export default function ProjectDetailPage() {
         if (!prev) return prev
         return { ...prev, project_members: [...prev.project_members, { id: crypto.randomUUID(), project_id: prev.id, user_id: userId, created_at: new Date().toISOString() }] }
       })
-    } catch { toast({ title: 'Erro ao adicionar membro', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
   }
 
   async function handleRemoveMember(memberId: string) {
     try {
       await removeProjectMember(memberId)
       setProject(prev => prev ? { ...prev, project_members: prev.project_members.filter(m => m.id !== memberId) } : prev)
-    } catch { toast({ title: 'Erro ao remover membro', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.deleteError'), variant: 'destructive' }) }
   }
 
   // ── Task actions ───────────────────────────────────────────────────────────
@@ -269,16 +274,16 @@ export default function ProjectDetailPage() {
         if (taskForm.assigned_to && taskForm.assigned_to !== editingTask.assigned_to) {
           notifyAssignment(taskForm.assigned_to, taskForm.title)
         }
-        toast({ title: 'Atividade atualizada' })
+        toast({ title: t('toast.taskUpdated') })
       } else {
         const created = await createProjectTask({ ...taskForm, project_id: project.id })
         setProject(prev => prev ? { ...prev, project_tasks: [...prev.project_tasks, created] } : prev)
         setExpanded(prev => new Set(prev).add(created.id))
         if (taskForm.assigned_to) notifyAssignment(taskForm.assigned_to, taskForm.title)
-        toast({ title: 'Atividade criada' })
+        toast({ title: t('toast.taskCreated') })
       }
       setTaskDialogOpen(false)
-    } catch { toast({ title: 'Erro ao salvar atividade', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -293,7 +298,7 @@ export default function ProjectDetailPage() {
         if (!prev) return prev
         return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === taskId ? { ...t, completed: !completed } : t) }
       })
-      toast({ title: 'Erro ao atualizar', variant: 'destructive' })
+      toast({ title: t('toast.saveError'), variant: 'destructive' })
     }
   }
 
@@ -302,8 +307,8 @@ export default function ProjectDetailPage() {
     try {
       await deleteProjectTask(deleteTaskId)
       setProject(prev => prev ? { ...prev, project_tasks: prev.project_tasks.filter(t => t.id !== deleteTaskId) } : prev)
-      toast({ title: 'Atividade removida' })
-    } catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+      toast({ title: t('toast.taskDeleted') })
+    } catch { toast({ title: t('toast.deleteError'), variant: 'destructive' }) }
     finally { setDeleteTaskId(null) }
   }
 
@@ -331,38 +336,38 @@ export default function ProjectDetailPage() {
         const updated = await updateProjectSubtask(editingSubtask.id, { ...subtaskForm, task_id: subtaskParentId })
         setProject(prev => {
           if (!prev) return prev
-          return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === subtaskParentId ? { ...t, project_subtasks: (t.project_subtasks ?? []).map(s => s.id === editingSubtask.id ? { ...s, ...updated } : s) } : t) }
+          return { ...prev, project_tasks: prev.project_tasks.map(task => task.id === subtaskParentId ? { ...task, project_subtasks: (task.project_subtasks ?? []).map(s => s.id === editingSubtask.id ? { ...s, ...updated } : s) } : task) }
         })
         if (subtaskForm.assigned_to && subtaskForm.assigned_to !== editingSubtask.assigned_to) {
           notifyAssignment(subtaskForm.assigned_to, subtaskForm.title, 'subtask')
         }
-        toast({ title: 'Sub-atividade atualizada' })
+        toast({ title: t('toast.subtaskUpdated') })
       } else {
         const created = await createProjectSubtask({ ...subtaskForm, task_id: subtaskParentId })
         setProject(prev => {
           if (!prev) return prev
-          return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === subtaskParentId ? { ...t, project_subtasks: [...(t.project_subtasks ?? []), created] } : t) }
+          return { ...prev, project_tasks: prev.project_tasks.map(task => task.id === subtaskParentId ? { ...task, project_subtasks: [...(task.project_subtasks ?? []), created] } : task) }
         })
         if (subtaskForm.assigned_to) notifyAssignment(subtaskForm.assigned_to, subtaskForm.title, 'subtask')
-        toast({ title: 'Sub-atividade criada' })
+        toast({ title: t('toast.subtaskCreated') })
       }
       setSubtaskDialogOpen(false)
-    } catch { toast({ title: 'Erro ao salvar sub-atividade', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
   async function handleToggleSubtask(taskId: string, subtaskId: string, completed: boolean) {
     setProject(prev => {
       if (!prev) return prev
-      return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === taskId ? { ...t, project_subtasks: (t.project_subtasks ?? []).map(s => s.id === subtaskId ? { ...s, completed } : s) } : t) }
+      return { ...prev, project_tasks: prev.project_tasks.map(task => task.id === taskId ? { ...task, project_subtasks: (task.project_subtasks ?? []).map(s => s.id === subtaskId ? { ...s, completed } : s) } : task) }
     })
     try { await toggleProjectSubtask(subtaskId, completed) }
     catch {
       setProject(prev => {
         if (!prev) return prev
-        return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === taskId ? { ...t, project_subtasks: (t.project_subtasks ?? []).map(s => s.id === subtaskId ? { ...s, completed: !completed } : s) } : t) }
+        return { ...prev, project_tasks: prev.project_tasks.map(task => task.id === taskId ? { ...task, project_subtasks: (task.project_subtasks ?? []).map(s => s.id === subtaskId ? { ...s, completed: !completed } : s) } : task) }
       })
-      toast({ title: 'Erro ao atualizar', variant: 'destructive' })
+      toast({ title: t('toast.saveError'), variant: 'destructive' })
     }
   }
 
@@ -372,10 +377,10 @@ export default function ProjectDetailPage() {
       await deleteProjectSubtask(deleteSubtaskId)
       setProject(prev => {
         if (!prev) return prev
-        return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === subtaskParentId ? { ...t, project_subtasks: (t.project_subtasks ?? []).filter(s => s.id !== deleteSubtaskId) } : t) }
+        return { ...prev, project_tasks: prev.project_tasks.map(task => task.id === subtaskParentId ? { ...task, project_subtasks: (task.project_subtasks ?? []).filter(s => s.id !== deleteSubtaskId) } : task) }
       })
-      toast({ title: 'Sub-atividade removida' })
-    } catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+      toast({ title: t('toast.subtaskDeleted') })
+    } catch { toast({ title: t('toast.deleteError'), variant: 'destructive' }) }
     finally { setDeleteSubtaskId(null) }
   }
 
@@ -387,10 +392,10 @@ export default function ProjectDetailPage() {
       const created = await createProjectSubtask({ title: inlineTitle.trim(), assigned_to: null, due_date: null, completed: false, task_id: taskId })
       setProject(prev => {
         if (!prev) return prev
-        return { ...prev, project_tasks: prev.project_tasks.map(t => t.id === taskId ? { ...t, project_subtasks: [...(t.project_subtasks ?? []), created] } : t) }
+        return { ...prev, project_tasks: prev.project_tasks.map(task => task.id === taskId ? { ...task, project_subtasks: [...(task.project_subtasks ?? []), created] } : task) }
       })
       setInlineTitle('')
-    } catch { toast({ title: 'Erro ao adicionar sub-atividade', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
   }
 
   // ── Email notification helper ──────────────────────────────────────────────
@@ -416,14 +421,14 @@ export default function ProjectDetailPage() {
   function handleExport() {
     if (!project) return
     const { pct: exportPct } = calcProgress(project.project_tasks)
-    const completedTasks = project.project_tasks.filter(t => t.completed).length
+    const completedTasks = project.project_tasks.filter(tsk => tsk.completed).length
 
     const memberNames = project.project_members
-      .map(pm => memberMap[pm.user_id] ?? 'Usuário removido')
+      .map(pm => memberMap[pm.user_id] ?? t('memberRemovedFallback'))
       .join(', ') || '—'
 
-    const tasksHtml = project.project_tasks.map(t => {
-      const subs = t.project_subtasks ?? []
+    const tasksHtml = project.project_tasks.map(tsk => {
+      const subs = tsk.project_subtasks ?? []
       const subHtml = subs.length > 0 ? `
         <ul style="margin: 6px 0 0 0; padding-left: 20px; list-style: none;">
           ${subs.map(s => `
@@ -435,13 +440,13 @@ export default function ProjectDetailPage() {
           `).join('')}
         </ul>` : ''
       return `
-        <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; background: ${t.completed ? '#f0fdf4' : '#fff'};">
+        <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; background: ${tsk.completed ? '#f0fdf4' : '#fff'};">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="color: ${t.completed ? '#16a34a' : '#d1d5db'}; font-size: 16px;">${t.completed ? '✓' : '○'}</span>
-            <span style="font-weight: 600; font-size: 14px; ${t.completed ? 'text-decoration: line-through; color: #999;' : ''}">${t.title}</span>
-            ${t.assigned_to && memberMap[t.assigned_to] ? `<span style="color: #888; font-size: 12px; margin-left: auto;">· ${memberMap[t.assigned_to]}</span>` : ''}
+            <span style="color: ${tsk.completed ? '#16a34a' : '#d1d5db'}; font-size: 16px;">${tsk.completed ? '✓' : '○'}</span>
+            <span style="font-weight: 600; font-size: 14px; ${tsk.completed ? 'text-decoration: line-through; color: #999;' : ''}">${tsk.title}</span>
+            ${tsk.assigned_to && memberMap[tsk.assigned_to] ? `<span style="color: #888; font-size: 12px; margin-left: auto;">· ${memberMap[tsk.assigned_to]}</span>` : ''}
           </div>
-          ${t.description ? `<p style="font-size: 12px; color: #777; margin: 4px 0 0 24px;">${t.description}</p>` : ''}
+          ${tsk.description ? `<p style="font-size: 12px; color: #777; margin: 4px 0 0 24px;">${tsk.description}</p>` : ''}
           ${subHtml}
         </div>`
     }).join('')
@@ -453,10 +458,10 @@ export default function ProjectDetailPage() {
       </div>` : ''
 
     const html = `<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="${locale}">
 <head>
   <meta charset="UTF-8" />
-  <title>Relatório — ${project.title}</title>
+  <title>${project.title}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 40px; color: #1a1a1a; max-width: 800px; margin: 0 auto; }
@@ -469,38 +474,38 @@ export default function ProjectDetailPage() {
 </head>
 <body>
   <div class="no-print" style="margin-bottom: 24px; display: flex; gap: 8px;">
-    <button onclick="window.print()" style="background: #1a1a1a; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer;">Imprimir / Salvar PDF</button>
-    <button onclick="window.close()" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer;">Fechar</button>
+    <button onclick="window.print()" style="background: #1a1a1a; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer;">${t('exportPrint')}</button>
+    <button onclick="window.close()" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer;">${t('exportClose')}</button>
   </div>
 
   <div style="border-bottom: 2px solid #1a1a1a; padding-bottom: 16px; margin-bottom: 28px;">
     <h1 style="margin: 0 0 6px; font-size: 24px;">${project.title}</h1>
     <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #555;">
-      <span>Status: <strong>${STATUS_LABELS[project.status]}</strong></span>
-      <span>Prioridade: <strong>${PRIORITY_LABELS[project.priority]}</strong></span>
-      <span>Progresso: <strong>${exportPct}%</strong> (${completedTasks}/${project.project_tasks.length} atividades)</span>
-      ${project.end_date ? `<span>Prazo: <strong>${new Intl.DateTimeFormat('pt-BR').format(new Date(project.end_date))}</strong></span>` : ''}
+      <span>${t('exportStatusLabel')}: <strong>${STATUS_LABELS[project.status]}</strong></span>
+      <span>${t('exportPriorityLabel')}: <strong>${PRIORITY_LABELS[project.priority]}</strong></span>
+      <span>${t('exportProgressLabel')}: <strong>${exportPct}%</strong> (${completedTasks}/${project.project_tasks.length})</span>
+      ${project.end_date ? `<span>${t('exportDeadlineLabel')}: <strong>${new Intl.DateTimeFormat(locale).format(new Date(project.end_date))}</strong></span>` : ''}
     </div>
     ${project.description ? `<p style="font-size: 14px; color: #555; margin: 12px 0 0;">${project.description}</p>` : ''}
   </div>
 
-  ${detailSection('Objetivos', project.objectives)}
-  ${detailSection('Escopo', project.scope)}
-  ${detailSection('Entregáveis', project.deliverables)}
-  ${detailSection('Riscos', project.risks)}
+  ${detailSection(t('objectives'), project.objectives)}
+  ${detailSection(t('scope'), project.scope)}
+  ${detailSection(t('deliverables'), project.deliverables)}
+  ${detailSection(t('risks'), project.risks)}
 
   <div style="margin-bottom: 20px;">
-    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 6px;">Membros</p>
+    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 6px;">${t('members')}</p>
     <p style="font-size: 14px; color: #333; margin: 0;">${memberNames}</p>
   </div>
 
   <div>
-    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 12px;">Atividades</p>
-    ${tasksHtml || '<p style="color: #999; font-size: 14px;">Nenhuma atividade cadastrada.</p>'}
+    <p style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 0 0 12px;">${t('tasks')}</p>
+    ${tasksHtml || `<p style="color: #999; font-size: 14px;">${t('noActivitiesExport')}</p>`}
   </div>
 
   <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e5e5; font-size: 12px; color: #999;">
-    Relatório gerado em ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date())} · L Board
+    ${t('exportReportGenerated')} ${new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }).format(new Date())} · L Board
   </div>
 </body>
 </html>`
@@ -538,7 +543,7 @@ export default function ProjectDetailPage() {
       setAiSelected(new Set(json.tasks.map((_: unknown, i: number) => i)))
       setAiStep('preview')
     } catch (err) {
-      toast({ title: err instanceof Error ? err.message : 'Erro ao processar arquivo', variant: 'destructive' })
+      toast({ title: err instanceof Error ? err.message : t('toast.importError'), variant: 'destructive' })
     } finally {
       setAiLoading(false)
     }
@@ -554,15 +559,15 @@ export default function ProjectDetailPage() {
 
       let position = project.project_tasks.length
       const created: ProjectTask[] = []
-      for (const t of selected) {
-        const assignedId = t.assigned_to_hint
-          ? memberByName[t.assigned_to_hint.toLowerCase()] ?? null
+      for (const tsk of selected) {
+        const assignedId = tsk.assigned_to_hint
+          ? memberByName[tsk.assigned_to_hint.toLowerCase()] ?? null
           : null
         const task = await createProjectTask({
-          project_id: project.id, title: t.title, description: t.description || null,
+          project_id: project.id, title: tsk.title, description: tsk.description || null,
           assigned_to: assignedId, due_date: null, position: position++, completed: false,
         })
-        for (const s of t.subtasks) {
+        for (const s of tsk.subtasks) {
           const subAssignedId = s.assigned_to_hint
             ? memberByName[s.assigned_to_hint.toLowerCase()] ?? null
             : null
@@ -576,11 +581,11 @@ export default function ProjectDetailPage() {
       }
 
       setProject(prev => prev ? { ...prev, project_tasks: [...prev.project_tasks, ...created] } : prev)
-      setExpanded(prev => { const n = new Set(prev); created.forEach(t => n.add(t.id)); return n })
-      toast({ title: `${created.length} atividade${created.length !== 1 ? 's' : ''} criada${created.length !== 1 ? 's' : ''} com sucesso` })
+      setExpanded(prev => { const n = new Set(prev); created.forEach(tsk => n.add(tsk.id)); return n })
+      toast({ title: t('toast.importSuccess', { count: created.length }) })
       setAiDialogOpen(false)
     } catch {
-      toast({ title: 'Erro ao criar tarefas', variant: 'destructive' })
+      toast({ title: t('toast.importError'), variant: 'destructive' })
     } finally {
       setAiCreating(false)
     }
@@ -609,13 +614,13 @@ export default function ProjectDetailPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Projeto não encontrado.</p>
-        <Button size="sm" variant="outline" onClick={() => router.push('/projects')}>← Voltar</Button>
+        <p className="text-sm font-medium">{t('notFound')}</p>
+        <Button size="sm" variant="outline" onClick={() => router.push('/projects')}>← {t('back')}</Button>
       </div>
     )
   }
 
-  const completedTasksCount = project.project_tasks.filter(t => t.completed).length
+  const completedTasksCount = project.project_tasks.filter(tsk => tsk.completed).length
 
   return (
     <div className="space-y-5">
@@ -637,11 +642,11 @@ export default function ProjectDetailPage() {
         </div>
         <div className="flex shrink-0 gap-1.5">
           <Button size="sm" variant="outline" onClick={handleExport} className="text-muted-foreground hidden sm:flex">
-            <FileDown className="mr-1.5 h-3.5 w-3.5" /> Exportar
+            <FileDown className="mr-1.5 h-3.5 w-3.5" /> {t('export')}
           </Button>
           <Button variant="outline" size="sm" onClick={openEditProject}>
             <Pencil className="mr-1.5 h-3.5 w-3.5 hidden sm:block" />
-            <span className="hidden sm:inline">Editar</span>
+            <span className="hidden sm:inline">{tc('edit')}</span>
             <Pencil className="h-3.5 w-3.5 sm:hidden" />
           </Button>
           <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteProjectOpen(true)}>
@@ -662,19 +667,19 @@ export default function ProjectDetailPage() {
               <CircularProgress value={pct} />
               <div className="text-center space-y-1">
                 <p className="text-xs text-muted-foreground">
-                  {doneItems} de {totalItems} item{totalItems !== 1 ? 's' : ''} concluído{totalItems !== 1 ? 's' : ''}
+                  {t('progressItems', { done: doneItems, total: totalItems })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {completedTasksCount}/{project.project_tasks.length} atividade{project.project_tasks.length !== 1 ? 's' : ''}
+                  {t('progressTasks', { done: completedTasksCount, total: project.project_tasks.length })}
                 </p>
               </div>
               <div className="w-full grid grid-cols-2 gap-2 text-center pt-1 border-t border-border">
                 <div>
-                  <p className="text-xs text-muted-foreground">Prioridade</p>
+                  <p className="text-xs text-muted-foreground">{t('priority')}</p>
                   <p className="text-xs font-semibold mt-0.5">{PRIORITY_LABELS[project.priority]}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Prazo</p>
+                  <p className="text-xs text-muted-foreground">{t('deadline')}</p>
                   <p className="text-xs font-semibold mt-0.5">{formatDate(project.end_date)}</p>
                 </div>
               </div>
@@ -684,13 +689,13 @@ export default function ProjectDetailPage() {
           {/* Project details */}
           {(project.objectives || project.scope || project.deliverables || project.risks) && (
             <Card className="shadow-none">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Detalhes</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">{t('details')}</CardTitle></CardHeader>
               <CardContent className="pt-0 space-y-4">
                 {[
-                  { label: 'Objetivos', value: project.objectives },
-                  { label: 'Escopo', value: project.scope },
-                  { label: 'Entregáveis', value: project.deliverables },
-                  { label: 'Riscos', value: project.risks },
+                  { label: t('objectives'), value: project.objectives },
+                  { label: t('scope'), value: project.scope },
+                  { label: t('deliverables'), value: project.deliverables },
+                  { label: t('risks'), value: project.risks },
                 ].filter(d => d.value).map(d => (
                   <div key={d.label}>
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{d.label}</p>
@@ -701,7 +706,7 @@ export default function ProjectDetailPage() {
                   <div className="flex gap-4">
                     {project.start_date && (
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Início</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t('startDate')}</p>
                         <p className="text-xs flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(project.start_date)}</p>
                       </div>
                     )}
@@ -713,10 +718,10 @@ export default function ProjectDetailPage() {
 
           {/* Members */}
           <Card className="shadow-none">
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Membros</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">{t('members')}</CardTitle></CardHeader>
             <CardContent className="pt-0 space-y-2">
               {project.project_members.length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhum membro adicionado.</p>
+                <p className="text-xs text-muted-foreground">{t('noMembers')}</p>
               )}
               {project.project_members.map(pm => (
                 <div key={pm.id} className="flex items-center justify-between gap-2">
@@ -724,7 +729,7 @@ export default function ProjectDetailPage() {
                     <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
                       {(memberMap[pm.user_id] ?? '?').charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-xs truncate">{memberMap[pm.user_id] ?? 'Usuário removido'}</span>
+                    <span className="text-xs truncate">{memberMap[pm.user_id] ?? t('memberRemovedFallback')}</span>
                   </div>
                   <Button
                     variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
@@ -738,7 +743,7 @@ export default function ProjectDetailPage() {
                 <Select onValueChange={handleAddMember}>
                   <SelectTrigger className="h-8 text-xs mt-2">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Plus className="h-3.5 w-3.5" /> Adicionar membro
+                      <Plus className="h-3.5 w-3.5" /> {t('addMember')}
                     </div>
                   </SelectTrigger>
                   <SelectContent>
@@ -761,13 +766,13 @@ export default function ProjectDetailPage() {
           <Card className="shadow-none">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <CardTitle className="text-sm">Atividades</CardTitle>
+                <CardTitle className="text-sm">{t('tasks')}</CardTitle>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={openAiDialog} className="text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
-                    <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Importar via IA
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" /> {t('importWithAI')}
                   </Button>
                   <Button size="sm" onClick={openNewTask}>
-                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova Atividade
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('addTask')}
                   </Button>
                 </div>
               </div>
@@ -775,9 +780,9 @@ export default function ProjectDetailPage() {
             <CardContent className="pt-0 space-y-2">
               {project.project_tasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-                  <p className="text-sm text-muted-foreground">Nenhuma atividade ainda.</p>
+                  <p className="text-sm text-muted-foreground">{t('noTasks')}</p>
                   <Button size="sm" variant="outline" onClick={openNewTask}>
-                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar atividade
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('addActivity')}
                   </Button>
                 </div>
               )}
@@ -831,7 +836,9 @@ export default function ProjectDetailPage() {
                             </span>
                           )}
                           {subs.length > 0 && (
-                            <span className="text-xs text-muted-foreground">{doneSubs}/{subs.length} sub-atividade{subs.length !== 1 ? 's' : ''}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {t('subTaskCount', { done: doneSubs, total: subs.length })}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -852,7 +859,7 @@ export default function ProjectDetailPage() {
                       <div className="border-t border-border bg-muted/20">
                         {subs.map(sub => (
                           <div key={sub.id} className="flex items-start gap-2 px-3 py-2 border-b border-border/50 last:border-0">
-                            <div className="w-6 shrink-0" /> {/* indent */}
+                            <div className="w-6 shrink-0" />
                             {/* Checkbox */}
                             <button
                               onClick={() => handleToggleSubtask(task.id, sub.id, !sub.completed)}
@@ -895,11 +902,11 @@ export default function ProjectDetailPage() {
                               <Input
                                 autoFocus
                                 className="h-7 text-xs flex-1"
-                                placeholder="Nome da sub-atividade..."
+                                placeholder={t('subtaskPlaceholder')}
                                 value={inlineTitle}
                                 onChange={(e) => setInlineTitle(e.target.value)}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') { handleInlineAdd(task.id); }
+                                  if (e.key === 'Enter') { handleInlineAdd(task.id) }
                                   if (e.key === 'Escape') { setInlineTaskId(null); setInlineTitle('') }
                                 }}
                               />
@@ -916,13 +923,13 @@ export default function ProjectDetailPage() {
                                 onClick={() => { setInlineTaskId(task.id); setInlineTitle('') }}
                                 className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
                               >
-                                <Plus className="h-3 w-3" /> Adicionar sub-atividade
+                                <Plus className="h-3 w-3" /> {t('addSubActivity')}
                               </button>
                               <button
                                 onClick={() => openNewSubtask(task.id)}
                                 className="text-xs text-muted-foreground hover:text-primary transition-colors"
                               >
-                                (avançado)
+                                {t('subtaskAdvanced')}
                               </button>
                             </div>
                           )}
@@ -940,67 +947,67 @@ export default function ProjectDetailPage() {
       {/* ── Edit Project Dialog ── */}
       <Dialog open={editProjectOpen} onOpenChange={setEditProjectOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Editar Projeto</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('editProject')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">
-              <Label>Nome *</Label>
+              <Label>{tProjects('form.name')} *</Label>
               <Input value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>{tProjects('form.description')}</Label>
               <Textarea rows={2} value={projectForm.description ?? ''} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{tProjects('form.status')}</Label>
               <Select value={projectForm.status} onValueChange={(v) => setProjectForm({ ...projectForm, status: v as ProjectStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(STATUS_LABELS) as ProjectStatus[]).map(s => (
+                  {STATUS_KEYS.map(s => (
                     <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Prioridade</Label>
+              <Label>{tProjects('form.priority')}</Label>
               <Select value={projectForm.priority} onValueChange={(v) => setProjectForm({ ...projectForm, priority: v as ProjectPriority })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(PRIORITY_LABELS) as ProjectPriority[]).map(p => (
+                  {PRIORITY_KEYS.map(p => (
                     <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Data de Início</Label>
+              <Label>{tProjects('form.startDate')}</Label>
               <Input type="date" value={projectForm.start_date ?? ''} onChange={(e) => setProjectForm({ ...projectForm, start_date: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo Final</Label>
+              <Label>{tProjects('form.endDate')}</Label>
               <Input type="date" value={projectForm.end_date ?? ''} onChange={(e) => setProjectForm({ ...projectForm, end_date: e.target.value || null })} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Objetivos</Label>
-              <Textarea rows={3} placeholder="O que esse projeto busca alcançar..." value={projectForm.objectives ?? ''} onChange={(e) => setProjectForm({ ...projectForm, objectives: e.target.value || null })} />
+              <Label>{t('objectives')}</Label>
+              <Textarea rows={3} placeholder={tProjects('form.objectivesPlaceholder')} value={projectForm.objectives ?? ''} onChange={(e) => setProjectForm({ ...projectForm, objectives: e.target.value || null })} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Escopo</Label>
-              <Textarea rows={3} placeholder="O que está dentro (e fora) do escopo..." value={projectForm.scope ?? ''} onChange={(e) => setProjectForm({ ...projectForm, scope: e.target.value || null })} />
+              <Label>{t('scope')}</Label>
+              <Textarea rows={3} placeholder={tProjects('form.scopePlaceholder')} value={projectForm.scope ?? ''} onChange={(e) => setProjectForm({ ...projectForm, scope: e.target.value || null })} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Entregáveis</Label>
-              <Textarea rows={3} placeholder="O que será entregue ao final..." value={projectForm.deliverables ?? ''} onChange={(e) => setProjectForm({ ...projectForm, deliverables: e.target.value || null })} />
+              <Label>{t('deliverables')}</Label>
+              <Textarea rows={3} placeholder={tProjects('form.deliverablesPlaceholder')} value={projectForm.deliverables ?? ''} onChange={(e) => setProjectForm({ ...projectForm, deliverables: e.target.value || null })} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Riscos</Label>
-              <Textarea rows={3} placeholder="Riscos identificados e mitigações..." value={projectForm.risks ?? ''} onChange={(e) => setProjectForm({ ...projectForm, risks: e.target.value || null })} />
+              <Label>{t('risks')}</Label>
+              <Textarea rows={3} placeholder={tProjects('form.risksPlaceholder')} value={projectForm.risks ?? ''} onChange={(e) => setProjectForm({ ...projectForm, risks: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditProjectOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setEditProjectOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleUpdateProject} disabled={saving || !projectForm.title.trim()}>
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? tc('saving') : tc('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1009,35 +1016,35 @@ export default function ProjectDetailPage() {
       {/* ── Task Dialog ── */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingTask ? 'Editar Atividade' : 'Nova Atividade'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingTask ? t('editTaskTitle') : t('newTaskTitle')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Título *</Label>
+              <Label>{t('taskTitle')} *</Label>
               <Input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>{t('taskDescription')}</Label>
               <Textarea rows={2} value={taskForm.description ?? ''} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Responsável</Label>
+              <Label>{t('taskAssigned')}</Label>
               <Select value={taskForm.assigned_to ?? 'none'} onValueChange={(v) => setTaskForm({ ...taskForm, assigned_to: v === 'none' ? null : v })}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tc('none')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
+                  <SelectItem value="none">{tc('none')}</SelectItem>
                   {allMembers.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo</Label>
+              <Label>{t('taskDueDate')}</Label>
               <Input type="date" value={taskForm.due_date ?? ''} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTaskDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setTaskDialogOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleSaveTask} disabled={saving || !taskForm.title.trim()}>
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? tc('saving') : tc('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1046,31 +1053,31 @@ export default function ProjectDetailPage() {
       {/* ── Subtask Dialog ── */}
       <Dialog open={subtaskDialogOpen} onOpenChange={setSubtaskDialogOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingSubtask ? 'Editar Sub-Atividade' : 'Nova Sub-Atividade'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingSubtask ? t('editSubtaskTitle') : t('newSubtaskTitle')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Título *</Label>
+              <Label>{t('taskTitle')} *</Label>
               <Input value={subtaskForm.title} onChange={(e) => setSubtaskForm({ ...subtaskForm, title: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Responsável</Label>
+              <Label>{t('taskAssigned')}</Label>
               <Select value={subtaskForm.assigned_to ?? 'none'} onValueChange={(v) => setSubtaskForm({ ...subtaskForm, assigned_to: v === 'none' ? null : v })}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tc('none')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
+                  <SelectItem value="none">{tc('none')}</SelectItem>
                   {allMembers.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo</Label>
+              <Label>{t('taskDueDate')}</Label>
               <Input type="date" value={subtaskForm.due_date ?? ''} onChange={(e) => setSubtaskForm({ ...subtaskForm, due_date: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSubtaskDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setSubtaskDialogOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleSaveSubtask} disabled={saving || !subtaskForm.title.trim()}>
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? tc('saving') : tc('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1080,13 +1087,13 @@ export default function ProjectDetailPage() {
       <AlertDialog open={deleteProjectOpen} onOpenChange={setDeleteProjectOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
-            <AlertDialogDescription>Todas as atividades e sub-atividades serão removidas. Essa ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteProject')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteProjectDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
+              {t('deleteProjectConfirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1095,13 +1102,13 @@ export default function ProjectDetailPage() {
       <AlertDialog open={!!deleteTaskId} onOpenChange={(o) => !o && setDeleteTaskId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover atividade?</AlertDialogTitle>
-            <AlertDialogDescription>As sub-atividades também serão removidas.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteTask')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteTaskDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTask} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+              {tc('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1113,15 +1120,13 @@ export default function ProjectDetailPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-600" />
-              Importar Tarefas via IA
+              {t('aiImportTitle')}
             </DialogTitle>
           </DialogHeader>
 
           {aiStep === 'upload' && (
             <div className="space-y-4 py-2">
-              <p className="text-sm text-muted-foreground">
-                Faça upload de qualquer arquivo (PDF, Word, imagem, TXT, CSV…) e o GPT-4o vai gerar as atividades automaticamente.
-              </p>
+              <p className="text-sm text-muted-foreground">{t('aiUploadDesc')}</p>
 
               {/* Drop zone */}
               <label
@@ -1140,8 +1145,8 @@ export default function ProjectDetailPage() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-sm font-medium">Clique para selecionar o arquivo</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Máx. 300 MB · PDF, Word, imagem, TXT, CSV e mais</p>
+                    <p className="text-sm font-medium">{t('aiSelectFile')}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('aiMaxSize')}</p>
                   </div>
                 )}
                 <input
@@ -1154,7 +1159,7 @@ export default function ProjectDetailPage() {
 
               {aiFile && (
                 <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => setAiFile(null)}>
-                  <X className="mr-1.5 h-3.5 w-3.5" /> Remover arquivo
+                  <X className="mr-1.5 h-3.5 w-3.5" /> {t('aiRemoveFile')}
                 </Button>
               )}
             </div>
@@ -1163,14 +1168,12 @@ export default function ProjectDetailPage() {
           {aiStep === 'preview' && (
             <div className="space-y-3 py-2">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {aiTasks.length} atividade{aiTasks.length !== 1 ? 's' : ''} gerada{aiTasks.length !== 1 ? 's' : ''}. Selecione as que deseja criar:
-                </p>
+                <p className="text-sm text-muted-foreground">{t('aiGenerated', { count: aiTasks.length })}</p>
                 <button
                   className="text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => setAiSelected(aiSelected.size === aiTasks.length ? new Set() : new Set(aiTasks.map((_, i) => i)))}
                 >
-                  {aiSelected.size === aiTasks.length ? 'Desmarcar todas' : 'Selecionar todas'}
+                  {aiSelected.size === aiTasks.length ? t('aiDeselectAll') : t('aiSelectAll')}
                 </button>
               </div>
 
@@ -1197,7 +1200,7 @@ export default function ProjectDetailPage() {
                         )}
                         {task.subtasks.length > 0 && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {task.subtasks.length} sub-atividade{task.subtasks.length !== 1 ? 's' : ''}
+                            {t('aiSubtaskCount', { count: task.subtasks.length })}
                           </p>
                         )}
                       </div>
@@ -1211,11 +1214,11 @@ export default function ProjectDetailPage() {
           <DialogFooter className="gap-2">
             {aiStep === 'preview' && (
               <Button variant="outline" size="sm" onClick={() => setAiStep('upload')}>
-                ← Voltar
+                {t('aiBack')}
               </Button>
             )}
             <Button variant="outline" onClick={() => setAiDialogOpen(false)} disabled={aiLoading || aiCreating}>
-              Cancelar
+              {tc('cancel')}
             </Button>
             {aiStep === 'upload' ? (
               <Button
@@ -1224,8 +1227,8 @@ export default function ProjectDetailPage() {
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 {aiLoading
-                  ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Analisando...</>
-                  : <><Sparkles className="mr-1.5 h-4 w-4" /> Gerar Tarefas</>
+                  ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> {t('aiAnalyzing')}</>
+                  : <><Sparkles className="mr-1.5 h-4 w-4" /> {t('aiGenerateBtn')}</>
                 }
               </Button>
             ) : (
@@ -1235,8 +1238,8 @@ export default function ProjectDetailPage() {
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 {aiCreating
-                  ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Criando...</>
-                  : `Criar ${aiSelected.size} atividade${aiSelected.size !== 1 ? 's' : ''}`
+                  ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> {t('aiCreatingBtn')}</>
+                  : t('aiCreateBtn', { count: aiSelected.size })
                 }
               </Button>
             )}
@@ -1247,13 +1250,13 @@ export default function ProjectDetailPage() {
       <AlertDialog open={!!deleteSubtaskId} onOpenChange={(o) => !o && setDeleteSubtaskId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover sub-atividade?</AlertDialogTitle>
-            <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteSubtask')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteSubtask} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+              {tc('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

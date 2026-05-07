@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { ArrowRight, BarChart3, Users, Sparkles, Kanban, Shield, KeyRound, ChevronDown, TrendingUp, Zap, Globe, LayoutDashboard, DollarSign, ListTodo, FolderKanban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,44 +19,23 @@ const fadeUp  = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, tr
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.09 } } }
 const fadeIn  = { hidden: { opacity: 0 },        visible: { opacity: 1,   transition: { duration: 0.5 } } }
 
-// ── Data ──────────────────────────────────────────────────────────────────────
-const FEATURES = [
-  { icon: BarChart3, title: 'Financeiro em tempo real',      desc: 'MRR, DRE, Runway, Burn Rate e CAC calculados automaticamente. Alertas inteligentes quando algo sai da rota.',                              color: '#60a5fa', glow: 'rgba(96,165,250,0.12)'  },
-  { icon: Users,     title: 'Clientes com margem real',      desc: 'Receita, custo, lucro e margem por cliente em tempo real. Saiba exatamente quem gera — e quem consome — valor.',                          color: '#a78bfa', glow: 'rgba(167,139,250,0.12)' },
-  { icon: Sparkles,  title: 'IA que trabalha por você',      desc: 'Importa qualquer documento — PDF, Word, imagem — e a IA estrutura todas as tarefas do projeto em segundos.',                               color: '#34d399', glow: 'rgba(52,211,153,0.12)'  },
-  { icon: Kanban,    title: 'Kanban com impacto financeiro', desc: 'Cada tarefa tem valor. Veja o risco financeiro das demandas antes que virem problema real.',                                                color: '#fb923c', glow: 'rgba(251,146,60,0.12)'  },
-  { icon: Shield,    title: 'Acesso por perfil',             desc: 'Founder vê tudo. Dev vê o que precisa. Colaborador só o dele. Controle total, sem complexidade.',                                          color: '#f472b6', glow: 'rgba(244,114,182,0.12)' },
-  { icon: KeyRound,  title: 'API Keys por cliente',          desc: 'Cada cliente registra suas próprias chaves de IA. Criptografia AES-256-GCM. Segurança enterprise.',                                        color: '#22d3ee', glow: 'rgba(34,211,238,0.12)'  },
+// ── Structural data (no text) ─────────────────────────────────────────────────
+const FEATURE_ICONS  = [BarChart3, Users, Sparkles, Kanban, Shield, KeyRound]
+const FEATURE_COLORS = ['#60a5fa', '#a78bfa', '#34d399', '#fb923c', '#f472b6', '#22d3ee']
+const FEATURE_GLOWS  = ['rgba(96,165,250,0.12)', 'rgba(167,139,250,0.12)', 'rgba(52,211,153,0.12)', 'rgba(251,146,60,0.12)', 'rgba(244,114,182,0.12)', 'rgba(34,211,238,0.12)']
+
+const STEP_ICONS = [Users, TrendingUp, Sparkles]
+
+const TESTIMONIAL_META = [
+  { avatar: 'MC', color: '#6366f1' },
+  { avatar: 'RM', color: '#a855f7' },
+  { avatar: 'JA', color: '#22d3ee' },
 ]
 
-const STEPS = [
-  { num: '01', title: 'Configure sua equipe',              desc: 'Convide colaboradores e defina o nível de acesso de cada um. Founder, dev ou funcionário — cada perfil vê o que precisa e nada mais.',   icon: Users      },
-  { num: '02', title: 'Cadastre clientes e projetos',      desc: 'Adicione clientes com metas financeiras, projetos com atividades e vincule tudo ao financeiro em tempo real.',                             icon: TrendingUp },
-  { num: '03', title: 'Deixe a IA e os dados trabalharem', desc: 'Importe documentos, gere tarefas automaticamente com IA e acompanhe tudo em um só lugar. O L Board faz o pesado.',                        icon: Sparkles   },
-]
-
-const TESTIMONIALS = [
-  { name: 'Mariana Costa', role: 'CEO · Agência Pixel',     text: 'O L Board substituiu 4 ferramentas que usávamos. Agora temos tudo em um lugar e a equipe parou de reclamar de sistemas.', avatar: 'MC', color: '#6366f1' },
-  { name: 'Rafael Mendes', role: 'Founder · TechFlow',      text: 'A visão de DRE em tempo real mudou como tomamos decisões. Antes dependíamos de planilhas que atrasavam 15 dias.',           avatar: 'RM', color: '#a855f7' },
-  { name: 'Juliana Alves', role: 'Gestora · Studio Criativo', text: 'A IA que gera tarefas a partir de briefings economiza horas por projeto. Implementamos em uma tarde.',                    avatar: 'JA', color: '#22d3ee' },
-]
-
-const FAQ_ITEMS = [
-  { q: 'O L Board funciona para qualquer tipo de negócio?', a: 'Sim. Foi projetado para ser flexível. Funciona para agências, startups, consultorias, empresas de serviços e qualquer negócio que precise gerenciar clientes, financeiro e equipes.' },
-  { q: 'Minha equipe precisa de treinamento?',              a: 'Não. A interface é intuitiva e cada membro vê apenas o que é relevante para seu perfil. A maioria está operando no mesmo dia.' },
-  { q: 'Os dados ficam seguros?',                           a: 'Completamente. Utilizamos Supabase com Row Level Security, criptografia AES-256-GCM para dados sensíveis e HTTPS em todo o tráfego.' },
-  { q: 'Tem versão mobile?',                                a: 'Sim. O L Board é totalmente responsivo e pode ser instalado como PWA na tela inicial do iPhone ou Android.' },
-  { q: 'Como funciona o controle de acesso?',               a: 'Por perfis. Founder tem acesso total. Developer acessa dashboard, demandas e docs. Colaborador acessa dashboard e demandas. Cada convite define o perfil.' },
-]
+const STAT_VALUES = ['6+', 'GPT-4o', 'AES-256', '100%']
+const STAT_KEYS   = ['modules', 'ai', 'crypto', 'mobile'] as const
 
 const LOGOS = ['Agência Pixel', 'TechFlow', 'Studio Criativo', 'Consulta Express', 'GrupoTech', 'StartupBR', 'Criativa Co', 'Nexus Digital']
-
-const STATS = [
-  { value: '6+',     label: 'Módulos nativos' },
-  { value: 'GPT-4o', label: 'IA integrada'    },
-  { value: 'AES-256', label: 'Criptografia'   },
-  { value: '100%',   label: 'Mobile ready'    },
-]
 
 // Stats border classes per index: 2×2 on mobile → 4×1 on sm+
 const STATS_BORDER = [
@@ -182,10 +162,10 @@ function ScreenFinanceiro() {
         ))}
       </div>
       <div style={{ fontSize: 6, color: TEXT3, marginBottom: 6, fontWeight: 700, letterSpacing: '0.07em' }}>ÚLTIMAS TRANSAÇÕES</div>
-      {txs.map((t) => (
-        <div key={t.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4.5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
-          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '64%' }}>{t.label}</span>
-          <span style={{ fontSize: 7.5, fontWeight: 700, color: t.c, flexShrink: 0 }}>{t.value}</span>
+      {txs.map((tx) => (
+        <div key={tx.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4.5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '64%' }}>{tx.label}</span>
+          <span style={{ fontSize: 7.5, fontWeight: 700, color: tx.c, flexShrink: 0 }}>{tx.value}</span>
         </div>
       ))}
     </>
@@ -293,11 +273,11 @@ function InteractiveMockup() {
 
   useEffect(() => {
     if (paused) return
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setDir(1)
       setCur((c) => (c + 1) % MOCK_SCREENS.length)
     }, 4000)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [cur, paused])
 
   const Screen = SCREEN_COMPONENTS[cur]
@@ -427,8 +407,56 @@ function InteractiveMockup() {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const t = useTranslations('landing')
   const [scrolled, setScrolled] = useState(false)
   const [openFaq, setOpenFaq]   = useState<number | null>(null)
+
+  const features = useMemo(() => FEATURE_ICONS.map((icon, i) => ({
+    icon,
+    color: FEATURE_COLORS[i],
+    glow:  FEATURE_GLOWS[i],
+    title: t(`features.f${i}.title` as never),
+    desc:  t(`features.f${i}.desc`  as never),
+  })), [t])
+
+  const steps = useMemo(() => STEP_ICONS.map((icon, i) => ({
+    icon,
+    num:   String(i + 1).padStart(2, '0'),
+    title: t(`steps.s${i}.title` as never),
+    desc:  t(`steps.s${i}.desc`  as never),
+  })), [t])
+
+  const testimonials = useMemo(() => TESTIMONIAL_META.map((meta, i) => ({
+    ...meta,
+    name: t(`testimonials.t${i}.name` as never),
+    role: t(`testimonials.t${i}.role` as never),
+    text: t(`testimonials.t${i}.text` as never),
+  })), [t])
+
+  const faqItems = useMemo(() => [0,1,2,3,4].map(i => ({
+    q: t(`faq.q${i}` as never),
+    a: t(`faq.a${i}` as never),
+  })), [t])
+
+  const stats = useMemo(() => STAT_VALUES.map((value, i) => ({
+    value,
+    label: t(`stats.${STAT_KEYS[i]}`),
+  })), [t])
+
+  const footerCols = useMemo(() => [
+    { title: t('footer.colProduto'), links: [t('footer.lProduto0'), t('footer.lProduto1'), t('footer.lProduto2')] },
+    { title: t('footer.colEmpresa'), links: [t('footer.lEmpresa0'), t('footer.lEmpresa1'), t('footer.lEmpresa2')] },
+    { title: t('footer.colAcesso'),  links: [t('footer.lAcesso0'),  t('footer.lAcesso1')]  },
+  ], [t])
+
+  const navLinks = [
+    { label: t('nav.funcionalidades'), href: '#funcionalidades' },
+    { label: t('nav.comoFunciona'),    href: '#como-funciona'   },
+    { label: t('nav.depoimentos'),     href: '#depoimentos'     },
+  ]
+
+  const heroTags  = [t('hero.tag1'), t('hero.tag2'), t('hero.tag3')]
+  const ctaTags   = [t('cta.tag1'),  t('cta.tag2'),  t('cta.tag3')]
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 30)
@@ -458,17 +486,17 @@ export default function LandingPage() {
 
           {/* Nav links — desktop only */}
           <div className="hidden md:flex items-center gap-8">
-            {['Funcionalidades', 'Como funciona', 'Depoimentos'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="text-[13px] no-underline transition-colors duration-200" style={{ color: TEXT2 }}
+            {navLinks.map((item) => (
+              <a key={item.href} href={item.href} className="text-[13px] no-underline transition-colors duration-200" style={{ color: TEXT2 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = TEXT2)}
-              >{item}</a>
+              >{item.label}</a>
             ))}
           </div>
 
           {/* CTA */}
           <Link href="/auth/login" className="flex items-center gap-1.5 bg-white text-black px-4 py-2 rounded-lg text-[13px] font-bold no-underline shrink-0 hover:bg-white/90" style={{ transition: 'background 0.2s' }}>
-            Entrar <ArrowRight size={13} />
+            {t('nav.entrar')} <ArrowRight size={13} />
           </Link>
         </div>
       </nav>
@@ -489,35 +517,35 @@ export default function LandingPage() {
 
             <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] mb-6 sm:mb-7" style={{ border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.08)', color: '#a5b4fc' }}>
               <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
-              Hub Operacional · Novo jeito de gerir
+              {t('badge')}
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="font-black leading-[1.05] tracking-[-2px] sm:tracking-[-2.5px] mb-4 sm:mb-5" style={{ fontSize: 'clamp(34px, 8vw, 76px)' }}>
               <span style={{ background: 'linear-gradient(180deg,#fff 30%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Tudo que o seu negócio precisa.
+                {t('hero.title')}
               </span>
               <br />
               <span style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Em um só lugar.
+                {t('hero.titleAccent')}
               </span>
             </motion.h1>
 
             <motion.p variants={fadeUp} className="leading-[1.7] mb-8 max-w-[480px] mx-auto lg:mx-0" style={{ fontSize: 'clamp(14px,1.8vw,18px)', color: TEXT2 }}>
-              L Board reúne financeiro, clientes, projetos e IA em uma plataforma que funciona de verdade — para qualquer tipo de negócio.
+              {t('hero.desc')}
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
               <Link href="/auth/register" className="inline-flex items-center justify-center gap-2 bg-white text-black px-6 py-3.5 rounded-xl text-[14px] font-bold no-underline" style={{ boxShadow: '0 0 40px rgba(255,255,255,0.08)', transition: 'opacity 0.2s' }}>
-                Criar conta <ArrowRight size={14} />
+                {t('hero.cta')} <ArrowRight size={14} />
               </Link>
               <a href="#como-funciona" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-[14px] font-medium no-underline" style={{ border: `1px solid ${BORDER}`, color: TEXT2, background: 'rgba(255,255,255,0.03)', transition: 'background 0.2s' }}>
-                Ver como funciona
+                {t('hero.ctaHow')}
               </a>
             </motion.div>
 
             <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center lg:justify-start gap-5 mt-7">
-              {['✓ Sem cartão de crédito', '✓ Setup em minutos', '✓ 100% Mobile'].map((t) => (
-                <span key={t} className="text-[12px]" style={{ color: TEXT3 }}>{t}</span>
+              {heroTags.map((tag) => (
+                <span key={tag} className="text-[12px]" style={{ color: TEXT3 }}>{tag}</span>
               ))}
             </motion.div>
           </motion.div>
@@ -542,7 +570,7 @@ export default function LandingPage() {
       {/* ── Stats ──────────────────────────────────────────────────── */}
       <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeIn} style={{ borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
         <div className="max-w-[1120px] mx-auto grid grid-cols-2 sm:grid-cols-4" style={{ borderColor: BORDER }}>
-          {STATS.map((s, i) => (
+          {stats.map((s, i) => (
             <div key={s.label} className={cn('py-6 px-4 sm:py-7 text-center', STATS_BORDER[i])} style={{ borderColor: BORDER }}>
               <p className="text-[22px] font-black mb-1 tracking-tight" style={{ background: 'linear-gradient(135deg,#fff,rgba(255,255,255,0.7))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.value}</p>
               <p className="text-[11px]" style={{ color: TEXT3 }}>{s.label}</p>
@@ -553,7 +581,7 @@ export default function LandingPage() {
 
       {/* ── Logos strip ────────────────────────────────────────────── */}
       <section className="py-10 sm:py-12 overflow-hidden" style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <p className="text-center text-[11px] tracking-[0.1em] uppercase mb-7" style={{ color: TEXT3 }}>Confiado por equipes de todos os tamanhos</p>
+        <p className="text-center text-[11px] tracking-[0.1em] uppercase mb-7" style={{ color: TEXT3 }}>{t('trusted')}</p>
         <div className="relative overflow-hidden">
           <div className="absolute left-0 inset-y-0 w-16 sm:w-24 z-[1] pointer-events-none" style={{ background: 'linear-gradient(to right,#000,transparent)' }} />
           <div className="absolute right-0 inset-y-0 w-16 sm:w-24 z-[1] pointer-events-none" style={{ background: 'linear-gradient(to left,#000,transparent)' }} />
@@ -568,12 +596,12 @@ export default function LandingPage() {
       {/* ── Features ───────────────────────────────────────────────── */}
       <section id="funcionalidades" className="py-16 sm:py-24 px-5 sm:px-7 max-w-[1120px] mx-auto">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12 sm:mb-16">
-          <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: ACCENT }}>Funcionalidades</motion.p>
+          <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: ACCENT }}>{t('features.sectionLabel')}</motion.p>
           <motion.h2 variants={fadeUp} className="font-black tracking-tight mb-4" style={{ fontSize: 'clamp(26px,4vw,50px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            Tudo que você precisa.<br />Nada que não precisa.
+            {t('features.title')}<br />{t('features.titleLine2')}
           </motion.h2>
           <motion.p variants={fadeUp} className="text-[15px] sm:text-[16px] leading-[1.65] max-w-[440px] mx-auto" style={{ color: TEXT2 }}>
-            Cada módulo foi pensado para times que precisam de clareza e resultado, não de dashboards bonitos.
+            {t('features.subtitle')}
           </motion.p>
         </motion.div>
 
@@ -582,7 +610,7 @@ export default function LandingPage() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-2xl overflow-hidden"
           style={{ border: `1px solid ${BORDER}`, gap: 1, background: BORDER }}
         >
-          {FEATURES.map((f) => {
+          {features.map((f) => {
             const Icon = f.icon
             return (
               <motion.div
@@ -609,14 +637,14 @@ export default function LandingPage() {
       <section id="como-funciona" className="py-16 sm:py-24 px-5 sm:px-7" style={{ background: 'rgba(255,255,255,0.01)', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
         <div className="max-w-[1120px] mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12 sm:mb-16">
-            <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: ACCENT2 }}>Como funciona</motion.p>
+            <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: ACCENT2 }}>{t('steps.sectionLabel')}</motion.p>
             <motion.h2 variants={fadeUp} className="font-black tracking-tight" style={{ fontSize: 'clamp(26px,4vw,50px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              Simples de começar.<br />Poderoso pra crescer.
+              {t('steps.title')}<br />{t('steps.titleLine2')}
             </motion.h2>
           </motion.div>
 
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger} className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
-            {STEPS.map((step) => {
+            {steps.map((step) => {
               const Icon = step.icon
               return (
                 <motion.div key={step.num} variants={fadeUp}>
@@ -638,16 +666,16 @@ export default function LandingPage() {
       {/* ── Testimonials ───────────────────────────────────────────── */}
       <section id="depoimentos" className="py-16 sm:py-24 px-5 sm:px-7 max-w-[1120px] mx-auto">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12 sm:mb-16">
-          <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: '#34d399' }}>Depoimentos</motion.p>
+          <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: '#34d399' }}>{t('testimonials.sectionLabel')}</motion.p>
           <motion.h2 variants={fadeUp} className="font-black tracking-tight" style={{ fontSize: 'clamp(26px,4vw,50px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            Quem usa, não abre mão.
+            {t('testimonials.title')}
           </motion.h2>
         </motion.div>
 
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }} variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {TESTIMONIALS.map((t) => (
+          {testimonials.map((tm) => (
             <motion.div
-              key={t.name}
+              key={tm.name}
               variants={fadeUp}
               whileHover={{ y: -4 }}
               className="p-6 sm:p-7 rounded-2xl"
@@ -656,12 +684,12 @@ export default function LandingPage() {
               <div className="flex gap-1 mb-5">
                 {[...Array(5)].map((_, i) => <span key={i} className="text-amber-400 text-[13px]">★</span>)}
               </div>
-              <p className="text-[14px] leading-[1.7] mb-6 italic" style={{ color: 'rgba(255,255,255,0.75)' }}>"{t.text}"</p>
+              <p className="text-[14px] leading-[1.7] mb-6 italic" style={{ color: 'rgba(255,255,255,0.75)' }}>"{tm.text}"</p>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0" style={{ background: `linear-gradient(135deg,${t.color},${t.color}88)` }}>{t.avatar}</div>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0" style={{ background: `linear-gradient(135deg,${tm.color},${tm.color}88)` }}>{tm.avatar}</div>
                 <div>
-                  <p className="text-[13px] font-semibold">{t.name}</p>
-                  <p className="text-[11px]" style={{ color: TEXT3 }}>{t.role}</p>
+                  <p className="text-[13px] font-semibold">{tm.name}</p>
+                  <p className="text-[11px]" style={{ color: TEXT3 }}>{tm.role}</p>
                 </div>
               </div>
             </motion.div>
@@ -673,14 +701,14 @@ export default function LandingPage() {
       <section className="py-16 sm:py-24 px-5 sm:px-7" style={{ borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.01)' }}>
         <div className="max-w-[680px] mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-10 sm:mb-14">
-            <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: '#fb923c' }}>FAQ</motion.p>
+            <motion.p variants={fadeUp} className="text-[12px] font-semibold tracking-[0.12em] uppercase mb-3" style={{ color: '#fb923c' }}>{t('faq.sectionLabel')}</motion.p>
             <motion.h2 variants={fadeUp} className="font-black tracking-tight" style={{ fontSize: 'clamp(24px,4vw,44px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              Dúvidas frequentes
+              {t('faq.title')}
             </motion.h2>
           </motion.div>
 
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="flex flex-col gap-2">
-            {FAQ_ITEMS.map((item, i) => (
+            {faqItems.map((item, i) => (
               <motion.div key={i} variants={fadeUp} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${BORDER}` }}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -714,20 +742,20 @@ export default function LandingPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] pointer-events-none" style={{ background: 'radial-gradient(ellipse,rgba(99,102,241,0.18),transparent 70%)' }} />
           <div className="relative z-[1]">
             <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] mb-6" style={{ border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.08)', color: '#a5b4fc' }}>
-              <Zap size={11} /> Pronto para começar?
+              <Zap size={11} /> {t('cta.badge')}
             </div>
             <h2 className="font-black tracking-tight mb-4" style={{ fontSize: 'clamp(24px,4vw,52px)', letterSpacing: '-1.5px', background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.6) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              Controle total do seu negócio.<br />Começa hoje.
+              {t('cta.title')}<br />{t('cta.titleLine2')}
             </h2>
             <p className="text-[15px] sm:text-[16px] mb-8 sm:mb-10 max-w-[420px] mx-auto" style={{ color: TEXT2 }}>
-              Junte-se a equipes que pararam de usar 4 ferramentas diferentes e passaram a enxergar o negócio de verdade.
+              {t('cta.desc')}
             </p>
             <Link href="/auth/register" className="inline-flex items-center justify-center gap-2 bg-white text-black px-7 sm:px-9 py-3.5 sm:py-4 rounded-xl text-[14px] sm:text-[15px] font-bold no-underline w-full sm:w-auto max-w-xs sm:max-w-none" style={{ boxShadow: '0 0 60px rgba(255,255,255,0.12)', transition: 'opacity 0.2s' }}>
-              Criar conta grátis <ArrowRight size={16} />
+              {t('cta.button')} <ArrowRight size={16} />
             </Link>
             <div className="flex flex-wrap justify-center gap-5 sm:gap-7 mt-7">
-              {['✓ Sem custo de setup', '✓ Dados 100% seguros', '✓ Cancele quando quiser'].map((t) => (
-                <span key={t} className="text-[12px]" style={{ color: TEXT3 }}>{t}</span>
+              {ctaTags.map((tag) => (
+                <span key={tag} className="text-[12px]" style={{ color: TEXT3 }}>{tag}</span>
               ))}
             </div>
           </div>
@@ -744,16 +772,12 @@ export default function LandingPage() {
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[13px]" style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT2})` }}>L</div>
                 <span className="font-bold text-[14px]">Board</span>
               </div>
-              <p className="text-[12px] leading-[1.6] max-w-[200px]" style={{ color: TEXT3 }}>Hub operacional para qualquer tipo de negócio.</p>
+              <p className="text-[12px] leading-[1.6] max-w-[200px]" style={{ color: TEXT3 }}>{t('footer.tagline')}</p>
             </div>
 
             {/* Links */}
             <div className="grid grid-cols-3 gap-6 sm:flex sm:gap-12">
-              {[
-                { title: 'Produto',  links: ['Funcionalidades', 'Segurança', 'Mobile'] },
-                { title: 'Empresa',  links: ['Sobre', 'Documentação', 'Contato'] },
-                { title: 'Acesso',   links: ['Entrar', 'Criar conta'] },
-              ].map((col) => (
+              {footerCols.map((col) => (
                 <div key={col.title}>
                   <p className="text-[11px] font-bold uppercase tracking-[0.1em] mb-3" style={{ color: TEXT3 }}>{col.title}</p>
                   {col.links.map((l) => (
@@ -765,10 +789,10 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style={{ borderTop: `1px solid ${BORDER}` }}>
-            <p className="text-[12px]" style={{ color: TEXT3 }}>© {new Date().getFullYear()} L Board · lboard.com.br</p>
+            <p className="text-[12px]" style={{ color: TEXT3 }}>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
             <div className="flex items-center gap-1.5">
               <Globe size={11} color={TEXT3} />
-              <span className="text-[12px]" style={{ color: TEXT3 }}>Feito no Brasil</span>
+              <span className="text-[12px]" style={{ color: TEXT3 }}>{t('footer.feitoBrasil')}</span>
             </div>
           </div>
         </div>

@@ -6,23 +6,20 @@ import {
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend, LineChart, Line, BarChart, Bar,
+  ResponsiveContainer, Legend, LineChart, Line,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getDashboardMetrics, getRevenueChartData } from '@/services/dashboard'
 import { getClients } from '@/services/clients'
-import { formatCurrency, formatDate, getStatusColor, getLabelByStatus, getMonthName } from '@/lib/utils'
+import { formatCurrency, formatDate, getMonthName } from '@/lib/utils'
 import type { DashboardMetrics, RevenueChartData, GrowthProjection, GrowthSimulatorInputs, ClientWithProfit } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+import { useTranslations } from 'next-intl'
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
 }
-
-// ─── Growth Simulator ─────────────────────────────────────────────────────────
 
 function generateProjection(inputs: GrowthSimulatorInputs): GrowthProjection[] {
   const result: GrowthProjection[] = []
@@ -46,6 +43,7 @@ function generateProjection(inputs: GrowthSimulatorInputs): GrowthProjection[] {
 }
 
 function GrowthSimulator({ currentMRR }: { currentMRR: number }) {
+  const t = useTranslations('dashboard.simulator')
   const [open, setOpen] = useState(false)
   const [inputs, setInputs] = useState<GrowthSimulatorInputs>({
     currentMRR,
@@ -61,14 +59,11 @@ function GrowthSimulator({ currentMRR }: { currentMRR: number }) {
 
   return (
     <Card>
-      <CardHeader
-        className="cursor-pointer"
-        onClick={() => setOpen(!open)}
-      >
+      <CardHeader className="cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-sm font-semibold">Simulador de Crescimento</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Projeção de MRR com base em crescimento e churn</p>
+            <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('subtitle')}</p>
           </div>
           {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </div>
@@ -76,22 +71,21 @@ function GrowthSimulator({ currentMRR }: { currentMRR: number }) {
 
       {open && (
         <CardContent className="space-y-6">
-          {/* Inputs */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">MRR Atual (R$)</Label>
+              <Label className="text-xs">{t('currentMRR')}</Label>
               <Input type="number" value={inputs.currentMRR} onChange={(e) => setInputs({ ...inputs, currentMRR: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Crescimento Mensal (%)</Label>
+              <Label className="text-xs">{t('growthRate')}</Label>
               <Input type="number" value={inputs.growthRate} onChange={(e) => setInputs({ ...inputs, growthRate: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Churn Mensal (%)</Label>
+              <Label className="text-xs">{t('churnRate')}</Label>
               <Input type="number" value={inputs.churnRate} onChange={(e) => setInputs({ ...inputs, churnRate: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Custo Médio (% da receita)</Label>
+              <Label className="text-xs">{t('avgCost')}</Label>
               <Input type="number" value={inputs.avgCostPercentage} onChange={(e) => setInputs({ ...inputs, avgCostPercentage: Number(e.target.value) })} />
             </div>
           </div>
@@ -105,39 +99,37 @@ function GrowthSimulator({ currentMRR }: { currentMRR: number }) {
                   inputs.months === m ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
                 }`}
               >
-                {m} meses
+                {m} {t('months')}
               </button>
             ))}
           </div>
 
-          {/* Summary */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             <Card className="shadow-none bg-muted/40">
               <CardContent className="p-3">
-                <p className="text-xs text-muted-foreground">MRR Projetado</p>
+                <p className="text-xs text-muted-foreground">{t('projectedMRR')}</p>
                 <p className="text-lg font-bold text-emerald-600">{formatCurrency(finalMRR)}</p>
-                <p className="text-xs text-muted-foreground">em {inputs.months} meses</p>
+                <p className="text-xs text-muted-foreground">{t('inMonths', { months: inputs.months })}</p>
               </CardContent>
             </Card>
             <Card className="shadow-none bg-muted/40">
               <CardContent className="p-3">
-                <p className="text-xs text-muted-foreground">Lucro Acumulado</p>
+                <p className="text-xs text-muted-foreground">{t('totalProfit')}</p>
                 <p className="text-lg font-bold text-blue-600">{formatCurrency(totalProfit)}</p>
-                <p className="text-xs text-muted-foreground">no período</p>
+                <p className="text-xs text-muted-foreground">{t('inPeriod')}</p>
               </CardContent>
             </Card>
             <Card className="shadow-none bg-muted/40">
               <CardContent className="p-3">
-                <p className="text-xs text-muted-foreground">Crescimento Total</p>
+                <p className="text-xs text-muted-foreground">{t('growthTotal')}</p>
                 <p className="text-lg font-bold text-primary">
                   {inputs.currentMRR > 0 ? `${(((finalMRR - inputs.currentMRR) / inputs.currentMRR) * 100).toFixed(0)}%` : '—'}
                 </p>
-                <p className="text-xs text-muted-foreground">vs MRR atual</p>
+                <p className="text-xs text-muted-foreground">{t('vsCurrentMRR')}</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Chart */}
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={projection} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -145,9 +137,9 @@ function GrowthSimulator({ currentMRR }: { currentMRR: number }) {
               <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={52} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Legend />
-              <Line type="monotone" dataKey="mrr" name="MRR" stroke="#10b981" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="costs" name="Custos" stroke="#ef4444" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="profit" name="Lucro" stroke="#3b82f6" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="mrr" name={t('mrr')} stroke="#10b981" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="costs" name={t('costs')} stroke="#ef4444" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="profit" name={t('profit')} stroke="#3b82f6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -156,9 +148,10 @@ function GrowthSimulator({ currentMRR }: { currentMRR: number }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
+  const t  = useTranslations('dashboard')
+  const tm = useTranslations('dashboard.metrics')
+  const ts = useTranslations('dashboard.simulator')
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [chartData, setChartData] = useState<RevenueChartData[]>([])
   const [clients, setClients] = useState<ClientWithProfit[]>([])
@@ -172,7 +165,6 @@ export default function DashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Alertas de renovação (próximos 30 dias)
   const today = new Date()
   const in30 = new Date(today); in30.setDate(in30.getDate() + 30)
   const renewalAlerts = clients.filter((c) => {
@@ -181,7 +173,6 @@ export default function DashboardPage() {
     return d >= today && d <= in30
   })
 
-  // Comparativo mês atual vs anterior
   const currentMonth = chartData[chartData.length - 1]
   const prevMonth = chartData[chartData.length - 2]
   const revDiff = currentMonth && prevMonth && prevMonth.revenue > 0
@@ -192,8 +183,8 @@ export default function DashboardPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao conectar com o banco de dados.</p>
-        <p className="text-xs text-muted-foreground">Verifique as variáveis de ambiente e a conexão com o Supabase.</p>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <p className="text-xs text-muted-foreground">{t('errorLoadingDesc')}</p>
       </div>
     )
   }
@@ -214,25 +205,24 @@ export default function DashboardPage() {
   if (!metrics) return null
 
   const cards = [
-    { title: 'MRR', value: formatCurrency(metrics.mrr), icon: DollarSign, description: 'Receita mensal recorrente', color: 'text-emerald-600' },
-    { title: 'Receita Total', value: formatCurrency(metrics.totalRevenue), icon: TrendingUp, description: revDiff !== null ? `${revDiff >= 0 ? '+' : ''}${revDiff.toFixed(1)}% vs mês anterior` : 'Todas as entradas confirmadas', color: 'text-blue-600' },
-    { title: 'Custos Totais', value: formatCurrency(metrics.totalCosts), icon: TrendingDown, description: 'Total de despesas registradas', color: 'text-red-500' },
-    { title: 'Lucro', value: formatCurrency(metrics.profit), icon: TrendingUp, description: 'Receita menos custos', color: metrics.profit >= 0 ? 'text-emerald-600' : 'text-red-500' },
-    { title: 'Clientes Ativos', value: String(metrics.activeClients), icon: Users, description: `${metrics.churnedClients} churned`, color: 'text-blue-600' },
-    { title: 'Tarefas Pendentes', value: String(metrics.pendingTasks), icon: ListTodo, description: 'Fora do status "done"', color: 'text-amber-600' },
-    { title: 'Receita em Risco', value: formatCurrency(metrics.revenueAtRisk), icon: AlertTriangle, description: 'Tasks que impactam receita', color: 'text-red-500' },
+    { title: tm('mrr'),          value: formatCurrency(metrics.mrr),          icon: DollarSign,  description: tm('mrrDesc'),          color: 'text-emerald-600' },
+    { title: tm('revenue'),      value: formatCurrency(metrics.totalRevenue),  icon: TrendingUp,  description: revDiff !== null ? tm('vsPrevMonth', { pct: `${revDiff >= 0 ? '+' : ''}${revDiff.toFixed(1)}` }) : tm('allEntries'), color: 'text-blue-600' },
+    { title: tm('totalCosts'),   value: formatCurrency(metrics.totalCosts),    icon: TrendingDown,description: tm('costsDesc'),         color: 'text-red-500' },
+    { title: tm('profit'),       value: formatCurrency(metrics.profit),        icon: TrendingUp,  description: tm('profitDesc'),        color: metrics.profit >= 0 ? 'text-emerald-600' : 'text-red-500' },
+    { title: tm('activeClients'),value: String(metrics.activeClients),         icon: Users,       description: tm('churnedDesc', { count: metrics.churnedClients }), color: 'text-blue-600' },
+    { title: tm('pendingTasks'), value: String(metrics.pendingTasks),          icon: ListTodo,    description: tm('pendingTasksDesc'),  color: 'text-amber-600' },
+    { title: tm('revenueAtRisk'),value: formatCurrency(metrics.revenueAtRisk), icon: AlertTriangle,description: tm('riskDesc'),         color: 'text-red-500' },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Alertas de renovação */}
       {renewalAlerts.length > 0 && (
         <Card className="border-amber-300 bg-amber-50">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-amber-600" />
               <CardTitle className="text-sm text-amber-800">
-                {renewalAlerts.length} cliente{renewalAlerts.length > 1 ? 's' : ''} com renovação nos próximos 30 dias
+                {t('renewalAlert', { count: renewalAlerts.length })}
               </CardTitle>
             </div>
           </CardHeader>
@@ -250,7 +240,6 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Metric Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {cards.map((card) => (
           <Card key={card.title}>
@@ -266,10 +255,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Revenue Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold">Receita vs Custos — últimos 6 meses</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t('revenueVsCosts')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
@@ -293,15 +281,14 @@ export default function DashboardPage() {
               <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={52} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Legend />
-              <Area type="monotone" dataKey="revenue" name="Receita" stroke="#10b981" fill="url(#colorRevenue)" strokeWidth={2} />
-              <Area type="monotone" dataKey="costs" name="Custos" stroke="#ef4444" fill="url(#colorCosts)" strokeWidth={2} />
-              <Area type="monotone" dataKey="profit" name="Lucro" stroke="#3b82f6" fill="url(#colorProfit)" strokeWidth={2} />
+              <Area type="monotone" dataKey="revenue" name={ts('mrr')} stroke="#10b981" fill="url(#colorRevenue)" strokeWidth={2} />
+              <Area type="monotone" dataKey="costs" name={ts('costs')} stroke="#ef4444" fill="url(#colorCosts)" strokeWidth={2} />
+              <Area type="monotone" dataKey="profit" name={ts('profit')} stroke="#3b82f6" fill="url(#colorProfit)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Growth Simulator */}
       <GrowthSimulator currentMRR={metrics.mrr} />
     </div>
   )

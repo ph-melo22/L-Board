@@ -36,11 +36,12 @@ import {
   type ContaPagar, type ContaPagarFormData,
   type ContaReceber, type ContaReceberFormData,
 } from '@/services/contador'
-import { formatCurrency, formatDate, getLabelByStatus, getStatusColor } from '@/lib/utils'
+import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils'
 import type {
   FinancialEntry, FinancialEntryFormData, FinancialEntryType, FinancialEntryStatus, FinancialEntryCategory,
   FinancialExpense, FinancialExpenseFormData, ExpenseType, ExpenseCategory, ExpenseNature, Client,
 } from '@/types'
+import { useTranslations, useLocale } from 'next-intl'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -69,14 +70,14 @@ const EMPTY_CONTA_RECEBER: ContaReceberFormData = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getPeriodOptions() {
-  const opts = [{ value: 'all', label: 'Todo o período' }]
+function getPeriodOptions(allLabel: string, accLabelFn: (year: number) => string, locale: string) {
+  const opts = [{ value: 'all', label: allLabel }]
   const now = new Date()
-  opts.push({ value: String(now.getFullYear()), label: `Acumulado ${now.getFullYear()}` })
+  opts.push({ value: String(now.getFullYear()), label: accLabelFn(now.getFullYear()) })
   for (let i = 0; i < 24; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    const label = d.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
     opts.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) })
   }
   return opts
@@ -104,22 +105,23 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className ?? ''}`} />
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, label }: { status: string; label: string }) {
   return (
     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(status)}`}>
-      {getLabelByStatus(status)}
+      {label}
     </span>
   )
 }
 
 function KPICard({
-  title, value, sub, color = 'default', trend,
+  title, value, sub, color = 'default', trend, trendLabel,
 }: {
   title: string
   value: string
   sub?: string
   color?: 'green' | 'red' | 'amber' | 'default'
   trend?: number
+  trendLabel?: string
 }) {
   const valueColor = {
     green: 'text-emerald-600',
@@ -139,7 +141,7 @@ function KPICard({
         {trend !== undefined && trend !== 0 && (
           <div className={`mt-1 flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
             {trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            {Math.abs(trend).toFixed(1)}% vs mês anterior
+            {Math.abs(trend).toFixed(1)}% {trendLabel}
           </div>
         )}
       </CardContent>
@@ -182,8 +184,17 @@ function DRERow({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ContadorPage() {
+  const t = useTranslations('contador')
+  const tc = useTranslations('common')
+  const tl = useTranslations('labels')
+  const td = useTranslations('contador.dialogs')
+  const locale = useLocale()
   const { toast } = useToast()
-  const periodOptions = useMemo(() => getPeriodOptions(), [])
+
+  const periodOptions = useMemo(
+    () => getPeriodOptions(t('allPeriods'), (year) => t('accumulated', { year }), locale),
+    [t, locale]
+  )
 
   // ── Data state ──
   const [entries, setEntries] = useState<FinancialEntry[]>([])
@@ -273,10 +284,10 @@ export default function ContadorPage() {
   async function saveEntry() {
     setSaving(true)
     try {
-      if (entryModal.item) { await updateFinancialEntry(entryModal.item.id, entryForm); toast({ title: 'Receita atualizada' }) }
-      else { await createFinancialEntry(entryForm); toast({ title: 'Receita criada' }) }
+      if (entryModal.item) { await updateFinancialEntry(entryModal.item.id, entryForm); toast({ title: t('toast.receitaUpdated') }) }
+      else { await createFinancialEntry(entryForm); toast({ title: t('toast.receitaCreated') }) }
       setEntryModal({ open: false, item: null }); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -290,10 +301,10 @@ export default function ContadorPage() {
   async function saveExpense() {
     setSaving(true)
     try {
-      if (expenseModal.item) { await updateFinancialExpense(expenseModal.item.id, expenseForm); toast({ title: 'Despesa atualizada' }) }
-      else { await createFinancialExpense(expenseForm); toast({ title: 'Despesa criada' }) }
+      if (expenseModal.item) { await updateFinancialExpense(expenseModal.item.id, expenseForm); toast({ title: t('toast.despesaUpdated') }) }
+      else { await createFinancialExpense(expenseForm); toast({ title: t('toast.despesaCreated') }) }
       setExpenseModal({ open: false, item: null }); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -307,10 +318,10 @@ export default function ContadorPage() {
   async function saveImposto() {
     setSaving(true)
     try {
-      if (impostoModal.item) { await updateImposto(impostoModal.item.id, impostoForm); toast({ title: 'Imposto atualizado' }) }
-      else { await createImposto(impostoForm); toast({ title: 'Imposto criado' }) }
+      if (impostoModal.item) { await updateImposto(impostoModal.item.id, impostoForm); toast({ title: t('toast.impostoUpdated') }) }
+      else { await createImposto(impostoForm); toast({ title: t('toast.impostoCreated') }) }
       setImpostoModal({ open: false, item: null }); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -324,10 +335,10 @@ export default function ContadorPage() {
   async function saveContaPagar() {
     setSaving(true)
     try {
-      if (contaPagarModal.item) { await updateContaPagar(contaPagarModal.item.id, contaPagarForm); toast({ title: 'Conta atualizada' }) }
-      else { await createContaPagar(contaPagarForm); toast({ title: 'Conta criada' }) }
+      if (contaPagarModal.item) { await updateContaPagar(contaPagarModal.item.id, contaPagarForm); toast({ title: t('toast.contaUpdated') }) }
+      else { await createContaPagar(contaPagarForm); toast({ title: t('toast.contaCreated') }) }
       setContaPagarModal({ open: false, item: null }); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -341,10 +352,10 @@ export default function ContadorPage() {
   async function saveContaReceber() {
     setSaving(true)
     try {
-      if (contaReceberModal.item) { await updateContaReceber(contaReceberModal.item.id, contaReceberForm); toast({ title: 'Conta atualizada' }) }
-      else { await createContaReceber(contaReceberForm); toast({ title: 'Conta criada' }) }
+      if (contaReceberModal.item) { await updateContaReceber(contaReceberModal.item.id, contaReceberForm); toast({ title: t('toast.contaUpdated') }) }
+      else { await createContaReceber(contaReceberForm); toast({ title: t('toast.contaCreated') }) }
       setContaReceberModal({ open: false, item: null }); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -358,8 +369,8 @@ export default function ContadorPage() {
       else if (type === 'imposto') await deleteImposto(id)
       else if (type === 'pagar') await deleteContaPagar(id)
       else if (type === 'receber') await deleteContaReceber(id)
-      toast({ title: 'Removido com sucesso' }); load()
-    } catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+      toast({ title: t('removedSuccess') }); load()
+    } catch { toast({ title: t('toast.removeError'), variant: 'destructive' }) }
     finally { setDeleteTarget(null) }
   }
 
@@ -368,8 +379,8 @@ export default function ContadorPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao carregar dados financeiros.</p>
-        <Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
       </div>
     )
   }
@@ -403,12 +414,12 @@ export default function ContadorPage() {
 
       <Tabs defaultValue="visao-geral">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
-          <TabsTrigger value="dre">DRE</TabsTrigger>
-          <TabsTrigger value="caixa">Caixa</TabsTrigger>
-          <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
-          <TabsTrigger value="contas">Contas</TabsTrigger>
-          <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
+          <TabsTrigger value="visao-geral">{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="dre">{t('tabs.dre')}</TabsTrigger>
+          <TabsTrigger value="caixa">{t('tabs.caixa')}</TabsTrigger>
+          <TabsTrigger value="lancamentos">{t('tabs.lancamentos')}</TabsTrigger>
+          <TabsTrigger value="contas">{t('tabs.contas')}</TabsTrigger>
+          <TabsTrigger value="indicadores">{t('tabs.indicadores')}</TabsTrigger>
         </TabsList>
 
         {/* ── TAB: VISÃO GERAL ─────────────────────────────────────────────── */}
@@ -420,45 +431,45 @@ export default function ContadorPage() {
           ) : (
             <>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Saúde Financeira</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('overview.financialHealth')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="Receita Total" value={formatCurrency(dreAll.receitaBruta)} color="green" />
-                  <KPICard title="Lucro Líquido" value={formatCurrency(dreAll.lucroLiquido)} color={dreAll.lucroLiquido >= 0 ? 'green' : 'red'} />
-                  <KPICard title="EBITDA" value={formatCurrency(dreAll.ebitda)} color={dreAll.ebitda >= 0 ? 'green' : 'red'} sub={`Margem ${dreAll.margemEbitda.toFixed(1)}%`} />
-                  <KPICard title="Margem Bruta" value={`${dreAll.margemBruta.toFixed(1)}%`} color={dreAll.margemBruta >= 40 ? 'green' : dreAll.margemBruta >= 20 ? 'amber' : 'red'} sub={`Margem Líquida ${dreAll.margemLiquida.toFixed(1)}%`} />
+                  <KPICard title={t('kpi.totalRevenue')} value={formatCurrency(dreAll.receitaBruta)} color="green" />
+                  <KPICard title={t('kpi.netProfit')} value={formatCurrency(dreAll.lucroLiquido)} color={dreAll.lucroLiquido >= 0 ? 'green' : 'red'} />
+                  <KPICard title={t('kpi.ebitda')} value={formatCurrency(dreAll.ebitda)} color={dreAll.ebitda >= 0 ? 'green' : 'red'} sub={t('kpi.ebitdaMarginLabel', { pct: dreAll.margemEbitda.toFixed(1) })} />
+                  <KPICard title={t('kpi.grossMargin')} value={`${dreAll.margemBruta.toFixed(1)}%`} color={dreAll.margemBruta >= 40 ? 'green' : dreAll.margemBruta >= 20 ? 'amber' : 'red'} sub={t('kpi.netMarginLabel', { pct: dreAll.margemLiquida.toFixed(1) })} />
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Caixa</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('overview.cash')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="MRR" value={formatCurrency(ind.mrr)} color="green" sub="Receita recorrente mensal" />
-                  <KPICard title="Caixa Estimado" value={formatCurrency(saldoEstimado)} color={saldoEstimado >= 0 ? 'green' : 'red'} sub="Baseado em lançamentos" />
-                  <KPICard title="Burn Rate" value={formatCurrency(ind.burnRate)} sub="Média mensal (3 meses)" />
-                  <KPICard title="Runway Est." value={ind.runway > 0 ? `${ind.runway.toFixed(1)} meses` : '—'} color={ind.runway > 6 ? 'green' : ind.runway > 3 ? 'amber' : ind.runway > 0 ? 'red' : 'default'} sub="Reserva estimada" />
+                  <KPICard title={t('kpi.mrr')} value={formatCurrency(ind.mrr)} color="green" sub={t('kpi.mrrSub')} />
+                  <KPICard title={t('kpi.estimatedCash')} value={formatCurrency(saldoEstimado)} color={saldoEstimado >= 0 ? 'green' : 'red'} sub={t('kpi.estimatedCashSub')} />
+                  <KPICard title={t('kpi.burnRate')} value={formatCurrency(ind.burnRate)} sub={t('kpi.burnRateSub')} />
+                  <KPICard title={t('kpi.runway')} value={ind.runway > 0 ? t('kpi.runwayMonths', { months: ind.runway.toFixed(1) }) : '—'} color={ind.runway > 6 ? 'green' : ind.runway > 3 ? 'amber' : ind.runway > 0 ? 'red' : 'default'} sub={t('kpi.runwaySub')} />
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Eficiência</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('overview.efficiency')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="CAC" value={ind.cac > 0 ? formatCurrency(ind.cac) : '—'} sub="Custo de aquisição" />
-                  <KPICard title="LTV Est." value={ind.ltv > 0 ? formatCurrency(ind.ltv) : '—'} sub="Valor do cliente (5% churn)" />
-                  <KPICard title="LTV / CAC" value={ind.ltvCac > 0 ? `${ind.ltvCac.toFixed(2)}x` : '—'} color={ind.ltvCac >= 3 ? 'green' : ind.ltvCac >= 1 ? 'amber' : ind.ltvCac > 0 ? 'red' : 'default'} sub="Ideal ≥ 3x" />
-                  <KPICard title="Ticket Médio" value={formatCurrency(ind.ticketMedio)} trend={ind.crescimentoMensal} />
+                  <KPICard title={t('kpi.cac')} value={ind.cac > 0 ? formatCurrency(ind.cac) : '—'} sub={t('kpi.cacSub')} />
+                  <KPICard title={t('kpi.ltv')} value={ind.ltv > 0 ? formatCurrency(ind.ltv) : '—'} sub={t('kpi.ltvSub')} />
+                  <KPICard title={t('kpi.ltvCac')} value={ind.ltvCac > 0 ? `${ind.ltvCac.toFixed(2)}x` : '—'} color={ind.ltvCac >= 3 ? 'green' : ind.ltvCac >= 1 ? 'amber' : ind.ltvCac > 0 ? 'red' : 'default'} sub={t('kpi.ltvCacSub')} />
+                  <KPICard title={t('kpi.avgTicket')} value={formatCurrency(ind.ticketMedio)} trend={ind.crescimentoMensal} trendLabel={t('kpi.vsPrevMonth')} />
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Riscos</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('overview.risks')}</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Card>
                     <CardContent className="pt-4 space-y-2">
                       {[
-                        { label: 'Impostos vencidos', value: impostos.filter((i) => i.status !== 'pago' && i.vencimento && i.vencimento < todayStr).length, icon: XCircle, bad: true },
-                        { label: 'Contas vencidas', value: contasPagar.filter((c) => c.status !== 'pago' && c.vencimento < todayStr).length, icon: XCircle, bad: true },
-                        { label: 'Impostos pendentes', value: impostos.filter((i) => i.status === 'pendente').length, icon: Clock, bad: false },
-                        { label: 'Contas a pagar pendentes', value: contasPagar.filter((c) => c.status === 'pendente').length, icon: Clock, bad: false },
+                        { label: t('overview.overdueImpostos'), value: impostos.filter((i) => i.status !== 'pago' && i.vencimento && i.vencimento < todayStr).length, icon: XCircle, bad: true },
+                        { label: t('overview.overdueContas'), value: contasPagar.filter((c) => c.status !== 'pago' && c.vencimento < todayStr).length, icon: XCircle, bad: true },
+                        { label: t('overview.pendingImpostos'), value: impostos.filter((i) => i.status === 'pendente').length, icon: Clock, bad: false },
+                        { label: t('overview.pendingContas'), value: contasPagar.filter((c) => c.status === 'pendente').length, icon: Clock, bad: false },
                       ].map((item) => (
                         <div key={item.label} className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2">
@@ -473,10 +484,10 @@ export default function ContadorPage() {
                   <Card>
                     <CardContent className="pt-4 space-y-2">
                       {[
-                        { label: 'Receita a confirmar', value: formatCurrency(entries.filter((e) => e.status === 'pending').reduce((s, e) => s + e.value, 0)) },
-                        { label: 'A receber (pendente)', value: formatCurrency(contasReceber.filter((c) => c.status === 'pendente').reduce((s, c) => s + c.valor, 0)) },
-                        { label: 'Inadimplência', value: formatCurrency(contasReceber.filter((c) => c.status === 'inadimplente' || (c.status === 'pendente' && c.previsao < todayStr)).reduce((s, c) => s + c.valor, 0)) },
-                        { label: 'Entradas pendentes total', value: formatCurrency(pendentesEntradas) },
+                        { label: t('overview.pendingRevenue'), value: formatCurrency(entries.filter((e) => e.status === 'pending').reduce((s, e) => s + e.value, 0)) },
+                        { label: t('overview.pendingReceivables'), value: formatCurrency(contasReceber.filter((c) => c.status === 'pendente').reduce((s, c) => s + c.valor, 0)) },
+                        { label: t('overview.delinquency'), value: formatCurrency(contasReceber.filter((c) => c.status === 'inadimplente' || (c.status === 'pendente' && c.previsao < todayStr)).reduce((s, c) => s + c.valor, 0)) },
+                        { label: t('overview.totalPendingEntries'), value: formatCurrency(pendentesEntradas) },
                       ].map((item) => (
                         <div key={item.label} className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">{item.label}</span>
@@ -494,7 +505,7 @@ export default function ContadorPage() {
         {/* ── TAB: DRE ─────────────────────────────────────────────────────── */}
         <TabsContent value="dre" className="space-y-4 pt-4">
           <div className="flex items-center gap-3">
-            <Label className="text-xs text-muted-foreground shrink-0">Período:</Label>
+            <Label className="text-xs text-muted-foreground shrink-0">{t('period')}</Label>
             <Select value={drePeriod} onValueChange={setDrePeriod}>
               <SelectTrigger className="w-56 h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -505,46 +516,44 @@ export default function ContadorPage() {
 
           {loading ? <Skeleton className="h-96" /> : (
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><BarChart3 className="h-4 w-4" /> Demonstrativo de Resultado (DRE)</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><BarChart3 className="h-4 w-4" /> {t('dre.title')}</CardTitle></CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground">
-                        <th className="pb-2 text-left font-medium">Linha</th>
-                        <th className="pb-2 text-right font-medium w-40">Valor</th>
-                        <th className="pb-2 text-right font-medium pl-4 w-16">Margem</th>
+                        <th className="pb-2 text-left font-medium">{t('dre.line')}</th>
+                        <th className="pb-2 text-right font-medium w-40">{t('dre.value')}</th>
+                        <th className="pb-2 text-right font-medium pl-4 w-16">{t('dre.margin')}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <DRERow label="Receita Bruta" value={dre.receitaBruta} bold />
-                      {dre.deducoes > 0 && <DRERow label="(-) Deduções (PIS/COFINS/ISS/ICMS)" value={-dre.deducoes} indent={1} sub />}
-                      <DRERow label="= Receita Líquida" value={dre.receitaLiquida} bold highlight />
+                      <DRERow label={t('dre.grossRevenue')} value={dre.receitaBruta} bold />
+                      {dre.deducoes > 0 && <DRERow label={t('dre.deductions')} value={-dre.deducoes} indent={1} sub />}
+                      <DRERow label={t('dre.netRevenue')} value={dre.receitaLiquida} bold highlight />
                       <DRERow separator />
-                      {dre.cmv > 0 && <DRERow label="(-) CMV / Custo do Produto ou Serviço" value={-dre.cmv} indent={1} sub />}
-                      <DRERow label="= Lucro Bruto" value={dre.lucroBruto} bold highlight margin={dre.margemBruta} />
+                      {dre.cmv > 0 && <DRERow label={t('dre.cogs')} value={-dre.cmv} indent={1} sub />}
+                      <DRERow label={t('dre.grossProfit')} value={dre.lucroBruto} bold highlight margin={dre.margemBruta} />
                       <DRERow separator />
-                      <DRERow label="Despesas Operacionais" bold />
-                      {dre.opexPayroll > 0 && <DRERow label="Folha de Pagamento" value={-dre.opexPayroll} indent={1} sub />}
-                      {dre.opexMarketing > 0 && <DRERow label="Marketing" value={-dre.opexMarketing} indent={1} sub />}
-                      {dre.opexInfra > 0 && <DRERow label="Infraestrutura" value={-dre.opexInfra} indent={1} sub />}
-                      {dre.opexTools > 0 && <DRERow label="Ferramentas" value={-dre.opexTools} indent={1} sub />}
-                      {dre.opexOffice > 0 && <DRERow label="Escritório" value={-dre.opexOffice} indent={1} sub />}
-                      {dre.opexOther > 0 && <DRERow label="Outras Despesas" value={-dre.opexOther} indent={1} sub />}
-                      <DRERow label="= Total Despesas Operacionais" value={-dre.opexTotal} bold />
+                      <DRERow label={t('dre.opex')} bold />
+                      {dre.opexPayroll > 0 && <DRERow label={t('dre.opexPayroll')} value={-dre.opexPayroll} indent={1} sub />}
+                      {dre.opexMarketing > 0 && <DRERow label={t('dre.opexMarketing')} value={-dre.opexMarketing} indent={1} sub />}
+                      {dre.opexInfra > 0 && <DRERow label={t('dre.opexInfra')} value={-dre.opexInfra} indent={1} sub />}
+                      {dre.opexTools > 0 && <DRERow label={t('dre.opexTools')} value={-dre.opexTools} indent={1} sub />}
+                      {dre.opexOffice > 0 && <DRERow label={t('dre.opexOffice')} value={-dre.opexOffice} indent={1} sub />}
+                      {dre.opexOther > 0 && <DRERow label={t('dre.opexOther')} value={-dre.opexOther} indent={1} sub />}
+                      <DRERow label={t('dre.totalOpex')} value={-dre.opexTotal} bold />
                       <DRERow separator />
-                      <DRERow label="= EBIT (Resultado Operacional)" value={dre.ebit} bold highlight />
-                      {dre.da > 0 && <DRERow label="(+) Depreciação e Amortização" value={dre.da} indent={1} sub />}
-                      <DRERow label="= EBITDA" value={dre.ebitda} bold highlight margin={dre.margemEbitda} />
+                      <DRERow label={t('dre.ebit')} value={dre.ebit} bold highlight />
+                      {dre.da > 0 && <DRERow label={t('dre.daLine')} value={dre.da} indent={1} sub />}
+                      <DRERow label={t('dre.ebitdaLine')} value={dre.ebitda} bold highlight margin={dre.margemEbitda} />
                       <DRERow separator />
-                      {dre.impostosLucro > 0 && <DRERow label="(-) Impostos s/ Lucro (IRPJ/CSLL)" value={-dre.impostosLucro} indent={1} sub />}
-                      <DRERow label="= Lucro Líquido" value={dre.lucroLiquido} bold highlight margin={dre.margemLiquida} />
+                      {dre.impostosLucro > 0 && <DRERow label={t('dre.taxesLine')} value={-dre.impostosLucro} indent={1} sub />}
+                      <DRERow label={t('dre.netProfit')} value={dre.lucroLiquido} bold highlight margin={dre.margemLiquida} />
                     </tbody>
                   </table>
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  * Despesas classificadas como &quot;CMV/CPV&quot; ou &quot;Depr./Amort.&quot; na aba Lançamentos aparecem nas linhas corretas do DRE. Impostos sobre receita (PIS, COFINS, ISS) e sobre lucro (IRPJ, CSLL) são lançados na aba Impostos.
-                </p>
+                <p className="mt-4 text-xs text-muted-foreground">{t('dre.note')}</p>
               </CardContent>
             </Card>
           )}
@@ -560,13 +569,13 @@ export default function ContadorPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <KPICard title="Caixa Estimado" value={formatCurrency(saldoEstimado)} color={saldoEstimado >= 0 ? 'green' : 'red'} sub="Receitas conf. − Despesas (total)" />
-                <KPICard title="Entradas Pendentes" value={formatCurrency(pendentesEntradas)} color="amber" sub="Receitas pend. + contas a receber" />
-                <KPICard title="Saídas Pendentes" value={formatCurrency(pendentesSaidas)} color="red" sub="Contas a pagar + impostos pend." />
+                <KPICard title={t('kpi.estimatedCash')} value={formatCurrency(saldoEstimado)} color={saldoEstimado >= 0 ? 'green' : 'red'} sub={t('caixa.estimatedCashSub')} />
+                <KPICard title={t('caixa.pendingEntries')} value={formatCurrency(pendentesEntradas)} color="amber" sub={t('caixa.pendingEntriesSub')} />
+                <KPICard title={t('caixa.pendingSaidas')} value={formatCurrency(pendentesSaidas)} color="red" sub={t('caixa.pendingSaidasSub')} />
               </div>
 
               <Card>
-                <CardHeader><CardTitle className="text-sm">Entradas vs Saídas — últimos 8 meses</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-sm">{t('caixa.title')}</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={280}>
                     <ComposedChart data={fluxo} margin={{ top: 4, right: 8, bottom: 4, left: 8 }}>
@@ -576,10 +585,10 @@ export default function ContadorPage() {
                       <RechartTooltip
                         formatter={(v: number, name: string) => [
                           formatCurrency(v),
-                          name === 'entradas' ? 'Entradas' : name === 'saidas' ? 'Saídas' : 'Saldo Mensal',
+                          name === 'entradas' ? t('caixa.chartEntries') : name === 'saidas' ? t('caixa.chartSaidas') : t('caixa.chartBalance'),
                         ]}
                       />
-                      <Legend formatter={(v) => v === 'entradas' ? 'Entradas' : v === 'saidas' ? 'Saídas' : 'Saldo Mensal'} />
+                      <Legend formatter={(v) => v === 'entradas' ? t('caixa.chartEntries') : v === 'saidas' ? t('caixa.chartSaidas') : t('caixa.chartBalance')} />
                       <Bar dataKey="entradas" fill="#10b981" radius={[3, 3, 0, 0]} />
                       <Bar dataKey="saidas" fill="#f87171" radius={[3, 3, 0, 0]} />
                       <Line type="monotone" dataKey="saldo" stroke="#6366f1" strokeWidth={2} dot={false} />
@@ -589,12 +598,12 @@ export default function ContadorPage() {
               </Card>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Projeção (baseada na média dos últimos 3 meses)</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('caixa.projection')}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: '30 dias', value: saldoEstimado + avgNet },
-                    { label: '60 dias', value: saldoEstimado + avgNet * 2 },
-                    { label: '90 dias', value: saldoEstimado + avgNet * 3 },
+                    { label: t('caixa.days30'), value: saldoEstimado + avgNet },
+                    { label: t('caixa.days60'), value: saldoEstimado + avgNet * 2 },
+                    { label: t('caixa.days90'), value: saldoEstimado + avgNet * 3 },
                   ].map((p) => (
                     <Card key={p.label}>
                       <CardHeader className="pb-1"><CardTitle className="text-xs text-muted-foreground">{p.label}</CardTitle></CardHeader>
@@ -614,14 +623,14 @@ export default function ContadorPage() {
           <Tabs value={lancTab} onValueChange={setLancTab}>
             <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
               <TabsList>
-                <TabsTrigger value="receitas">Receitas ({entries.length})</TabsTrigger>
-                <TabsTrigger value="despesas">Despesas ({expenses.length})</TabsTrigger>
-                <TabsTrigger value="impostos">Impostos ({impostos.length})</TabsTrigger>
+                <TabsTrigger value="receitas">{t('lancamentos.receitas')} ({entries.length})</TabsTrigger>
+                <TabsTrigger value="despesas">{t('lancamentos.despesas')} ({expenses.length})</TabsTrigger>
+                <TabsTrigger value="impostos">{t('lancamentos.impostos')} ({impostos.length})</TabsTrigger>
               </TabsList>
               <div>
-                {lancTab === 'receitas' && <Button size="sm" onClick={() => openEntry()}><Plus className="mr-1.5 h-4 w-4" />Nova Receita</Button>}
-                {lancTab === 'despesas' && <Button size="sm" onClick={() => openExpense()}><Plus className="mr-1.5 h-4 w-4" />Nova Despesa</Button>}
-                {lancTab === 'impostos' && <Button size="sm" onClick={() => openImposto()}><Plus className="mr-1.5 h-4 w-4" />Novo Imposto</Button>}
+                {lancTab === 'receitas' && <Button size="sm" onClick={() => openEntry()}><Plus className="mr-1.5 h-4 w-4" />{t('lancamentos.newReceita')}</Button>}
+                {lancTab === 'despesas' && <Button size="sm" onClick={() => openExpense()}><Plus className="mr-1.5 h-4 w-4" />{t('lancamentos.newDespesa')}</Button>}
+                {lancTab === 'impostos' && <Button size="sm" onClick={() => openImposto()}><Plus className="mr-1.5 h-4 w-4" />{t('lancamentos.newImposto')}</Button>}
               </div>
             </div>
 
@@ -629,26 +638,26 @@ export default function ContadorPage() {
             <TabsContent value="receitas">
               <Card><CardContent className="p-0">
                 {loading ? <div className="p-4 space-y-2">{[1,2,3].map((i) => <Skeleton key={i} className="h-10" />)}</div>
-                  : entries.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nenhuma receita lançada.</p>
+                  : entries.length === 0 ? <p className="p-6 text-sm text-muted-foreground">{t('lancamentos.noReceitas')}</p>
                   : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead><tr className="border-b text-xs text-muted-foreground">
-                          <th className="px-4 py-3 text-left font-medium">Data</th>
-                          <th className="px-4 py-3 text-left font-medium">Cliente</th>
-                          <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                          <th className="px-4 py-3 text-left font-medium">Status</th>
-                          <th className="px-4 py-3 text-right font-medium">Valor</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colDate')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colClient')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colCategory')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colType')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colStatus')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('lancamentos.colValue')}</th>
                           <th className="px-4 py-3" />
                         </tr></thead>
                         <tbody>{entries.map((e) => (
                           <tr key={e.id} className="border-b last:border-0 hover:bg-muted/40">
                             <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
                             <td className="px-4 py-3">{e.clients?.name ?? '—'}</td>
-                            <td className="px-4 py-3">{getLabelByStatus(e.category)}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{getLabelByStatus(e.type)}</td>
-                            <td className="px-4 py-3"><StatusBadge status={e.status} /></td>
+                            <td className="px-4 py-3">{tl(e.category as never)}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{tl(e.type as never)}</td>
+                            <td className="px-4 py-3"><StatusBadge status={e.status} label={tl(e.status as never)} /></td>
                             <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
                             <td className="px-4 py-3">
                               <div className="flex justify-end gap-1">
@@ -668,26 +677,26 @@ export default function ContadorPage() {
             <TabsContent value="despesas">
               <Card><CardContent className="p-0">
                 {loading ? <div className="p-4 space-y-2">{[1,2,3].map((i) => <Skeleton key={i} className="h-10" />)}</div>
-                  : expenses.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nenhuma despesa lançada.</p>
+                  : expenses.length === 0 ? <p className="p-6 text-sm text-muted-foreground">{t('lancamentos.noDespesas')}</p>
                   : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead><tr className="border-b text-xs text-muted-foreground">
-                          <th className="px-4 py-3 text-left font-medium">Data</th>
-                          <th className="px-4 py-3 text-left font-medium">Fornecedor</th>
-                          <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                          <th className="px-4 py-3 text-left font-medium">Natureza (DRE)</th>
-                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                          <th className="px-4 py-3 text-right font-medium">Valor</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colDate')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colSupplier')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colCategory')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colNature')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colType')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('lancamentos.colValue')}</th>
                           <th className="px-4 py-3" />
                         </tr></thead>
                         <tbody>{expenses.map((e) => (
                           <tr key={e.id} className="border-b last:border-0 hover:bg-muted/40">
                             <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
                             <td className="px-4 py-3 font-medium">{e.supplier}</td>
-                            <td className="px-4 py-3">{getLabelByStatus(e.category)}</td>
-                            <td className="px-4 py-3"><StatusBadge status={e.nature ?? 'opex'} /></td>
-                            <td className="px-4 py-3 text-muted-foreground">{getLabelByStatus(e.type)}</td>
+                            <td className="px-4 py-3">{tl(e.category as never)}</td>
+                            <td className="px-4 py-3"><StatusBadge status={e.nature ?? 'opex'} label={tl((e.nature ?? 'opex') as never)} /></td>
+                            <td className="px-4 py-3 text-muted-foreground">{tl(e.type as never)}</td>
                             <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
                             <td className="px-4 py-3">
                               <div className="flex justify-end gap-1">
@@ -707,33 +716,36 @@ export default function ContadorPage() {
             <TabsContent value="impostos">
               <Card><CardContent className="p-0">
                 {loading ? <div className="p-4 space-y-2">{[1,2,3].map((i) => <Skeleton key={i} className="h-10" />)}</div>
-                  : impostos.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nenhum imposto lançado.</p>
+                  : impostos.length === 0 ? <p className="p-6 text-sm text-muted-foreground">{t('lancamentos.noImpostos')}</p>
                   : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead><tr className="border-b text-xs text-muted-foreground">
-                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                          <th className="px-4 py-3 text-left font-medium">Competência</th>
-                          <th className="px-4 py-3 text-left font-medium">Vencimento</th>
-                          <th className="px-4 py-3 text-left font-medium">Status</th>
-                          <th className="px-4 py-3 text-right font-medium">Valor</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colTaxType')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colCompetencia')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colVencimento')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('lancamentos.colStatus')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('lancamentos.colValue')}</th>
                           <th className="px-4 py-3" />
                         </tr></thead>
-                        <tbody>{impostos.map((i) => (
-                          <tr key={i.id} className="border-b last:border-0 hover:bg-muted/40">
-                            <td className="px-4 py-3 font-medium">{i.tipo}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{formatDate(i.competencia)}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{formatDate(i.vencimento)}</td>
-                            <td className="px-4 py-3"><StatusBadge status={getDisplayStatusImposto(i)} /></td>
-                            <td className="px-4 py-3 text-right font-medium">{formatCurrency(i.valor)}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openImposto(i)}><Pencil className="h-3.5 w-3.5" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ type: 'imposto', id: i.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}</tbody>
+                        <tbody>{impostos.map((i) => {
+                          const ds = getDisplayStatusImposto(i)
+                          return (
+                            <tr key={i.id} className="border-b last:border-0 hover:bg-muted/40">
+                              <td className="px-4 py-3 font-medium">{i.tipo}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{formatDate(i.competencia)}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{formatDate(i.vencimento)}</td>
+                              <td className="px-4 py-3"><StatusBadge status={ds} label={tl(ds as never)} /></td>
+                              <td className="px-4 py-3 text-right font-medium">{formatCurrency(i.valor)}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openImposto(i)}><Pencil className="h-3.5 w-3.5" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ type: 'imposto', id: i.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}</tbody>
                       </table>
                     </div>
                   )}
@@ -747,12 +759,12 @@ export default function ContadorPage() {
           <Tabs value={contasTab} onValueChange={setContasTab}>
             <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
               <TabsList>
-                <TabsTrigger value="pagar">A Pagar ({contasPagar.length})</TabsTrigger>
-                <TabsTrigger value="receber">A Receber ({contasReceber.length})</TabsTrigger>
+                <TabsTrigger value="pagar">{t('contas.pagar')} ({contasPagar.length})</TabsTrigger>
+                <TabsTrigger value="receber">{t('contas.receber')} ({contasReceber.length})</TabsTrigger>
               </TabsList>
               <div>
-                {contasTab === 'pagar' && <Button size="sm" onClick={() => openContaPagar()}><Plus className="mr-1.5 h-4 w-4" />Nova Conta</Button>}
-                {contasTab === 'receber' && <Button size="sm" onClick={() => openContaReceber()}><Plus className="mr-1.5 h-4 w-4" />Nova Conta</Button>}
+                {contasTab === 'pagar' && <Button size="sm" onClick={() => openContaPagar()}><Plus className="mr-1.5 h-4 w-4" />{t('contas.newConta')}</Button>}
+                {contasTab === 'receber' && <Button size="sm" onClick={() => openContaReceber()}><Plus className="mr-1.5 h-4 w-4" />{t('contas.newConta')}</Button>}
               </div>
             </div>
 
@@ -760,35 +772,38 @@ export default function ContadorPage() {
             <TabsContent value="pagar">
               <Card><CardContent className="p-0">
                 {loading ? <div className="p-4 space-y-2">{[1,2,3].map((i) => <Skeleton key={i} className="h-10" />)}</div>
-                  : contasPagar.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nenhuma conta a pagar.</p>
+                  : contasPagar.length === 0 ? <p className="p-6 text-sm text-muted-foreground">{t('contas.noPagar')}</p>
                   : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead><tr className="border-b text-xs text-muted-foreground">
-                          <th className="px-4 py-3 text-left font-medium">Descrição</th>
-                          <th className="px-4 py-3 text-left font-medium">Fornecedor</th>
-                          <th className="px-4 py-3 text-left font-medium">Categoria</th>
-                          <th className="px-4 py-3 text-left font-medium">Vencimento</th>
-                          <th className="px-4 py-3 text-left font-medium">Status</th>
-                          <th className="px-4 py-3 text-right font-medium">Valor</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colDescription')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colSupplier')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colCategory')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colDueDate')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colStatus')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('contas.colValue')}</th>
                           <th className="px-4 py-3" />
                         </tr></thead>
-                        <tbody>{contasPagar.map((c) => (
-                          <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40">
-                            <td className="px-4 py-3 font-medium">{c.descricao}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{c.fornecedor ?? '—'}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{c.categoria ?? '—'}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{formatDate(c.vencimento)}</td>
-                            <td className="px-4 py-3"><StatusBadge status={getDisplayStatusContaPagar(c)} /></td>
-                            <td className="px-4 py-3 text-right font-medium">{formatCurrency(c.valor)}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openContaPagar(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ type: 'pagar', id: c.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}</tbody>
+                        <tbody>{contasPagar.map((c) => {
+                          const ds = getDisplayStatusContaPagar(c)
+                          return (
+                            <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40">
+                              <td className="px-4 py-3 font-medium">{c.descricao}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{c.fornecedor ?? '—'}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{c.categoria ?? '—'}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{formatDate(c.vencimento)}</td>
+                              <td className="px-4 py-3"><StatusBadge status={ds} label={tl(ds as never)} /></td>
+                              <td className="px-4 py-3 text-right font-medium">{formatCurrency(c.valor)}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openContaPagar(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ type: 'pagar', id: c.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}</tbody>
                       </table>
                     </div>
                   )}
@@ -799,35 +814,38 @@ export default function ContadorPage() {
             <TabsContent value="receber">
               <Card><CardContent className="p-0">
                 {loading ? <div className="p-4 space-y-2">{[1,2,3].map((i) => <Skeleton key={i} className="h-10" />)}</div>
-                  : contasReceber.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nenhuma conta a receber.</p>
+                  : contasReceber.length === 0 ? <p className="p-6 text-sm text-muted-foreground">{t('contas.noReceber')}</p>
                   : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead><tr className="border-b text-xs text-muted-foreground">
-                          <th className="px-4 py-3 text-left font-medium">Cliente</th>
-                          <th className="px-4 py-3 text-left font-medium">Descrição</th>
-                          <th className="px-4 py-3 text-left font-medium">NF</th>
-                          <th className="px-4 py-3 text-left font-medium">Previsão</th>
-                          <th className="px-4 py-3 text-left font-medium">Status</th>
-                          <th className="px-4 py-3 text-right font-medium">Valor</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colClient')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colDescription')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colNF')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colPrevisao')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('contas.colStatus')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('contas.colValue')}</th>
                           <th className="px-4 py-3" />
                         </tr></thead>
-                        <tbody>{contasReceber.map((c) => (
-                          <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40">
-                            <td className="px-4 py-3 font-medium">{c.cliente}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{c.descricao ?? '—'}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{c.numero_nf ?? '—'}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{formatDate(c.previsao)}</td>
-                            <td className="px-4 py-3"><StatusBadge status={getDisplayStatusContaReceber(c)} /></td>
-                            <td className="px-4 py-3 text-right font-medium">{formatCurrency(c.valor)}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openContaReceber(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ type: 'receber', id: c.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}</tbody>
+                        <tbody>{contasReceber.map((c) => {
+                          const ds = getDisplayStatusContaReceber(c)
+                          return (
+                            <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40">
+                              <td className="px-4 py-3 font-medium">{c.cliente}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{c.descricao ?? '—'}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{c.numero_nf ?? '—'}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{formatDate(c.previsao)}</td>
+                              <td className="px-4 py-3"><StatusBadge status={ds} label={tl(ds as never)} /></td>
+                              <td className="px-4 py-3 text-right font-medium">{formatCurrency(c.valor)}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openContaReceber(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ type: 'receber', id: c.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}</tbody>
                       </table>
                     </div>
                   )}
@@ -843,50 +861,46 @@ export default function ContadorPage() {
           ) : (
             <>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Receita</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('indicadores.revenue')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="MRR" value={formatCurrency(ind.mrr)} color="green" sub="Recorrente este mês" />
-                  <KPICard title="Receita Acumulada" value={formatCurrency(ind.receitaAcumulada)} color="green" />
-                  <KPICard title="Ticket Médio" value={formatCurrency(ind.ticketMedio)} sub="Média por entrada confirmada" />
-                  <KPICard title="Crescimento MoM" value={`${ind.crescimentoMensal >= 0 ? '+' : ''}${ind.crescimentoMensal.toFixed(1)}%`} color={ind.crescimentoMensal >= 0 ? 'green' : 'red'} sub="vs mês anterior" />
+                  <KPICard title={t('indicadores.mrr')} value={formatCurrency(ind.mrr)} color="green" sub={t('indicadores.mrrSub')} />
+                  <KPICard title={t('indicadores.accumulated')} value={formatCurrency(ind.receitaAcumulada)} color="green" />
+                  <KPICard title={t('indicadores.avgTicket')} value={formatCurrency(ind.ticketMedio)} sub={t('indicadores.avgTicketSub')} />
+                  <KPICard title={t('indicadores.mom')} value={`${ind.crescimentoMensal >= 0 ? '+' : ''}${ind.crescimentoMensal.toFixed(1)}%`} color={ind.crescimentoMensal >= 0 ? 'green' : 'red'} sub={t('indicadores.momSub')} />
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Clientes</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('indicadores.clients')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="CAC" value={ind.cac > 0 ? formatCurrency(ind.cac) : '—'} sub="Marketing ÷ novos clientes (3 meses)" />
-                  <KPICard title="LTV Est." value={ind.ltv > 0 ? formatCurrency(ind.ltv) : '—'} sub="Rev. média ÷ 5% churn estimado" />
-                  <KPICard title="LTV / CAC" value={ind.ltvCac > 0 ? `${ind.ltvCac.toFixed(2)}x` : '—'} color={ind.ltvCac >= 3 ? 'green' : ind.ltvCac >= 1 ? 'amber' : ind.ltvCac > 0 ? 'red' : 'default'} sub="Ideal ≥ 3x" />
-                  <KPICard title="Receita / Cliente" value={ind.receitaPorCliente !== undefined ? formatCurrency(ind.receitaPorCliente) : '—'} sub="Total ÷ clientes ativos" />
+                  <KPICard title={t('indicadores.cac')} value={ind.cac > 0 ? formatCurrency(ind.cac) : '—'} sub={t('indicadores.cacSub')} />
+                  <KPICard title={t('indicadores.ltv')} value={ind.ltv > 0 ? formatCurrency(ind.ltv) : '—'} sub={t('indicadores.ltvSub')} />
+                  <KPICard title={t('indicadores.ltvCac')} value={ind.ltvCac > 0 ? `${ind.ltvCac.toFixed(2)}x` : '—'} color={ind.ltvCac >= 3 ? 'green' : ind.ltvCac >= 1 ? 'amber' : ind.ltvCac > 0 ? 'red' : 'default'} sub={t('indicadores.ltvCacSub')} />
+                  <KPICard title={t('indicadores.revenuePerClient')} value={ind.receitaPorCliente !== undefined ? formatCurrency(ind.receitaPorCliente) : '—'} sub={t('indicadores.revenuePerClientSub')} />
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Eficiência Operacional</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('indicadores.efficiency')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="Burn Rate" value={formatCurrency(ind.burnRate)} sub="Média mensal de despesas (3 meses)" />
-                  <KPICard title="Runway Est." value={ind.runway > 0 ? `${ind.runway.toFixed(1)} meses` : '—'} color={ind.runway > 6 ? 'green' : ind.runway > 3 ? 'amber' : ind.runway > 0 ? 'red' : 'default'} sub="Caixa ÷ Burn Rate" />
-                  <KPICard title="Receita / Colaborador" value={ind.receitaPorColaborador > 0 ? formatCurrency(ind.receitaPorColaborador) : '—'} sub={`${teamCount} colaborador(es)`} />
-                  <KPICard title="Custo / Cliente" value={ind.custoPorCliente > 0 ? formatCurrency(ind.custoPorCliente) : '—'} sub="Burn Rate ÷ clientes ativos" />
+                  <KPICard title={t('indicadores.burnRate')} value={formatCurrency(ind.burnRate)} sub={t('indicadores.burnRateSub')} />
+                  <KPICard title={t('indicadores.runway')} value={ind.runway > 0 ? `${ind.runway.toFixed(1)} meses` : '—'} color={ind.runway > 6 ? 'green' : ind.runway > 3 ? 'amber' : ind.runway > 0 ? 'red' : 'default'} sub={t('indicadores.runwaySub')} />
+                  <KPICard title={t('indicadores.revenuePerEmployee')} value={ind.receitaPorColaborador > 0 ? formatCurrency(ind.receitaPorColaborador) : '—'} sub={t('kpi.collaboratorSub', { count: teamCount })} />
+                  <KPICard title={t('indicadores.costPerClient')} value={ind.custoPorCliente > 0 ? formatCurrency(ind.custoPorCliente) : '—'} sub={t('indicadores.costPerClientSub')} />
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Resultado</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('indicadores.result')}</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <KPICard title="Despesa Acumulada" value={formatCurrency(ind.despesaAcumulada)} color="red" />
-                  <KPICard title="Resultado Acumulado" value={formatCurrency(ind.receitaAcumulada - ind.despesaAcumulada)} color={(ind.receitaAcumulada - ind.despesaAcumulada) >= 0 ? 'green' : 'red'} />
-                  <KPICard title="Margem Bruta" value={`${dreAll.margemBruta.toFixed(1)}%`} color={dreAll.margemBruta >= 40 ? 'green' : dreAll.margemBruta >= 20 ? 'amber' : 'red'} sub="Sobre receita líquida" />
-                  <KPICard title="Margem Líquida" value={`${dreAll.margemLiquida.toFixed(1)}%`} color={dreAll.margemLiquida >= 15 ? 'green' : dreAll.margemLiquida >= 5 ? 'amber' : 'red'} sub="Sobre receita líquida" />
+                  <KPICard title={t('indicadores.totalExpenses')} value={formatCurrency(ind.despesaAcumulada)} color="red" />
+                  <KPICard title={t('indicadores.totalResult')} value={formatCurrency(ind.receitaAcumulada - ind.despesaAcumulada)} color={(ind.receitaAcumulada - ind.despesaAcumulada) >= 0 ? 'green' : 'red'} />
+                  <KPICard title={t('indicadores.grossMargin')} value={`${dreAll.margemBruta.toFixed(1)}%`} color={dreAll.margemBruta >= 40 ? 'green' : dreAll.margemBruta >= 20 ? 'amber' : 'red'} sub={t('indicadores.grossMarginSub')} />
+                  <KPICard title={t('indicadores.netMargin')} value={`${dreAll.margemLiquida.toFixed(1)}%`} color={dreAll.margemLiquida >= 15 ? 'green' : dreAll.margemLiquida >= 5 ? 'amber' : 'red'} sub={t('indicadores.netMarginSub')} />
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                * CAC considera gastos de marketing dos últimos 3 meses dividido por novos clientes no período.
-                LTV usa receita média mensal por cliente ativo dividida por 5% de churn estimado (ajuste conforme sua realidade).
-                Runway é estimado com base no resultado acumulado dividido pelo burn rate médio.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('indicadores.note')}</p>
             </>
           )}
         </TabsContent>
@@ -897,69 +911,69 @@ export default function ContadorPage() {
       {/* Receita Dialog */}
       <Dialog open={entryModal.open} onOpenChange={(o) => !o && setEntryModal({ open: false, item: null })}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{entryModal.item ? 'Editar Receita' : 'Nova Receita'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{entryModal.item ? td('receitaEdit') : td('receitaNew')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
-              <Label>Cliente</Label>
+              <Label>{td('client')}</Label>
               <Select value={entryForm.client_id ?? 'none'} onValueChange={(v) => setEntryForm({ ...entryForm, client_id: v === 'none' ? null : v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tc('select')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
+                  <SelectItem value="none">{tc('none')}</SelectItem>
                   {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
+              <Label>{td('value')}</Label>
               <Input type="number" value={entryForm.value} onChange={(e) => setEntryForm({ ...entryForm, value: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Data</Label>
+              <Label>{td('date')}</Label>
               <Input type="date" value={entryForm.date} onChange={(e) => setEntryForm({ ...entryForm, date: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>{td('type')}</Label>
               <Select value={entryForm.type} onValueChange={(v) => setEntryForm({ ...entryForm, type: v as FinancialEntryType })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recurring">Recorrente</SelectItem>
-                  <SelectItem value="one_time">Pontual</SelectItem>
-                  <SelectItem value="upsell">Upsell</SelectItem>
+                  <SelectItem value="recurring">{tl('recurring')}</SelectItem>
+                  <SelectItem value="one_time">{tl('one_time')}</SelectItem>
+                  <SelectItem value="upsell">{tl('upsell')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Categoria</Label>
+              <Label>{td('category')}</Label>
               <Select value={entryForm.category} onValueChange={(v) => setEntryForm({ ...entryForm, category: v as FinancialEntryCategory })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="subscription">Assinatura</SelectItem>
-                  <SelectItem value="consulting">Consultoria</SelectItem>
-                  <SelectItem value="implementation">Implantação</SelectItem>
-                  <SelectItem value="support">Suporte</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="subscription">{tl('subscription')}</SelectItem>
+                  <SelectItem value="consulting">{tl('consulting')}</SelectItem>
+                  <SelectItem value="implementation">{tl('implementation')}</SelectItem>
+                  <SelectItem value="support">{tl('support')}</SelectItem>
+                  <SelectItem value="other">{tl('other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Status</Label>
+              <Label>{td('status')}</Label>
               <Select value={entryForm.status} onValueChange={(v) => setEntryForm({ ...entryForm, status: v as FinancialEntryStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="confirmed">Confirmado</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                  <SelectItem value="confirmed">{tl('confirmed')}</SelectItem>
+                  <SelectItem value="pending">{tl('pending')}</SelectItem>
+                  <SelectItem value="cancelled">{tl('cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Descrição</Label>
+              <Label>{td('description')}</Label>
               <Input value={entryForm.description ?? ''} onChange={(e) => setEntryForm({ ...entryForm, description: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEntryModal({ open: false, item: null })}>Cancelar</Button>
-            <Button onClick={saveEntry} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setEntryModal({ open: false, item: null })}>{tc('cancel')}</Button>
+            <Button onClick={saveEntry} disabled={saving}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -967,69 +981,69 @@ export default function ContadorPage() {
       {/* Despesa Dialog */}
       <Dialog open={expenseModal.open} onOpenChange={(o) => !o && setExpenseModal({ open: false, item: null })}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{expenseModal.item ? 'Editar Despesa' : 'Nova Despesa'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{expenseModal.item ? td('despesaEdit') : td('despesaNew')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
-              <Label>Fornecedor</Label>
+              <Label>{td('supplier')}</Label>
               <Input value={expenseForm.supplier} onChange={(e) => setExpenseForm({ ...expenseForm, supplier: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
+              <Label>{td('value')}</Label>
               <Input type="number" value={expenseForm.value} onChange={(e) => setExpenseForm({ ...expenseForm, value: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Data</Label>
+              <Label>{td('date')}</Label>
               <Input type="date" value={expenseForm.date} onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Categoria</Label>
+              <Label>{td('category')}</Label>
               <Select value={expenseForm.category} onValueChange={(v) => setExpenseForm({ ...expenseForm, category: v as ExpenseCategory })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="infrastructure">Infraestrutura</SelectItem>
-                  <SelectItem value="payroll">Folha</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="tools">Ferramentas</SelectItem>
-                  <SelectItem value="office">Escritório</SelectItem>
-                  <SelectItem value="taxes">Impostos</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="infrastructure">{tl('infrastructure')}</SelectItem>
+                  <SelectItem value="payroll">{tl('payroll')}</SelectItem>
+                  <SelectItem value="marketing">{tl('marketing')}</SelectItem>
+                  <SelectItem value="tools">{tl('tools')}</SelectItem>
+                  <SelectItem value="office">{tl('office')}</SelectItem>
+                  <SelectItem value="taxes">{tl('taxes')}</SelectItem>
+                  <SelectItem value="other">{tl('other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>{td('type')}</Label>
               <Select value={expenseForm.type} onValueChange={(v) => setExpenseForm({ ...expenseForm, type: v as ExpenseType })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fixed">Fixo</SelectItem>
-                  <SelectItem value="variable">Variável</SelectItem>
-                  <SelectItem value="investment">Investimento</SelectItem>
+                  <SelectItem value="fixed">{tl('fixed')}</SelectItem>
+                  <SelectItem value="variable">{tl('variable')}</SelectItem>
+                  <SelectItem value="investment">{tl('investment')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Natureza no DRE</Label>
+              <Label>{td('natureDRE')}</Label>
               <Select value={expenseForm.nature} onValueChange={(v) => setExpenseForm({ ...expenseForm, nature: v as ExpenseNature })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="opex">Despesa Operacional (padrão)</SelectItem>
-                  <SelectItem value="cogs">CMV / Custo do Produto ou Serviço</SelectItem>
-                  <SelectItem value="da">Depreciação / Amortização</SelectItem>
+                  <SelectItem value="opex">{td('opex')}</SelectItem>
+                  <SelectItem value="cogs">{td('cogs')}</SelectItem>
+                  <SelectItem value="da">{td('da')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Centro de Custo</Label>
+              <Label>{td('costCenter')}</Label>
               <Input value={expenseForm.cost_center ?? ''} onChange={(e) => setExpenseForm({ ...expenseForm, cost_center: e.target.value || null })} />
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Descrição</Label>
+              <Label>{td('description')}</Label>
               <Input value={expenseForm.description ?? ''} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExpenseModal({ open: false, item: null })}>Cancelar</Button>
-            <Button onClick={saveExpense} disabled={saving || !expenseForm.supplier}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setExpenseModal({ open: false, item: null })}>{tc('cancel')}</Button>
+            <Button onClick={saveExpense} disabled={saving || !expenseForm.supplier}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1037,49 +1051,49 @@ export default function ContadorPage() {
       {/* Imposto Dialog */}
       <Dialog open={impostoModal.open} onOpenChange={(o) => !o && setImpostoModal({ open: false, item: null })}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{impostoModal.item ? 'Editar Imposto' : 'Novo Imposto'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{impostoModal.item ? td('impostoEdit') : td('impostoNew')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
-              <Label>Tipo de Imposto</Label>
-              <Input placeholder="Ex: IRPJ, CSLL, PIS, COFINS, ISS…" value={impostoForm.tipo} onChange={(e) => setImpostoForm({ ...impostoForm, tipo: e.target.value })} />
+              <Label>{td('taxType')}</Label>
+              <Input placeholder={td('taxPlaceholder')} value={impostoForm.tipo} onChange={(e) => setImpostoForm({ ...impostoForm, tipo: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
+              <Label>{td('value')}</Label>
               <Input type="number" value={impostoForm.valor} onChange={(e) => setImpostoForm({ ...impostoForm, valor: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Competência</Label>
+              <Label>{td('competencia')}</Label>
               <Input type="date" value={impostoForm.competencia} onChange={(e) => setImpostoForm({ ...impostoForm, competencia: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Vencimento</Label>
+              <Label>{td('vencimento')}</Label>
               <Input type="date" value={impostoForm.vencimento ?? ''} onChange={(e) => setImpostoForm({ ...impostoForm, vencimento: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{td('status')}</Label>
               <Select value={impostoForm.status} onValueChange={(v) => setImpostoForm({ ...impostoForm, status: v as Imposto['status'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                  <SelectItem value="atrasado">Atrasado</SelectItem>
+                  <SelectItem value="pendente">{tl('pendente')}</SelectItem>
+                  <SelectItem value="pago">{tl('pago')}</SelectItem>
+                  <SelectItem value="atrasado">{tl('atrasado')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {impostoForm.status === 'pago' && (
               <div className="space-y-1.5 col-span-2">
-                <Label>Data de Pagamento</Label>
+                <Label>{td('paymentDate')}</Label>
                 <Input type="date" value={impostoForm.data_pagamento ?? ''} onChange={(e) => setImpostoForm({ ...impostoForm, data_pagamento: e.target.value || null })} />
               </div>
             )}
             <div className="space-y-1.5 col-span-2">
-              <Label>Notas</Label>
+              <Label>{td('notes')}</Label>
               <Input value={impostoForm.notas ?? ''} onChange={(e) => setImpostoForm({ ...impostoForm, notas: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImpostoModal({ open: false, item: null })}>Cancelar</Button>
-            <Button onClick={saveImposto} disabled={saving || !impostoForm.tipo}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setImpostoModal({ open: false, item: null })}>{tc('cancel')}</Button>
+            <Button onClick={saveImposto} disabled={saving || !impostoForm.tipo}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1087,53 +1101,53 @@ export default function ContadorPage() {
       {/* Conta a Pagar Dialog */}
       <Dialog open={contaPagarModal.open} onOpenChange={(o) => !o && setContaPagarModal({ open: false, item: null })}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{contaPagarModal.item ? 'Editar Conta a Pagar' : 'Nova Conta a Pagar'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{contaPagarModal.item ? td('contaPagarEdit') : td('contaPagarNew')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
-              <Label>Descrição</Label>
+              <Label>{td('descricao')}</Label>
               <Input value={contaPagarForm.descricao} onChange={(e) => setContaPagarForm({ ...contaPagarForm, descricao: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Fornecedor</Label>
+              <Label>{td('supplier')}</Label>
               <Input value={contaPagarForm.fornecedor ?? ''} onChange={(e) => setContaPagarForm({ ...contaPagarForm, fornecedor: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Categoria</Label>
-              <Input placeholder="Ex: Aluguel, Fornecedor…" value={contaPagarForm.categoria ?? ''} onChange={(e) => setContaPagarForm({ ...contaPagarForm, categoria: e.target.value || null })} />
+              <Label>{td('category')}</Label>
+              <Input placeholder={td('categoryPlaceholder')} value={contaPagarForm.categoria ?? ''} onChange={(e) => setContaPagarForm({ ...contaPagarForm, categoria: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
+              <Label>{td('value')}</Label>
               <Input type="number" value={contaPagarForm.valor} onChange={(e) => setContaPagarForm({ ...contaPagarForm, valor: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Vencimento</Label>
+              <Label>{td('vencimento')}</Label>
               <Input type="date" value={contaPagarForm.vencimento} onChange={(e) => setContaPagarForm({ ...contaPagarForm, vencimento: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{td('status')}</Label>
               <Select value={contaPagarForm.status} onValueChange={(v) => setContaPagarForm({ ...contaPagarForm, status: v as ContaPagar['status'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                  <SelectItem value="atrasado">Atrasado</SelectItem>
+                  <SelectItem value="pendente">{tl('pendente')}</SelectItem>
+                  <SelectItem value="pago">{tl('pago')}</SelectItem>
+                  <SelectItem value="atrasado">{tl('atrasado')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {contaPagarForm.status === 'pago' && (
               <div className="space-y-1.5">
-                <Label>Data de Pagamento</Label>
+                <Label>{td('paymentDate')}</Label>
                 <Input type="date" value={contaPagarForm.data_pagamento ?? ''} onChange={(e) => setContaPagarForm({ ...contaPagarForm, data_pagamento: e.target.value || null })} />
               </div>
             )}
             <div className="space-y-1.5 col-span-2">
-              <Label>Notas</Label>
+              <Label>{td('notes')}</Label>
               <Input value={contaPagarForm.notas ?? ''} onChange={(e) => setContaPagarForm({ ...contaPagarForm, notas: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setContaPagarModal({ open: false, item: null })}>Cancelar</Button>
-            <Button onClick={saveContaPagar} disabled={saving || !contaPagarForm.descricao}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setContaPagarModal({ open: false, item: null })}>{tc('cancel')}</Button>
+            <Button onClick={saveContaPagar} disabled={saving || !contaPagarForm.descricao}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1141,58 +1155,58 @@ export default function ContadorPage() {
       {/* Conta a Receber Dialog */}
       <Dialog open={contaReceberModal.open} onOpenChange={(o) => !o && setContaReceberModal({ open: false, item: null })}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{contaReceberModal.item ? 'Editar Conta a Receber' : 'Nova Conta a Receber'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{contaReceberModal.item ? td('contaReceberEdit') : td('contaReceberNew')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5 col-span-2">
-              <Label>Cliente</Label>
+              <Label>{td('client')}</Label>
               <Select value={contaReceberForm.client_id ?? 'none'} onValueChange={(v) => {
                 const cl = v === 'none' ? null : clients.find((c) => c.id === v) ?? null
                 setContaReceberForm({ ...contaReceberForm, client_id: v === 'none' ? null : v, cliente: cl?.name ?? contaReceberForm.cliente })
               }}>
-                <SelectTrigger><SelectValue placeholder="Selecione ou digita abaixo" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={td('clientPlaceholder')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Cliente avulso</SelectItem>
+                  <SelectItem value="none">{td('avulso')}</SelectItem>
                   {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             {(!contaReceberForm.client_id || contaReceberForm.client_id === 'none') && (
               <div className="space-y-1.5 col-span-2">
-                <Label>Nome do Cliente</Label>
+                <Label>{td('clientName')}</Label>
                 <Input value={contaReceberForm.cliente} onChange={(e) => setContaReceberForm({ ...contaReceberForm, cliente: e.target.value })} />
               </div>
             )}
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
+              <Label>{td('value')}</Label>
               <Input type="number" value={contaReceberForm.valor} onChange={(e) => setContaReceberForm({ ...contaReceberForm, valor: Number(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Previsão de Recebimento</Label>
+              <Label>{td('previsao')}</Label>
               <Input type="date" value={contaReceberForm.previsao} onChange={(e) => setContaReceberForm({ ...contaReceberForm, previsao: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{td('status')}</Label>
               <Select value={contaReceberForm.status} onValueChange={(v) => setContaReceberForm({ ...contaReceberForm, status: v as ContaReceber['status'] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="recebido">Recebido</SelectItem>
-                  <SelectItem value="inadimplente">Inadimplente</SelectItem>
+                  <SelectItem value="pendente">{tl('pendente')}</SelectItem>
+                  <SelectItem value="recebido">{tl('recebido')}</SelectItem>
+                  <SelectItem value="inadimplente">{tl('inadimplente')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Número NF</Label>
+              <Label>{td('nf')}</Label>
               <Input value={contaReceberForm.numero_nf ?? ''} onChange={(e) => setContaReceberForm({ ...contaReceberForm, numero_nf: e.target.value || null })} />
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Descrição</Label>
+              <Label>{td('description')}</Label>
               <Input value={contaReceberForm.descricao ?? ''} onChange={(e) => setContaReceberForm({ ...contaReceberForm, descricao: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setContaReceberModal({ open: false, item: null })}>Cancelar</Button>
-            <Button onClick={saveContaReceber} disabled={saving || !contaReceberForm.cliente}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setContaReceberModal({ open: false, item: null })}>{tc('cancel')}</Button>
+            <Button onClick={saveContaReceber} disabled={saving || !contaReceberForm.cliente}>{saving ? tc('saving') : tc('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1201,12 +1215,12 @@ export default function ContadorPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover item?</AlertDialogTitle>
-            <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteItem')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{tc('delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

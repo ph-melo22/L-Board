@@ -23,14 +23,18 @@ import {
   getNotes, upsertNote, deleteNote,
 } from '@/services/founder'
 import { getTeam, inviteTeamMember, removeTeamMember, updateMemberRole } from '@/services/team'
-import { getLabelByStatus, getStatusColor, getPriorityColor, formatDate } from '@/lib/utils'
+import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils'
 import type { OKR, OKRStatus, KeyResult, StrategicProject, StrategicNote, Profile, UserRole } from '@/types'
+import { useTranslations } from 'next-intl'
 
 // ─── OKR Section ──────────────────────────────────────────────────────────────
 
 const EMPTY_KR = { description: '', target: 100, current: 0, unit: '%' }
 
 function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
+  const t = useTranslations('founder')
+  const tc = useTranslations('common')
+  const tl = useTranslations('labels')
   const { toast } = useToast()
   const [expanded, setExpanded] = useState(false)
   const [krOpen, setKrOpen] = useState(false)
@@ -58,18 +62,18 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
   async function handleSaveKr() {
     setSavingKr(true)
     try {
-      if (editingKr) { await updateKeyResult(editingKr.id, krForm); toast({ title: 'KR atualizado' }) }
-      else { await createKeyResult(okr.id, krForm); toast({ title: 'KR adicionado' }) }
+      if (editingKr) { await updateKeyResult(editingKr.id, krForm); toast({ title: t('toast.krUpdated') }) }
+      else { await createKeyResult(okr.id, krForm); toast({ title: t('toast.krAdded') }) }
       setKrOpen(false)
       onReload()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSavingKr(false) }
   }
 
   async function handleDeleteKr() {
     if (!deleteKrId) return
-    try { await deleteKeyResult(deleteKrId); toast({ title: 'KR removido' }); onReload() }
-    catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+    try { await deleteKeyResult(deleteKrId); toast({ title: t('toast.krRemoved') }); onReload() }
+    catch { toast({ title: t('toast.removeError'), variant: 'destructive' }) }
     finally { setDeleteKrId(null) }
   }
 
@@ -81,7 +85,7 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(okr.status)}`}>
-                  {getLabelByStatus(okr.status)}
+                  {tl(okr.status as never)}
                 </span>
                 <span className="text-xs text-muted-foreground">{okr.quarter}</span>
               </div>
@@ -93,7 +97,7 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
           </div>
           <div className="mt-2 space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progresso médio</span>
+              <span>{t('avgProgress')}</span>
               <span>{avgProgress.toFixed(0)}%</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-muted">
@@ -130,7 +134,7 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
               onClick={openNewKr}
               className="w-full rounded border border-dashed border-border py-1.5 text-xs text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
             >
-              + Adicionar Key Result
+              {t('addKR')}
             </button>
           </CardContent>
         )}
@@ -139,31 +143,31 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
       {/* KR Dialog */}
       <Dialog open={krOpen} onOpenChange={setKrOpen}>
         <DialogContent className="sm:max-w-sm overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingKr ? 'Editar Key Result' : 'Novo Key Result'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingKr ? t('editKR') : t('newKR')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>{t('kr.description')}</Label>
               <Input value={krForm.description} onChange={(e) => setKrForm({ ...krForm, description: e.target.value })} />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label>Meta</Label>
+                <Label>{t('kr.target')}</Label>
                 <Input type="number" value={krForm.target} onChange={(e) => setKrForm({ ...krForm, target: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Atual</Label>
+                <Label>{t('kr.current')}</Label>
                 <Input type="number" value={krForm.current} onChange={(e) => setKrForm({ ...krForm, current: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Unidade</Label>
-                <Input placeholder="%" value={krForm.unit} onChange={(e) => setKrForm({ ...krForm, unit: e.target.value })} />
+                <Label>{t('kr.unit')}</Label>
+                <Input placeholder={t('kr.unitPlaceholder')} value={krForm.unit} onChange={(e) => setKrForm({ ...krForm, unit: e.target.value })} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setKrOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setKrOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleSaveKr} disabled={savingKr || !krForm.description}>
-              {savingKr ? 'Salvando...' : 'Salvar'}
+              {savingKr ? tc('saving') : tc('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -173,13 +177,13 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
       <AlertDialog open={!!deleteKrId} onOpenChange={(o) => !o && setDeleteKrId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover Key Result?</AlertDialogTitle>
-            <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteKR')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteKr} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+              {tc('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -191,6 +195,10 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function FounderPage() {
+  const t = useTranslations('founder')
+  const tc = useTranslations('common')
+  const tl = useTranslations('labels')
+  const tTeam = useTranslations('team')
   const { toast } = useToast()
 
   const [okrs, setOkrs] = useState<OKR[]>([])
@@ -230,8 +238,8 @@ export default function FounderPage() {
   async function load() {
     setLoading(true)
     try {
-      const [o, p, n, t] = await Promise.all([getOKRs(), getProjects(), getNotes(), getTeam()])
-      setOkrs(o); setProjects(p); setNotes(n); setTeam(t); setError(false)
+      const [o, p, n, tm] = await Promise.all([getOKRs(), getProjects(), getNotes(), getTeam()])
+      setOkrs(o); setProjects(p); setNotes(n); setTeam(tm); setError(false)
     } catch { setError(true) }
     finally { setLoading(false) }
   }
@@ -244,16 +252,16 @@ export default function FounderPage() {
   async function handleSaveOkr() {
     setSavingOkr(true)
     try {
-      if (editingOkr) { await updateOKR(editingOkr.id, okrForm); toast({ title: 'OKR atualizado' }) }
-      else { await createOKR(okrForm); toast({ title: 'OKR criado' }) }
+      if (editingOkr) { await updateOKR(editingOkr.id, okrForm); toast({ title: t('toast.okrUpdated') }) }
+      else { await createOKR(okrForm); toast({ title: t('toast.okrCreated') }) }
       setOkrOpen(false); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSavingOkr(false) }
   }
   async function handleDeleteOkr() {
     if (!deleteOkrId) return
-    try { await deleteOKR(deleteOkrId); toast({ title: 'OKR removido' }); load() }
-    catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+    try { await deleteOKR(deleteOkrId); toast({ title: t('toast.okrRemoved') }); load() }
+    catch { toast({ title: t('toast.removeError'), variant: 'destructive' }) }
     finally { setDeleteOkrId(null) }
   }
 
@@ -263,16 +271,16 @@ export default function FounderPage() {
   async function handleSaveProject() {
     setSavingProject(true)
     try {
-      if (editingProject) { await updateProject(editingProject.id, projectForm); toast({ title: 'Projeto atualizado' }) }
-      else { await createProject(projectForm); toast({ title: 'Projeto criado' }) }
+      if (editingProject) { await updateProject(editingProject.id, projectForm); toast({ title: t('toast.projectUpdated') }) }
+      else { await createProject(projectForm); toast({ title: t('toast.projectCreated') }) }
       setProjectOpen(false); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSavingProject(false) }
   }
   async function handleDeleteProject() {
     if (!deleteProjectId) return
-    try { await deleteProject(deleteProjectId); toast({ title: 'Projeto removido' }); load() }
-    catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+    try { await deleteProject(deleteProjectId); toast({ title: t('toast.projectRemoved') }); load() }
+    catch { toast({ title: t('toast.removeError'), variant: 'destructive' }) }
     finally { setDeleteProjectId(null) }
   }
 
@@ -282,17 +290,17 @@ export default function FounderPage() {
   async function handleSaveNote() {
     setSavingNote(true)
     try {
-      const tags = noteForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
+      const tags = noteForm.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
       await upsertNote({ id: editingNote?.id, title: noteForm.title, content: noteForm.content, tags })
-      toast({ title: editingNote ? 'Nota atualizada' : 'Nota criada' })
+      toast({ title: editingNote ? t('toast.noteUpdated') : t('toast.noteCreated') })
       setNoteOpen(false); load()
-    } catch { toast({ title: 'Erro ao salvar', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSavingNote(false) }
   }
   async function handleDeleteNote() {
     if (!deleteNoteId) return
-    try { await deleteNote(deleteNoteId); toast({ title: 'Nota removida' }); load() }
-    catch { toast({ title: 'Erro ao remover', variant: 'destructive' }) }
+    try { await deleteNote(deleteNoteId); toast({ title: t('toast.noteRemoved') }); load() }
+    catch { toast({ title: t('toast.removeError'), variant: 'destructive' }) }
     finally { setDeleteNoteId(null) }
   }
 
@@ -301,12 +309,12 @@ export default function FounderPage() {
     setInviting(true)
     try {
       await inviteTeamMember(inviteForm.full_name, inviteForm.email, inviteForm.role)
-      toast({ title: 'Convite enviado', description: `${inviteForm.email} receberá um email de acesso.` })
+      toast({ title: t('toast.inviteSent'), description: t('toast.inviteSentDesc', { email: inviteForm.email }) })
       setInviteOpen(false)
       setInviteForm({ full_name: '', email: '', role: 'employee' })
       load()
     } catch (e: unknown) {
-      toast({ title: 'Erro ao convidar', description: e instanceof Error ? e.message : '', variant: 'destructive' })
+      toast({ title: t('toast.inviteError'), description: e instanceof Error ? e.message : '', variant: 'destructive' })
     } finally { setInviting(false) }
   }
 
@@ -314,20 +322,20 @@ export default function FounderPage() {
     if (!removeMemberId) return
     try {
       await removeTeamMember(removeMemberId)
-      toast({ title: 'Membro removido' })
+      toast({ title: t('toast.memberRemoved') })
       load()
     } catch {
-      toast({ title: 'Erro ao remover', variant: 'destructive' })
+      toast({ title: t('toast.memberRemoveError'), variant: 'destructive' })
     } finally { setRemoveMemberId(null) }
   }
 
   async function handleRoleChange(id: string, role: UserRole) {
     try {
       await updateMemberRole(id, role)
-      toast({ title: 'Função atualizada' })
+      toast({ title: t('toast.roleUpdated') })
       load()
     } catch {
-      toast({ title: 'Erro ao atualizar função', variant: 'destructive' })
+      toast({ title: t('toast.roleError'), variant: 'destructive' })
     }
   }
 
@@ -335,8 +343,8 @@ export default function FounderPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao carregar dados.</p>
-        <Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
       </div>
     )
   }
@@ -346,23 +354,23 @@ export default function FounderPage() {
       <Tabs defaultValue="okrs">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="h-auto flex-wrap">
-            <TabsTrigger value="okrs">OKRs ({okrs.length})</TabsTrigger>
-            <TabsTrigger value="projects">Projetos ({projects.length})</TabsTrigger>
-            <TabsTrigger value="notes">Notas ({notes.length})</TabsTrigger>
-            <TabsTrigger value="team">Equipe ({team.length})</TabsTrigger>
+            <TabsTrigger value="okrs">{t('tabs.okrs')} ({okrs.length})</TabsTrigger>
+            <TabsTrigger value="projects">{t('tabs.projects')} ({projects.length})</TabsTrigger>
+            <TabsTrigger value="notes">{t('tabs.notes')} ({notes.length})</TabsTrigger>
+            <TabsTrigger value="team">{t('tabs.team')} ({team.length})</TabsTrigger>
           </TabsList>
           <div>
             <TabsContent value="okrs" className="mt-0">
-              <Button size="sm" onClick={openNewOkr}><Plus className="mr-1.5 h-4 w-4" /> Novo OKR</Button>
+              <Button size="sm" onClick={openNewOkr}><Plus className="mr-1.5 h-4 w-4" /> {t('newOkr')}</Button>
             </TabsContent>
             <TabsContent value="projects" className="mt-0">
-              <Button size="sm" onClick={openNewProject}><Plus className="mr-1.5 h-4 w-4" /> Novo Projeto</Button>
+              <Button size="sm" onClick={openNewProject}><Plus className="mr-1.5 h-4 w-4" /> {t('newProject')}</Button>
             </TabsContent>
             <TabsContent value="notes" className="mt-0">
-              <Button size="sm" onClick={openNewNote}><Plus className="mr-1.5 h-4 w-4" /> Nova Nota</Button>
+              <Button size="sm" onClick={openNewNote}><Plus className="mr-1.5 h-4 w-4" /> {t('newNote')}</Button>
             </TabsContent>
             <TabsContent value="team" className="mt-0">
-              <Button size="sm" onClick={() => setInviteOpen(true)}><UserPlus className="mr-1.5 h-4 w-4" /> Convidar</Button>
+              <Button size="sm" onClick={() => setInviteOpen(true)}><UserPlus className="mr-1.5 h-4 w-4" /> {t('invite')}</Button>
             </TabsContent>
           </div>
         </div>
@@ -374,7 +382,7 @@ export default function FounderPage() {
               {[1,2,3,4].map((i) => <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />)}
             </div>
           ) : okrs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum OKR cadastrado.</p>
+            <p className="text-sm text-muted-foreground">{t('noOkrs')}</p>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {okrs.map((okr) => (
@@ -397,7 +405,7 @@ export default function FounderPage() {
               {[1,2,3].map((i) => <div key={i} className="h-24 animate-pulse rounded-lg bg-muted" />)}
             </div>
           ) : projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum projeto cadastrado.</p>
+            <p className="text-sm text-muted-foreground">{t('noProjects')}</p>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {projects.map((p) => (
@@ -407,10 +415,10 @@ export default function FounderPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(p.status)}`}>
-                            {getLabelByStatus(p.status)}
+                            {tl(p.status as never)}
                           </span>
                           <span className={`text-xs font-medium ${getPriorityColor(p.priority)}`}>
-                            {getLabelByStatus(p.priority)}
+                            {tl(p.priority as never)}
                           </span>
                         </div>
                         <CardTitle className="mt-1 text-sm">{p.title}</CardTitle>
@@ -424,7 +432,7 @@ export default function FounderPage() {
                   {(p.description || p.due_date) && (
                     <CardContent className="pt-0 space-y-1">
                       {p.description && <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>}
-                      {p.due_date && <p className="text-xs text-muted-foreground">Prazo: {formatDate(p.due_date)}</p>}
+                      {p.due_date && <p className="text-xs text-muted-foreground">{t('dueDate', { date: formatDate(p.due_date) })}</p>}
                     </CardContent>
                   )}
                 </Card>
@@ -440,7 +448,7 @@ export default function FounderPage() {
               {[1,2,3].map((i) => <div key={i} className="h-36 animate-pulse rounded-lg bg-muted" />)}
             </div>
           ) : notes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma nota registrada.</p>
+            <p className="text-sm text-muted-foreground">{t('noNotes')}</p>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {notes.map((n) => (
@@ -463,13 +471,14 @@ export default function FounderPage() {
                         ))}
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground">Atualizado {formatDate(n.updated_at)}</p>
+                    <p className="text-xs text-muted-foreground">{t('updatedAt', { date: formatDate(n.updated_at) })}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
         </TabsContent>
+
         {/* Team */}
         <TabsContent value="team">
           {loading ? (
@@ -477,7 +486,7 @@ export default function FounderPage() {
               {[1,2,3].map((i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />)}
             </div>
           ) : team.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum membro cadastrado. Convide seu primeiro funcionário.</p>
+            <p className="text-sm text-muted-foreground">{t('noTeam')}</p>
           ) : (
             <div className="space-y-2">
               {team.map((member) => (
@@ -497,7 +506,7 @@ export default function FounderPage() {
                         'border-border bg-muted text-muted-foreground'
                       }`}>
                         {member.role === 'founder' ? <Crown className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                        {member.role === 'founder' ? 'Founder' : member.role === 'developer' ? 'Dev / TI' : 'Funcionário'}
+                        {tTeam(`roles.${member.role}.label` as never)}
                       </span>
                       <Select
                         value={member.role}
@@ -507,9 +516,9 @@ export default function FounderPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="founder">Founder</SelectItem>
-                          <SelectItem value="developer">Dev / TI</SelectItem>
-                          <SelectItem value="employee">Funcionário</SelectItem>
+                          <SelectItem value="founder">{tTeam('roles.founder.label')}</SelectItem>
+                          <SelectItem value="developer">{tTeam('roles.developer.label')}</SelectItem>
+                          <SelectItem value="employee">{tTeam('roles.employee.label')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
@@ -532,15 +541,15 @@ export default function FounderPage() {
       {/* OKR Dialog */}
       <Dialog open={okrOpen} onOpenChange={setOkrOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingOkr ? 'Editar OKR' : 'Novo OKR'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingOkr ? t('editOkr') : t('newOkr')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Objetivo</Label>
+              <Label>{t('okrObjective')}</Label>
               <Input value={okrForm.objective} onChange={(e) => setOkrForm({ ...okrForm, objective: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Quarter</Label>
+                <Label>{t('okrQuarter')}</Label>
                 <Input placeholder="Q2 2025" value={okrForm.quarter} onChange={(e) => setOkrForm({ ...okrForm, quarter: e.target.value })} />
               </div>
               <div className="space-y-1.5">
@@ -548,18 +557,20 @@ export default function FounderPage() {
                 <Select value={okrForm.status} onValueChange={(v) => setOkrForm({ ...okrForm, status: v as OKRStatus })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="on_track">No prazo</SelectItem>
-                    <SelectItem value="at_risk">Em risco</SelectItem>
-                    <SelectItem value="off_track">Atrasado</SelectItem>
-                    <SelectItem value="completed">Concluído</SelectItem>
+                    <SelectItem value="on_track">{tl('on_track')}</SelectItem>
+                    <SelectItem value="at_risk">{tl('at_risk')}</SelectItem>
+                    <SelectItem value="off_track">{tl('off_track')}</SelectItem>
+                    <SelectItem value="completed">{tl('completed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOkrOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveOkr} disabled={savingOkr || !okrForm.objective}>{savingOkr ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setOkrOpen(false)}>{tc('cancel')}</Button>
+            <Button onClick={handleSaveOkr} disabled={savingOkr || !okrForm.objective}>
+              {savingOkr ? tc('saving') : tc('save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -567,14 +578,14 @@ export default function FounderPage() {
       {/* Project Dialog */}
       <Dialog open={projectOpen} onOpenChange={setProjectOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingProject ? 'Editar Projeto' : 'Novo Projeto'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingProject ? t('editProject') : t('newProject')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Título</Label>
+              <Label>{t('projectTitle')}</Label>
               <Input value={projectForm.title} onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>{t('projectDescription')}</Label>
               <Textarea rows={2} value={projectForm.description ?? ''} onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value || null })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -583,33 +594,35 @@ export default function FounderPage() {
                 <Select value={projectForm.status} onValueChange={(v) => setProjectForm({ ...projectForm, status: v as StrategicProject['status'] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="planning">Planejando</SelectItem>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="paused">Pausado</SelectItem>
-                    <SelectItem value="completed">Concluído</SelectItem>
+                    <SelectItem value="planning">{tl('planning')}</SelectItem>
+                    <SelectItem value="active">{tl('active')}</SelectItem>
+                    <SelectItem value="paused">{tl('paused')}</SelectItem>
+                    <SelectItem value="completed">{tl('completed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Prioridade</Label>
+                <Label>{t('projectPriority')}</Label>
                 <Select value={projectForm.priority} onValueChange={(v) => setProjectForm({ ...projectForm, priority: v as StrategicProject['priority'] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="low">{tl('low')}</SelectItem>
+                    <SelectItem value="medium">{tl('medium')}</SelectItem>
+                    <SelectItem value="high">{tl('high')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo</Label>
+              <Label>{t('projectDueDate')}</Label>
               <Input type="date" value={projectForm.due_date ?? ''} onChange={(e) => setProjectForm({ ...projectForm, due_date: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setProjectOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveProject} disabled={savingProject || !projectForm.title}>{savingProject ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setProjectOpen(false)}>{tc('cancel')}</Button>
+            <Button onClick={handleSaveProject} disabled={savingProject || !projectForm.title}>
+              {savingProject ? tc('saving') : tc('save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -617,24 +630,26 @@ export default function FounderPage() {
       {/* Note Dialog */}
       <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>{editingNote ? 'Editar Nota' : 'Nova Nota'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingNote ? t('editNote') : t('newNote')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Título</Label>
+              <Label>{t('projectTitle')}</Label>
               <Input value={noteForm.title} onChange={(e) => setNoteForm({ ...noteForm, title: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Conteúdo</Label>
+              <Label>{t('noteContent')}</Label>
               <Textarea rows={5} value={noteForm.content} onChange={(e) => setNoteForm({ ...noteForm, content: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Tags (separadas por vírgula)</Label>
-              <Input placeholder="estratégia, produto, mercado" value={noteForm.tags} onChange={(e) => setNoteForm({ ...noteForm, tags: e.target.value })} />
+              <Label>{t('noteTags')}</Label>
+              <Input placeholder={t('noteTagsPlaceholder')} value={noteForm.tags} onChange={(e) => setNoteForm({ ...noteForm, tags: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNoteOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveNote} disabled={savingNote || !noteForm.title}>{savingNote ? 'Salvando...' : 'Salvar'}</Button>
+            <Button variant="outline" onClick={() => setNoteOpen(false)}>{tc('cancel')}</Button>
+            <Button onClick={handleSaveNote} disabled={savingNote || !noteForm.title}>
+              {savingNote ? tc('saving') : tc('save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -642,10 +657,15 @@ export default function FounderPage() {
       {/* Delete OKR */}
       <AlertDialog open={!!deleteOkrId} onOpenChange={(o) => !o && setDeleteOkrId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Remover OKR?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteOkr')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteOkr} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOkr} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {tc('delete')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -653,10 +673,15 @@ export default function FounderPage() {
       {/* Delete Project */}
       <AlertDialog open={!!deleteProjectId} onOpenChange={(o) => !o && setDeleteProjectId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Remover projeto?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteProject')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {tc('delete')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -664,10 +689,15 @@ export default function FounderPage() {
       {/* Delete Note */}
       <AlertDialog open={!!deleteNoteId} onOpenChange={(o) => !o && setDeleteNoteId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Remover nota?</AlertDialogTitle><AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteNote')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteNote} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteNote} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {tc('delete')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -675,47 +705,47 @@ export default function FounderPage() {
       {/* Invite Team Member */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>Convidar Funcionário</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('inviteTitle')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Nome completo</Label>
+              <Label>{tTeam('form.fullName')}</Label>
               <Input
-                placeholder="João Silva"
+                placeholder={tTeam('form.fullNamePlaceholder')}
                 value={inviteForm.full_name}
                 onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>E-mail</Label>
+              <Label>{tTeam('form.email')}</Label>
               <Input
                 type="email"
-                placeholder="joao@empresa.com"
+                placeholder={tTeam('form.emailPlaceholder')}
                 value={inviteForm.email}
                 onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Função</Label>
+              <Label>{tTeam('form.access')}</Label>
               <Select value={inviteForm.role} onValueChange={(v) => setInviteForm({ ...inviteForm, role: v as UserRole })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="employee">Funcionário — Dashboard e Demandas</SelectItem>
-                  <SelectItem value="developer">Dev / TI — Dashboard, Demandas e Docs</SelectItem>
-                  <SelectItem value="founder">Founder — acesso completo</SelectItem>
+                  <SelectItem value="employee">{t('roleEmployee')}</SelectItem>
+                  <SelectItem value="developer">{t('roleDeveloper')}</SelectItem>
+                  <SelectItem value="founder">{t('roleFounder')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">
-              O usuário receberá um e-mail com um link para criar a senha e acessar o sistema.
+              {t('inviteEmailInfo')}
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setInviteOpen(false)}>{tc('cancel')}</Button>
             <Button
               onClick={handleInvite}
               disabled={inviting || !inviteForm.email || !inviteForm.full_name}
             >
-              {inviting ? 'Enviando...' : 'Enviar convite'}
+              {inviting ? tTeam('invite.sending') : tTeam('invite.send')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -725,15 +755,15 @@ export default function FounderPage() {
       <AlertDialog open={!!removeMemberId} onOpenChange={(o) => !o && setRemoveMemberId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('removeMemberTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              O usuário perderá acesso imediatamente. Essa ação não pode ser desfeita.
+              {t('removeMemberDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover acesso
+              {t('removeAccess')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

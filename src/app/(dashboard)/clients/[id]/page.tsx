@@ -18,8 +18,9 @@ import { useToast } from '@/hooks/use-toast'
 import { getClientById, updateClient, deleteClient } from '@/services/clients'
 import { getTasks } from '@/services/demands'
 import { getClientApiKeys, createClientApiKey, updateClientApiKey, deleteClientApiKey } from '@/services/apiKeys'
-import { formatCurrency, formatDate, formatPercent, getLabelByStatus, getStatusColor, getPriorityColor } from '@/lib/utils'
+import { formatCurrency, formatDate, formatPercent, getStatusColor, getPriorityColor } from '@/lib/utils'
 import type { ClientWithProfit, ClientFormData, ClientStatus, Task, ClientApiKey, ClientApiKeyFormData, ApiKeyProvider } from '@/types'
+import { useTranslations } from 'next-intl'
 
 const PROVIDER_CONFIG: Record<ApiKeyProvider, { name: string; placeholder: string }> = {
   openai:    { name: 'OpenAI',        placeholder: 'sk-proj-...' },
@@ -27,8 +28,10 @@ const PROVIDER_CONFIG: Record<ApiKeyProvider, { name: string; placeholder: strin
   gemini:    { name: 'Google Gemini', placeholder: 'AIza...' },
   grok:      { name: 'Grok (xAI)',    placeholder: 'xai-...' },
   deepseek:  { name: 'DeepSeek',      placeholder: 'sk-...' },
-  other:     { name: 'Outro',         placeholder: 'Chave de API...' },
+  other:     { name: 'Other',         placeholder: 'API Key...' },
 }
+
+const CLIENT_STATUS_KEYS: ClientStatus[] = ['active', 'trial', 'inactive', 'churned']
 
 const PROVIDERS = Object.entries(PROVIDER_CONFIG) as [ApiKeyProvider, { name: string; placeholder: string }][]
 
@@ -36,6 +39,9 @@ export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('clientDetail')
+  const tc = useTranslations('common')
+  const tl = useTranslations('labels')
 
   const [client, setClient] = useState<ClientWithProfit | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
@@ -87,11 +93,11 @@ export default function ClientDetailPage() {
     setSaving(true)
     try {
       await updateClient(client.id, form)
-      toast({ title: 'Cliente atualizado' })
+      toast({ title: t('toast.updated') })
       setEditOpen(false)
       load()
     } catch {
-      toast({ title: 'Erro ao salvar', variant: 'destructive' })
+      toast({ title: t('toast.saveError'), variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -101,10 +107,10 @@ export default function ClientDetailPage() {
     if (!client) return
     try {
       await deleteClient(client.id)
-      toast({ title: 'Cliente removido' })
+      toast({ title: t('toast.deleted') })
       router.push('/clients')
     } catch {
-      toast({ title: 'Erro ao remover', variant: 'destructive' })
+      toast({ title: t('toast.deleteError'), variant: 'destructive' })
     }
   }
 
@@ -119,11 +125,11 @@ export default function ClientDetailPage() {
         api_key: keyForm.api_key,
       } as ClientApiKeyFormData)
       setApiKeys((prev) => [newKey, ...prev])
-      toast({ title: 'Chave adicionada' })
+      toast({ title: t('toast.keyAdded') })
       setKeyFormOpen(false)
       setKeyForm({ provider: 'openai', label: '', api_key: '' })
     } catch {
-      toast({ title: 'Erro ao adicionar chave', variant: 'destructive' })
+      toast({ title: t('toast.saveError'), variant: 'destructive' })
     } finally {
       setKeyLoading(false)
     }
@@ -134,7 +140,7 @@ export default function ClientDetailPage() {
       const updated = await updateClientApiKey(keyId, { is_active })
       setApiKeys((prev) => prev.map((k) => k.id === keyId ? { ...k, is_active: updated.is_active } : k))
     } catch {
-      toast({ title: 'Erro ao atualizar chave', variant: 'destructive' })
+      toast({ title: t('toast.saveError'), variant: 'destructive' })
     }
   }
 
@@ -143,10 +149,10 @@ export default function ClientDetailPage() {
     try {
       await deleteClientApiKey(deleteKeyId)
       setApiKeys((prev) => prev.filter((k) => k.id !== deleteKeyId))
-      toast({ title: 'Chave removida' })
+      toast({ title: t('toast.keyRemoved') })
       setDeleteKeyId(null)
     } catch {
-      toast({ title: 'Erro ao remover chave', variant: 'destructive' })
+      toast({ title: t('toast.deleteError'), variant: 'destructive' })
     }
   }
 
@@ -154,8 +160,8 @@ export default function ClientDetailPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao carregar cliente.</p>
-        <Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
       </div>
     )
   }
@@ -188,7 +194,7 @@ export default function ClientDetailPage() {
   }
 
   if (!client) {
-    return <div className="flex h-full items-center justify-center"><p className="text-sm text-muted-foreground">Cliente não encontrado.</p></div>
+    return <div className="flex h-full items-center justify-center"><p className="text-sm text-muted-foreground">{t('clientNotFound')}</p></div>
   }
 
   return (
@@ -196,11 +202,11 @@ export default function ClientDetailPage() {
       {/* Back + actions */}
       <div className="flex items-center justify-between">
         <button onClick={() => router.push('/clients')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Voltar
+          <ArrowLeft className="h-4 w-4" /> {t('back')}
         </button>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar</Button>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Remover</Button>
+          <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="mr-1.5 h-3.5 w-3.5" /> {tc('edit')}</Button>
+          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> {tc('delete')}</Button>
         </div>
       </div>
 
@@ -214,17 +220,17 @@ export default function ClientDetailPage() {
           <p className="text-sm text-muted-foreground">{client.product}</p>
         </div>
         <span className={`ml-auto inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusColor(client.status)}`}>
-          {getLabelByStatus(client.status)}
+          {tl(client.status as never)}
         </span>
       </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: 'Receita Mensal', value: formatCurrency(client.monthly_revenue) },
-          { label: 'Custo Operacional', value: formatCurrency(client.operational_cost) },
-          { label: 'Lucro Mensal', value: formatCurrency(client.profit) },
-          { label: 'Margem', value: formatPercent(client.margin) },
+          { label: t('monthlyRevenue'), value: formatCurrency(client.monthly_revenue) },
+          { label: t('operationalCost'), value: formatCurrency(client.operational_cost) },
+          { label: t('monthlyProfit'), value: formatCurrency(client.profit) },
+          { label: t('margin'), value: formatPercent(client.margin) },
         ].map((m) => (
           <Card key={m.label}>
             <CardHeader className="pb-1">
@@ -239,18 +245,18 @@ export default function ClientDetailPage() {
 
       {/* Info */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Informações</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t('info')}</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">Início</p>
+            <p className="text-xs text-muted-foreground">{t('startDate')}</p>
             <p className="font-medium">{formatDate(client.start_date)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Renovação</p>
+            <p className="text-xs text-muted-foreground">{t('renewalDate')}</p>
             <p className="font-medium">{formatDate(client.renewal_date)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Criado em</p>
+            <p className="text-xs text-muted-foreground">{t('createdAt')}</p>
             <p className="font-medium">{formatDate(client.created_at)}</p>
           </div>
         </CardContent>
@@ -258,31 +264,31 @@ export default function ClientDetailPage() {
 
       {/* Tasks */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Demandas ({tasks.length})</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t('taskCount', { count: tasks.length })}</CardTitle></CardHeader>
         <CardContent className="p-0">
           {tasks.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">Nenhuma tarefa vinculada.</p>
+            <p className="p-4 text-sm text-muted-foreground">{t('noTasksLinked')}</p>
           ) : (
             <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground">
-                  <th className="px-4 py-2 text-left font-medium">Título</th>
-                  <th className="px-4 py-2 text-left font-medium">Prioridade</th>
-                  <th className="px-4 py-2 text-left font-medium">Status</th>
-                  <th className="px-4 py-2 text-left font-medium">Prazo</th>
+                  <th className="px-4 py-2 text-left font-medium">{t('columns.title')}</th>
+                  <th className="px-4 py-2 text-left font-medium">{t('columns.priority')}</th>
+                  <th className="px-4 py-2 text-left font-medium">{t('columns.status')}</th>
+                  <th className="px-4 py-2 text-left font-medium">{t('columns.dueDate')}</th>
                 </tr>
               </thead>
               <tbody>
-                {tasks.map((t) => (
-                  <tr key={t.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2">{t.title}</td>
-                    <td className={`px-4 py-2 font-medium ${getPriorityColor(t.priority)}`}>{getLabelByStatus(t.priority)}</td>
+                {tasks.map((task) => (
+                  <tr key={task.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-2">{task.title}</td>
+                    <td className={`px-4 py-2 font-medium ${getPriorityColor(task.priority)}`}>{tl(task.priority as never)}</td>
                     <td className="px-4 py-2">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(t.status)}`}>
-                        {getLabelByStatus(t.status)}
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(task.status)}`}>
+                        {tl(task.status as never)}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-muted-foreground">{formatDate(t.due_date)}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{formatDate(task.due_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -296,15 +302,15 @@ export default function ClientDetailPage() {
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-muted-foreground" />
-            Integrações ({apiKeys.length})
+            {t('integrations', { count: apiKeys.length })}
           </CardTitle>
           <Button size="sm" variant="outline" onClick={() => setKeyFormOpen(true)}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> {t('addIntegration')}
           </Button>
         </CardHeader>
         <CardContent className="p-0">
           {apiKeys.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">Nenhuma chave de API configurada.</p>
+            <p className="p-4 text-sm text-muted-foreground">{t('noApiKeys')}</p>
           ) : (
             <div className="divide-y divide-border">
               {apiKeys.map((key) => (
@@ -325,7 +331,7 @@ export default function ClientDetailPage() {
                           : 'border-muted bg-muted/40 text-muted-foreground'
                       }`}
                     >
-                      {key.is_active ? 'Ativa' : 'Inativa'}
+                      {key.is_active ? t('active') : t('inactive')}
                     </button>
                     <Button
                       variant="ghost"
@@ -347,51 +353,50 @@ export default function ClientDetailPage() {
       {form && (
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-            <DialogHeader><DialogTitle>Editar Cliente</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t('editClientTitle')}</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5 col-span-2">
-                  <Label>Nome</Label>
+                  <Label>{t('form.name')}</Label>
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </div>
                 <div className="space-y-1.5 col-span-2">
-                  <Label>Produto / Plano</Label>
+                  <Label>{t('form.product')}</Label>
                   <Input value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Receita Mensal (R$)</Label>
+                  <Label>{t('form.monthlyRevenue')}</Label>
                   <Input type="number" value={form.monthly_revenue} onChange={(e) => setForm({ ...form, monthly_revenue: Number(e.target.value) })} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Custo Operacional (R$)</Label>
+                  <Label>{t('form.operationalCost')}</Label>
                   <Input type="number" value={form.operational_cost} onChange={(e) => setForm({ ...form, operational_cost: Number(e.target.value) })} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Início</Label>
+                  <Label>{t('form.startDate')}</Label>
                   <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Renovação</Label>
+                  <Label>{t('form.renewalDate')}</Label>
                   <Input type="date" value={form.renewal_date ?? ''} onChange={(e) => setForm({ ...form, renewal_date: e.target.value || null })} />
                 </div>
                 <div className="space-y-1.5 col-span-2">
-                  <Label>Status</Label>
+                  <Label>{t('form.status')}</Label>
                   <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ClientStatus })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Ativo</SelectItem>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="inactive">Inativo</SelectItem>
-                      <SelectItem value="churned">Churned</SelectItem>
+                      {CLIENT_STATUS_KEYS.map((s) => (
+                        <SelectItem key={s} value={s}>{tl(s as never)}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setEditOpen(false)}>{tc('cancel')}</Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Salvando...' : 'Salvar'}
+                {saving ? tc('saving') : tc('save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -401,10 +406,10 @@ export default function ClientDetailPage() {
       {/* Add Key Dialog */}
       <Dialog open={keyFormOpen} onOpenChange={setKeyFormOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> Adicionar Chave de API</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> {t('addKeyDialogTitle')}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Provedor</Label>
+              <Label>{t('provider')}</Label>
               <Select
                 value={keyForm.provider}
                 onValueChange={(v) => setKeyForm({ ...keyForm, provider: v as ApiKeyProvider })}
@@ -418,28 +423,28 @@ export default function ClientDetailPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Label <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Label>{t('apiKeyLabel')}</Label>
               <Input
-                placeholder="Ex: Produção, Staging..."
+                placeholder={t('labelPlaceholder')}
                 value={keyForm.label}
                 onChange={(e) => setKeyForm({ ...keyForm, label: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Chave de API</Label>
+              <Label>{t('apiKeyField')}</Label>
               <Input
                 type="password"
                 placeholder={PROVIDER_CONFIG[keyForm.provider].placeholder}
                 value={keyForm.api_key}
                 onChange={(e) => setKeyForm({ ...keyForm, api_key: e.target.value })}
               />
-              <p className="text-xs text-muted-foreground">Armazenada com criptografia AES-256-GCM.</p>
+              <p className="text-xs text-muted-foreground">{t('keyEncrypted')}</p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setKeyFormOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setKeyFormOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleAddKey} disabled={keyLoading || !keyForm.api_key}>
-              {keyLoading ? 'Salvando...' : 'Salvar'}
+              {keyLoading ? tc('saving') : t('saveKey')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -449,13 +454,13 @@ export default function ClientDetailPage() {
       <AlertDialog open={!!deleteKeyId} onOpenChange={(o) => !o && setDeleteKeyId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover chave?</AlertDialogTitle>
-            <AlertDialogDescription>A chave será excluída permanentemente. Essa ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteKey')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteKeyDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteKey} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+              {tc('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -465,13 +470,13 @@ export default function ClientDetailPage() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover cliente?</AlertDialogTitle>
-            <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteClientTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{tc('irreversible')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remover
+              {tc('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

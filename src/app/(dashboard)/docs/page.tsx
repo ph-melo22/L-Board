@@ -1,13 +1,33 @@
 'use client'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.5.0'
+const VERSION = '1.6.0'
 
 const CHANGELOG = [
+  {
+    version: '1.6.0',
+    date: '2026-05-07',
+    changes: [
+      'Migração i18n completa: toda a interface traduzida para 6 idiomas (PT, EN, ES, FR, DE, ZH) com next-intl',
+      'Locale armazenado em cookie "locale"; nenhuma alteração de URL — rotas mantidas sem prefixo de idioma',
+      'Seletor de idioma (LanguageSelector) adicionado ao Header com bandeiras e nomes nativos',
+      'Componente src/components/layout/LanguageSelector.tsx: muda locale via cookie e recarrega a página',
+      'src/i18n/request.ts: detecta locale do cookie com fallback para "pt"',
+      'Arquivo messages/pt.json como fonte única (1500+ chaves); script scripts/translate.mjs gera EN/ES/FR/DE/ZH via DeepL API',
+      'Namespaces: common, labels, dashboard, clients, clientDetail, financial, demands, projects, projectDetail, founder, settings, team, docs, landing, contador',
+      'LandingPage.tsx migrada: FEATURES/STEPS/TESTIMONIALS/FAQ construídos com useMemo + t() — arrays estruturais module-level, texto via i18n',
+      'clients/[id]/page.tsx migrada com useTranslations("clientDetail"), padrão tl(value as never) para labels dinâmicos',
+      'projects/[id]/page.tsx migrada: STATUS_LABELS e PRIORITY_LABELS como useMemo; loop vars renomeadas de t para tsk',
+      'Plurais ICU em projectDetail: importSuccess, progressItems, progressTasks, subTaskCount, aiGenerated, aiCreateBtn',
+      'handleExport em projects/[id] usa t()/tProjects() por closure e Intl.DateTimeFormat(locale) em vez de hardcoded "pt-BR"',
+      'Todas as páginas do dashboard migradas: dashboard, clients, financial, demands, projects, founder, settings, team, contador',
+    ],
+  },
   {
     version: '1.5.0',
     date: '2026-05-07',
@@ -568,6 +588,7 @@ function TypeBadge({ type }: { type: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DocsPage() {
+  const t = useTranslations('docs')
   const [openService, setOpenService] = useState<string | null>(null)
   const [openChangelog, setOpenChangelog] = useState<string | null>(CHANGELOG[0].version)
 
@@ -577,16 +598,16 @@ export default function DocsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold">Documentação Técnica</h1>
-          <p className="text-sm text-muted-foreground mt-1">L Board — versão {VERSION}</p>
+          <h1 className="text-xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle', { v: VERSION })}</p>
         </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          BETA 0.9
+          {t('betaBadge')}
         </span>
       </div>
 
       {/* Changelog */}
-      <Section title="Histórico de Versões">
+      <Section title={t('changelogTitle')}>
         <div className="space-y-2">
           {CHANGELOG.map((v) => (
             <Card key={v.version} className="shadow-none">
@@ -599,7 +620,7 @@ export default function DocsPage() {
                     <span className="text-sm font-bold font-mono text-primary">v{v.version}</span>
                     <span className="text-xs text-muted-foreground">{v.date}</span>
                     {v.version === VERSION && (
-                      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">atual</span>
+                      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">{t('currentBadge')}</span>
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground">{openChangelog === v.version ? '▲' : '▼'}</span>
@@ -623,7 +644,7 @@ export default function DocsPage() {
       </Section>
 
       {/* Roles */}
-      <Section title="Roles e Permissões">
+      <Section title={t('rolesTitle')}>
         <div className="space-y-2">
           {ROLES.map((r) => (
             <Card key={r.role} className="shadow-none">
@@ -639,7 +660,7 @@ export default function DocsPage() {
       </Section>
 
       {/* Stack */}
-      <Section title="Stack Tecnológico">
+      <Section title={t('stackTitle')}>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
           {STACK.map((s) => (
             <Card key={s.name} className="shadow-none">
@@ -653,16 +674,16 @@ export default function DocsPage() {
       </Section>
 
       {/* Pages */}
-      <Section title="Páginas, Rotas e APIs">
+      <Section title={t('pagesTitle')}>
         <Card className="shadow-none">
           <CardContent className="p-0">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground">
-                  <th className="px-4 py-3 text-left font-medium">Rota</th>
-                  <th className="px-4 py-3 text-left font-medium">Arquivo</th>
-                  <th className="px-4 py-3 text-left font-medium">Acesso</th>
-                  <th className="px-4 py-3 text-left font-medium">Descrição</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('colRoute')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('colFile')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('colAccess')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('colDescription')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -681,7 +702,7 @@ export default function DocsPage() {
       </Section>
 
       {/* Services */}
-      <Section title="Services (Acesso ao Banco)">
+      <Section title={t('servicesTitle')}>
         <div className="space-y-2">
           {SERVICES.map((s) => (
             <Card key={s.file} className="shadow-none">
@@ -689,7 +710,7 @@ export default function DocsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-xs font-mono font-semibold text-primary">{s.file}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">Tabela: <span className="font-medium">{s.tabela}</span> · {s.funcoes.length} funções</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('tableLabel')}: <span className="font-medium">{s.tabela}</span> · {t('functionsLabel', { count: s.funcoes.length })}</p>
                   </div>
                   <span className="text-xs text-muted-foreground">{openService === s.file ? '▲' : '▼'}</span>
                 </div>
@@ -710,14 +731,14 @@ export default function DocsPage() {
       </Section>
 
       {/* Models */}
-      <Section title="Modelos de Dados (Types)">
-        <p className="text-xs text-muted-foreground">Arquivo: <code className="font-mono">src/types/index.ts</code></p>
+      <Section title={t('modelsTitle')}>
+        <p className="text-xs text-muted-foreground">{t('fileLabel')}: <code className="font-mono">src/types/index.ts</code></p>
         <div className="grid gap-3 md:grid-cols-2">
           {MODELS.map((m) => (
             <Card key={m.name} className="shadow-none">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">{m.name}</CardTitle>
-                <p className="text-xs text-muted-foreground">Tabela: <code className="font-mono">{m.tabela}</code></p>
+                <p className="text-xs text-muted-foreground">{t('tableLabel')}: <code className="font-mono">{m.tabela}</code></p>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex flex-wrap gap-1">
@@ -732,14 +753,14 @@ export default function DocsPage() {
       </Section>
 
       {/* Infrastructure */}
-      <Section title="Infraestrutura e Configuração">
+      <Section title={t('infraTitle')}>
         <Card className="shadow-none">
           <CardContent className="p-0">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground">
-                  <th className="px-4 py-3 text-left font-medium">Arquivo</th>
-                  <th className="px-4 py-3 text-left font-medium">Responsabilidade</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('colFile')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('colResponsibility')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -756,7 +777,7 @@ export default function DocsPage() {
       </Section>
 
       {/* Database */}
-      <Section title="Banco de Dados">
+      <Section title={t('dbTitle')}>
         <div className="grid gap-3 md:grid-cols-2">
           {[
             { table: 'clients', desc: 'Clientes com receita mensal, custo operacional, status e datas.' },
@@ -782,14 +803,12 @@ export default function DocsPage() {
             </Card>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">
-          RLS ativo em todas as tabelas. Políticas por role gerenciadas via middleware e admin client.
-        </p>
+        <p className="text-xs text-muted-foreground">{t('rlsNote')}</p>
       </Section>
 
       {/* Footer */}
       <div className="border-t border-border pt-4 text-xs text-muted-foreground">
-        L Board v{VERSION} · Atualizado em {new Date().toLocaleDateString('pt-BR')} · Stack: Next.js + Supabase + Vercel
+        {t('footer', { v: VERSION, date: new Date().toLocaleDateString('pt-BR') })}
       </div>
     </div>
   )

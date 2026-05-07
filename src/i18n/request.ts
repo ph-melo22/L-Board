@@ -10,8 +10,15 @@ export default getRequestConfig(async () => {
   const cookie = cookieStore.get('locale')?.value as Locale | undefined
   const locale: Locale = cookie && locales.includes(cookie) ? cookie : defaultLocale
 
+  let messages
+  try {
+    messages = (await import(`../../messages/${locale}.json`)).default
+  } catch {
+    messages = (await import('../../messages/pt.json')).default
+  }
+
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages,
   }
 })

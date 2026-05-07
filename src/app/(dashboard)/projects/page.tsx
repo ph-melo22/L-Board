@@ -14,15 +14,9 @@ import { getProjects, createProject } from '@/services/projects'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
 import type { ProjectListItem, ProjectFormData, ProjectStatus, ProjectPriority } from '@/types'
+import { useTranslations } from 'next-intl'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  planning: 'Planejamento',
-  active: 'Em Andamento',
-  paused: 'Pausado',
-  completed: 'Concluído',
-}
 
 const STATUS_COLORS: Record<ProjectStatus, string> = {
   planning: 'text-blue-600 bg-blue-50 border-blue-200',
@@ -31,16 +25,15 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
   completed: 'text-muted-foreground bg-muted border-border',
 }
 
-const PRIORITY_LABELS: Record<ProjectPriority, string> = {
-  low: 'Baixa', medium: 'Média', high: 'Alta', critical: 'Crítica',
-}
-
 const PRIORITY_TEXT: Record<ProjectPriority, string> = {
   low: 'text-muted-foreground',
   medium: 'text-amber-600',
   high: 'text-orange-600',
   critical: 'text-red-600 font-semibold',
 }
+
+const STATUS_KEYS: ProjectStatus[] = ['planning', 'active', 'paused', 'completed']
+const PRIORITY_KEYS: ProjectPriority[] = ['low', 'medium', 'high', 'critical']
 
 const EMPTY_FORM: ProjectFormData = {
   title: '', description: null, objectives: null, scope: null,
@@ -73,6 +66,8 @@ function Skeleton({ className }: { className?: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProjectsPage() {
+  const t = useTranslations('projects')
+  const tc = useTranslations('common')
   const router = useRouter()
   const { toast } = useToast()
   const [projects, setProjects] = useState<ProjectListItem[]>([])
@@ -108,10 +103,10 @@ export default function ProjectsPage() {
     setSaving(true)
     try {
       const p = await createProject(form)
-      toast({ title: 'Projeto criado' })
+      toast({ title: t('toast.created') })
       setDialogOpen(false)
       router.push(`/projects/${p.id}`)
-    } catch { toast({ title: 'Erro ao criar projeto', variant: 'destructive' }) }
+    } catch { toast({ title: t('toast.saveError'), variant: 'destructive' }) }
     finally { setSaving(false) }
   }
 
@@ -119,16 +114,16 @@ export default function ProjectsPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Erro ao carregar projetos.</p>
-        <Button size="sm" variant="outline" onClick={load}>Tentar novamente</Button>
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
       </div>
     )
   }
 
   const statGroups = [
-    { key: 'active' as ProjectStatus, label: 'Em andamento', count: projects.filter(p => p.status === 'active').length },
-    { key: 'planning' as ProjectStatus, label: 'Planejamento', count: projects.filter(p => p.status === 'planning').length },
-    { key: 'completed' as ProjectStatus, label: 'Concluídos', count: projects.filter(p => p.status === 'completed').length },
+    { key: 'active' as ProjectStatus, label: t('stats.active'), count: projects.filter(p => p.status === 'active').length },
+    { key: 'planning' as ProjectStatus, label: t('stats.planning'), count: projects.filter(p => p.status === 'planning').length },
+    { key: 'completed' as ProjectStatus, label: t('stats.completed'), count: projects.filter(p => p.status === 'completed').length },
   ]
 
   return (
@@ -149,10 +144,10 @@ export default function ProjectsPage() {
             onClick={() => setMyOnly(v => !v)}
             className={myOnly ? '' : 'text-muted-foreground'}
           >
-            <User className="mr-1.5 h-3.5 w-3.5" /> Meus projetos
+            <User className="mr-1.5 h-3.5 w-3.5" /> {t('myProjects')}
           </Button>
           <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>
-            <Plus className="mr-1.5 h-4 w-4" /> Novo Projeto
+            <Plus className="mr-1.5 h-4 w-4" /> {t('newProject')}
           </Button>
         </div>
       </div>
@@ -166,11 +161,11 @@ export default function ProjectsPage() {
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-20">
           <FolderKanban className="h-10 w-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground">
-            {myOnly ? 'Nenhum projeto seu encontrado.' : 'Nenhum projeto ainda.'}
+            {myOnly ? t('notFoundMine') : t('notFound')}
           </p>
           {!myOnly && (
             <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setDialogOpen(true) }}>
-              <Plus className="mr-1.5 h-4 w-4" /> Criar primeiro projeto
+              <Plus className="mr-1.5 h-4 w-4" /> {t('createFirst')}
             </Button>
           )}
         </div>
@@ -188,7 +183,7 @@ export default function ProjectsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold leading-tight line-clamp-2 flex-1">{project.title}</p>
                     <span className={`shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[project.status]}`}>
-                      {STATUS_LABELS[project.status]}
+                      {t(`statusLabel.${project.status}` as never)}
                     </span>
                   </div>
                   {project.description && (
@@ -200,7 +195,7 @@ export default function ProjectsPage() {
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
-                        {project.project_tasks.length} atividade{project.project_tasks.length !== 1 ? 's' : ''}
+                        {t('activities', { count: project.project_tasks.length })}
                       </span>
                       <span className="font-semibold text-foreground">{pct}%</span>
                     </div>
@@ -213,7 +208,9 @@ export default function ProjectsPage() {
                   </div>
                   {/* Footer */}
                   <div className="flex items-center gap-3 text-xs">
-                    <span className={PRIORITY_TEXT[project.priority]}>{PRIORITY_LABELS[project.priority]}</span>
+                    <span className={PRIORITY_TEXT[project.priority]}>
+                      {t(`priority.${project.priority}` as never)}
+                    </span>
                     {project.end_date && (
                       <span className="flex items-center gap-1 text-muted-foreground ml-auto">
                         <Calendar className="h-3 w-3" />
@@ -231,60 +228,60 @@ export default function ProjectsPage() {
       {/* New Project Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>Novo Projeto</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('newProject')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">
-              <Label>Nome do Projeto *</Label>
+              <Label>{t('form.name')} *</Label>
               <Input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Ex: Redesign do Site"
+                placeholder={t('form.namePlaceholder')}
               />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>{t('form.description')}</Label>
               <Textarea
                 rows={2}
                 value={form.description ?? ''}
                 onChange={(e) => setForm({ ...form, description: e.target.value || null })}
-                placeholder="Contexto geral do projeto..."
+                placeholder={t('form.descriptionPlaceholder')}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{t('form.status')}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ProjectStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(STATUS_LABELS) as ProjectStatus[]).map(s => (
-                    <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+                  {STATUS_KEYS.map(s => (
+                    <SelectItem key={s} value={s}>{t(`statusLabel.${s}` as never)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Prioridade</Label>
+              <Label>{t('form.priority')}</Label>
               <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as ProjectPriority })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(PRIORITY_LABELS) as ProjectPriority[]).map(p => (
-                    <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>
+                  {PRIORITY_KEYS.map(p => (
+                    <SelectItem key={p} value={p}>{t(`priority.${p}` as never)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Data de Início</Label>
+              <Label>{t('form.startDate')}</Label>
               <Input type="date" value={form.start_date ?? ''} onChange={(e) => setForm({ ...form, start_date: e.target.value || null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Prazo Final</Label>
+              <Label>{t('form.endDate')}</Label>
               <Input type="date" value={form.end_date ?? ''} onChange={(e) => setForm({ ...form, end_date: e.target.value || null })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{tc('cancel')}</Button>
             <Button onClick={handleCreate} disabled={saving || !form.title.trim()}>
-              {saving ? 'Criando...' : 'Criar Projeto'}
+              {saving ? t('creating') : t('createProject')}
             </Button>
           </DialogFooter>
         </DialogContent>
