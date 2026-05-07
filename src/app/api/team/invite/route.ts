@@ -4,6 +4,18 @@ import { requireAuth } from '@/lib/requireAuth'
 import { rateLimit } from '@/lib/rateLimit'
 import { sendEmail } from '@/lib/email'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee']
+
+function escapeHtml(s: string) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 const INVITE_HTML = (name: string, inviteUrl: string) => `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -58,9 +70,16 @@ export async function POST(request: NextRequest) {
   try {
     const { full_name, email, role } = await request.json()
 
-    if (!email || !full_name) {
+    if (!full_name || !email) {
       return NextResponse.json({ error: 'Nome e email são obrigatórios' }, { status: 400 })
     }
+
+    if (!EMAIL_RE.test(email)) {
+      return NextResponse.json({ error: 'E-mail inválido' }, { status: 400 })
+    }
+
+    const safeRole = VALID_ROLES.includes(role) ? role : 'employee'
+    const safeName = String(full_name).slice(0, 100)
 
     const supabase = createAdminClient()
     const appUrl = request.nextUrl.origin
@@ -77,8 +96,8 @@ export async function POST(request: NextRequest) {
     const { error: profileError } = await supabase.from('profiles').insert({
       id: linkData.user.id,
       email,
-      full_name,
-      role: role ?? 'employee',
+      full_name: safeName,
+      role: safeRole,
       organization_id: profile.organization_id,
     })
     if (profileError) throw profileError
@@ -88,7 +107,7 @@ export async function POST(request: NextRequest) {
     await sendEmail({
       to: email,
       subject: 'Você foi convidado para o L Board',
-      html: INVITE_HTML(full_name, inviteUrl),
+      html: INVITE_HTML(escapeHtml(safeName), inviteUrl),
     })
 
     return NextResponse.json({ success: true })

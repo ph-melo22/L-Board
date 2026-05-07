@@ -13,6 +13,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
   }
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_RE.test(params.id)) {
+    return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  }
+
   if (params.id === user.id) {
     return NextResponse.json({ error: 'Não é possível remover a própria conta' }, { status: 400 })
   }

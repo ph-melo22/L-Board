@@ -151,8 +151,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Arquivo muito grande. O limite é 300 MB.' }, { status: 400 })
     }
 
-    const membersCtx = membersRaw
-      ? `\n\nMembros disponíveis para delegação: ${membersRaw}. Quando o documento mencionar explicitamente uma pessoa ou papel que corresponda a um membro, preencha "assigned_to_hint" com o nome exato do membro.`
+    // Sanitize members input to prevent prompt injection: strip special chars, limit length
+    const safeMembers = membersRaw
+      ? String(membersRaw).replace(/[<>"'`\\]/g, '').slice(0, 500)
+      : null
+
+    const membersCtx = safeMembers
+      ? `\n\nMembros disponíveis para delegação: ${safeMembers}. Quando o documento mencionar explicitamente uma pessoa ou papel que corresponda a um membro, preencha "assigned_to_hint" com o nome exato do membro.`
       : ''
 
     const content = await extractContent(file)

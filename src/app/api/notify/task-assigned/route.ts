@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
 import { requireAuth } from '@/lib/requireAuth'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function escapeHtml(s: string) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 export async function POST(request: NextRequest) {
   const { error: authError } = await requireAuth()
   if (authError) return authError
@@ -11,20 +22,27 @@ export async function POST(request: NextRequest) {
   try {
     const { assigneeName, assigneeEmail, taskTitle, projectTitle, taskType } = await request.json()
 
+    if (!assigneeEmail || !EMAIL_RE.test(assigneeEmail)) {
+      return NextResponse.json({ ok: false, reason: 'invalid_email' })
+    }
+
     const label = taskType === 'subtask' ? 'sub-atividade' : 'atividade'
+    const name    = escapeHtml(String(assigneeName  ?? '').slice(0, 100))
+    const task    = escapeHtml(String(taskTitle     ?? '').slice(0, 200))
+    const project = escapeHtml(String(projectTitle  ?? '').slice(0, 200))
 
     const html = `
       <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; color: #1a1a1a;">
         <div style="background: #f9f9f9; border-radius: 12px; padding: 32px;">
           <h2 style="margin: 0 0 8px; font-size: 20px;">Nova ${label} atribuída a você</h2>
-          <p style="color: #666; margin: 0 0 24px; font-size: 14px;">Projeto: <strong>${projectTitle}</strong></p>
+          <p style="color: #666; margin: 0 0 24px; font-size: 14px;">Projeto: <strong>${project}</strong></p>
 
           <div style="background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
-            <p style="margin: 0; font-size: 15px; font-weight: 600;">${taskTitle}</p>
+            <p style="margin: 0; font-size: 15px; font-weight: 600;">${task}</p>
           </div>
 
           <p style="font-size: 14px; color: #444; margin: 0 0 24px;">
-            Olá, <strong>${assigneeName}</strong>! Acesse o L Board para ver os detalhes e marcar como concluída quando finalizar.
+            Olá, <strong>${name}</strong>! Acesse o L Board para ver os detalhes e marcar como concluída quando finalizar.
           </p>
 
           <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 0 0 16px;" />
@@ -35,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: assigneeEmail,
-      subject: `Nova ${label}: ${taskTitle} — ${projectTitle}`,
+      subject: `Nova ${label}: ${task} — ${project}`,
       html,
     })
 
