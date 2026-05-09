@@ -277,10 +277,11 @@ Diretrizes:
     const choice = completion.choices[0]
     const usage = completion.usage
 
-    const toolCalls = choice.message.tool_calls?.map((tc) => ({
-      type: tc.function.name,
-      params: JSON.parse(tc.function.arguments) as Record<string, unknown>,
-    })) ?? []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const toolCalls = (choice.message.tool_calls ?? []).filter(tc => tc.type === 'function').map((tc: any) => ({
+      type: tc.function.name as string,
+      params: JSON.parse(tc.function.arguments as string) as Record<string, unknown>,
+    }))
 
     return NextResponse.json({
       reply: choice.message.content ?? '',
