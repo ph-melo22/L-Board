@@ -631,7 +631,8 @@
       "okrs": "OKRs",
       "projects": "Projetos",
       "notes": "Notas",
-      "team": "Equipe"
+      "team": "Equipe",
+      "assistant": "Secretária"
     },
     "kr": {
       "description": "Descrição",

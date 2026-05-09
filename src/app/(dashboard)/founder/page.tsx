@@ -26,6 +26,7 @@ import { getTeam, inviteTeamMember, removeTeamMember, updateMemberRole } from '@
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils'
 import type { OKR, OKRStatus, KeyResult, StrategicProject, StrategicNote, Profile, UserRole } from '@/types'
 import { useTranslations } from 'next-intl'
+import { AssistantChat } from './AssistantChat'
 
 // ─── OKR Section ──────────────────────────────────────────────────────────────
 
@@ -358,6 +359,7 @@ export default function FounderPage() {
             <TabsTrigger value="projects">{t('tabs.projects')} ({projects.length})</TabsTrigger>
             <TabsTrigger value="notes">{t('tabs.notes')} ({notes.length})</TabsTrigger>
             <TabsTrigger value="team">{t('tabs.team')} ({team.length})</TabsTrigger>
+            <TabsTrigger value="assistant">{t('tabs.assistant')}</TabsTrigger>
           </TabsList>
           <div>
             <TabsContent value="okrs" className="mt-0">
@@ -535,6 +537,11 @@ export default function FounderPage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* Assistente */}
+        <TabsContent value="assistant">
+          <AssistantChat />
         </TabsContent>
       </Tabs>
 

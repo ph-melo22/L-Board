@@ -6,9 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.6.1'
+const VERSION = '1.7.0'
 
 const CHANGELOG = [
+  {
+    version: '1.7.0',
+    date: '2026-05-09',
+    changes: [
+      'Adiciona tab "Secretária" no Founder Board com chat de IA conectado à OpenAI (GPT-4o / GPT-4o-mini)',
+      'Assistente "Layla" recebe contexto completo da operação: clientes, demandas abertas, OKRs, projetos estratégicos, equipe e resumo financeiro do mês',
+      'Seletor de modelo no header do chat (GPT-4o ou GPT-4o-mini), trocável a qualquer momento',
+      'Function calling com 3 ações: criar_demanda, atualizar_status_demanda, criar_projeto_estrategico — todas com card de confirmação antes de executar',
+      'Barra de tokens mostrando uso acumulado da sessão (X / 128k tokens) e custo estimado em R$ com preços oficiais da OpenAI',
+      'Typing indicator animado (3 bolinhas) enquanto aguarda resposta da IA',
+      'Sugestões rápidas de pergunta exibidas no estado vazio do chat',
+      'API route POST /api/assistant — acessível apenas por founders; rate limit 30 req/min; usa chave OpenAI da organização',
+      'Execução de ações confirmadas via admin client do Supabase com filtro por organization_id',
+      'Componente src/app/(dashboard)/founder/AssistantChat.tsx criado',
+    ],
+  },
   {
     version: '1.6.1',
     date: '2026-05-09',
