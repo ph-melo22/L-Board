@@ -6,9 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.6.0'
+const VERSION = '1.6.1'
 
 const CHANGELOG = [
+  {
+    version: '1.6.1',
+    date: '2026-05-09',
+    changes: [
+      'Adiciona seção de Metas do Período na página /financial com cards de progresso para receita, despesas e resultado líquido',
+      'GoalCard: barra de progresso com cores dinâmicas (verde/âmbar/vermelho) e status label (Atingida, Em progresso, Crítico, Acima do limite)',
+      'Metas persistidas por período no localStorage com chave lboard_financial_goals_{YYYY-MM}',
+      'Dialog de edição de metas com 3 campos (receita, limite de despesas, resultado); valor 0 oculta o card correspondente',
+      'Botão "Definir Metas" exibido quando nenhuma meta está configurada; botão "Editar Metas" ao lado do título da seção quando há metas ativas',
+      'Adiciona namespace financial.goals em messages/pt.json com todas as chaves de tradução da feature',
+    ],
+  },
   {
     version: '1.6.0',
     date: '2026-05-07',

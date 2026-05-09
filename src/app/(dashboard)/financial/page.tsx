@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Trash2, AlertTriangle, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -35,6 +35,51 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
 }
 
+type FinancialGoals = { revenue: number; expenses: number; result: number }
+
+function GoalCard({ label, current, target, inverse = false, tGoals }: {
+  label: string; current: number; target: number; inverse?: boolean
+  tGoals: (k: string) => string
+}) {
+  const pct = target > 0 ? Math.min(Math.max((current / target) * 100, 0), 100) : 0
+  const isAchieved = inverse ? current <= target : current >= target
+  const isWarning = inverse ? current > target * 0.8 && current <= target : current >= target * 0.6 && current < target
+
+  const barColor = isAchieved
+    ? 'bg-emerald-500'
+    : isWarning ? 'bg-amber-500' : 'bg-red-400'
+
+  const statusLabel = inverse
+    ? (isAchieved ? tGoals('onTrack') : tGoals('overLimit'))
+    : (isAchieved ? tGoals('achieved') : pct >= 60 ? tGoals('onTrack') : tGoals('critical'))
+
+  const statusColor = isAchieved
+    ? 'text-emerald-600'
+    : (inverse ? 'text-red-500' : pct >= 60 ? 'text-amber-500' : 'text-red-500')
+
+  return (
+    <Card>
+      <CardHeader className="pb-1 flex flex-row items-center justify-between">
+        <CardTitle className="text-xs text-muted-foreground">{label}</CardTitle>
+        <Target className="h-3.5 w-3.5 text-muted-foreground" />
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-lg font-bold">{formatCurrency(current)}</p>
+          <p className="text-xs text-muted-foreground shrink-0">/ {formatCurrency(target)}</p>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{pct.toFixed(0)}% {tGoals('ofGoal')}</p>
+          <p className={`text-xs font-medium ${statusColor}`}>{statusLabel}</p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 const EMPTY_ENTRY: FinancialEntryFormData = {
   client_id: null, value: 0, type: 'recurring', category: 'subscription',
   status: 'confirmed', date: new Date().toISOString().split('T')[0], description: null,
@@ -64,6 +109,7 @@ function getMonthOptions(allLabel: string) {
 export default function FinancialPage() {
   const { toast } = useToast()
   const t  = useTranslations('financial')
+  const tg = useTranslations('financial.goals')
   const tc = useTranslations('common')
   const tl = useTranslations('labels')
 
@@ -85,6 +131,34 @@ export default function FinancialPage() {
   const [expenseForm, setExpenseForm] = useState<FinancialExpenseFormData>(EMPTY_EXPENSE)
   const [savingExpense, setSavingExpense] = useState(false)
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null)
+
+  const currentMonth = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  }, [])
+  const goalsKey = period === 'all' ? currentMonth : period
+  const GOALS_STORAGE_KEY = `lboard_financial_goals_${goalsKey}`
+
+  const [goals, setGoals] = useState<FinancialGoals>({ revenue: 0, expenses: 0, result: 0 })
+  const [goalsOpen, setGoalsOpen] = useState(false)
+  const [goalsForm, setGoalsForm] = useState<FinancialGoals>({ revenue: 0, expenses: 0, result: 0 })
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(GOALS_STORAGE_KEY)
+      const parsed: FinancialGoals = stored ? JSON.parse(stored) : { revenue: 0, expenses: 0, result: 0 }
+      setGoals(parsed)
+    } catch {
+      setGoals({ revenue: 0, expenses: 0, result: 0 })
+    }
+  }, [GOALS_STORAGE_KEY])
+
+  function openGoals() { setGoalsForm(goals); setGoalsOpen(true) }
+  function saveGoals() {
+    localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goalsForm))
+    setGoals(goalsForm)
+    setGoalsOpen(false)
+  }
 
   async function load() {
     setLoading(true)
@@ -159,6 +233,7 @@ export default function FinancialPage() {
   const totalEntries = calcEntriesTotal(filteredEntries)
   const totalExpenses = calcExpensesTotal(filteredExpenses)
   const monthOptions = getMonthOptions(t('allPeriods'))
+  const hasAnyGoal = goals.revenue > 0 || goals.expenses > 0 || goals.result > 0
 
   if (error) {
     return (
@@ -205,6 +280,32 @@ export default function FinancialPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {hasAnyGoal ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold">{tg('title')}</h2>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={openGoals}>
+              <Pencil className="h-3 w-3 mr-1" />{tg('edit')}
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {goals.revenue > 0 && (
+              <GoalCard label={tg('revenue')} current={totalEntries} target={goals.revenue} tGoals={tg} />
+            )}
+            {goals.expenses > 0 && (
+              <GoalCard label={tg('expenses')} current={totalExpenses} target={goals.expenses} inverse tGoals={tg} />
+            )}
+            {goals.result > 0 && (
+              <GoalCard label={tg('result')} current={totalEntries - totalExpenses} target={goals.result} tGoals={tg} />
+            )}
+          </div>
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" className="w-fit" onClick={openGoals}>
+          <Target className="h-3.5 w-3.5 mr-1.5" />{tg('set')}
+        </Button>
       )}
 
       <Tabs defaultValue="entries">
@@ -475,6 +576,34 @@ export default function FinancialPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Goals Dialog */}
+      <Dialog open={goalsOpen} onOpenChange={setGoalsOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{tg('form.title')}</DialogTitle>
+            <p className="text-xs text-muted-foreground">{tg('form.subtitle')}</p>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>{tg('form.revenue')}</Label>
+              <Input type="number" min={0} value={goalsForm.revenue} onChange={(e) => setGoalsForm({ ...goalsForm, revenue: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{tg('form.expenses')}</Label>
+              <Input type="number" min={0} value={goalsForm.expenses} onChange={(e) => setGoalsForm({ ...goalsForm, expenses: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{tg('form.result')}</Label>
+              <Input type="number" min={0} value={goalsForm.result} onChange={(e) => setGoalsForm({ ...goalsForm, result: Number(e.target.value) })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGoalsOpen(false)}>{tc('cancel')}</Button>
+            <Button onClick={saveGoals}>{tc('save')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteExpenseId} onOpenChange={(o) => !o && setDeleteExpenseId(null)}>
         <AlertDialogContent>

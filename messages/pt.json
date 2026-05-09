@@ -598,6 +598,26 @@
       "supplier": "Fornecedor",
       "costCenter": "Centro de Custo"
     },
+    "goals": {
+      "title": "Metas do Período",
+      "edit": "Editar Metas",
+      "set": "Definir Metas",
+      "revenue": "Meta de Receita",
+      "expenses": "Limite de Despesas",
+      "result": "Meta de Resultado",
+      "ofGoal": "da meta",
+      "achieved": "Atingida",
+      "onTrack": "Em progresso",
+      "critical": "Crítico",
+      "overLimit": "Acima do limite",
+      "form": {
+        "title": "Metas do Período",
+        "subtitle": "Deixe 0 para não exibir a meta",
+        "revenue": "Meta de Receita (R$)",
+        "expenses": "Limite de Despesas (R$)",
+        "result": "Meta de Resultado Líquido (R$)"
+      }
+    },
     "toast": {
       "created": "Lançamento criado",
       "updated": "Lançamento atualizado",
