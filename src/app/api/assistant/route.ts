@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { requireAuth } from '@/lib/requireAuth'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { decrypt } from '@/lib/crypto'
 import { rateLimit } from '@/lib/rateLimit'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-async function getOpenAIClient(orgId: string): Promise<OpenAI> {
+async function getOpenAIClient(supabase: SupabaseClient): Promise<OpenAI> {
   try {
-    const supabase = createAdminClient()
     const { data: orgKey } = await supabase
       .from('organization_api_keys')
       .select('encrypted_key, iv, auth_tag')
-      .eq('organization_id', orgId)
       .eq('provider', 'openai')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
@@ -26,8 +26,26 @@ async function getOpenAIClient(orgId: string): Promise<OpenAI> {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 }
 
-async function buildContext(orgId: string): Promise<string> {
-  const supabase = createAdminClient()
+async function resolveOrgId(supabase: SupabaseClient, userId: string): Promise<string | null> {
+  // Try profile first
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', userId)
+    .single()
+  if (profile?.organization_id) return profile.organization_id
+
+  // Fallback: derive from any resource the user's RLS policy exposes
+  for (const table of ['clients', 'tasks', 'strategic_projects']) {
+    const { data } = await supabase.from(table).select('organization_id').limit(1).single()
+    if ((data as { organization_id?: string })?.organization_id) {
+      return (data as { organization_id: string }).organization_id
+    }
+  }
+  return null
+}
+
+async function buildContext(supabase: SupabaseClient): Promise<string> {
   const now = new Date()
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
@@ -40,13 +58,13 @@ async function buildContext(orgId: string): Promise<string> {
     { data: financialEntries },
     { data: financialExpenses },
   ] = await Promise.all([
-    supabase.from('clients').select('id, name, status, monthly_revenue, product').eq('organization_id', orgId).eq('status', 'active'),
-    supabase.from('tasks').select('id, title, status, priority, responsible, due_date').eq('organization_id', orgId).neq('status', 'done').order('priority', { ascending: false }),
-    supabase.from('okrs').select('*, key_results(*)').eq('organization_id', orgId),
-    supabase.from('strategic_projects').select('*').eq('organization_id', orgId),
-    supabase.from('profiles').select('full_name, role').eq('organization_id', orgId),
-    supabase.from('financial_entries').select('value').eq('organization_id', orgId).gte('date', `${currentMonth}-01`).eq('status', 'confirmed'),
-    supabase.from('financial_expenses').select('value').eq('organization_id', orgId).gte('date', `${currentMonth}-01`),
+    supabase.from('clients').select('id, name, status, monthly_revenue, product').eq('status', 'active'),
+    supabase.from('tasks').select('id, title, status, priority, responsible, due_date').neq('status', 'done').order('priority', { ascending: false }),
+    supabase.from('okrs').select('*, key_results(*)'),
+    supabase.from('strategic_projects').select('*'),
+    supabase.from('profiles').select('full_name, role'),
+    supabase.from('financial_entries').select('value').gte('date', `${currentMonth}-01`).eq('status', 'confirmed'),
+    supabase.from('financial_expenses').select('value').gte('date', `${currentMonth}-01`),
   ])
 
   const totalRevenue = (financialEntries ?? []).reduce((sum, e) => sum + e.value, 0)
@@ -215,14 +233,14 @@ export async function POST(request: NextRequest) {
   if (profile.role !== 'founder') {
     return NextResponse.json({ error: 'Apenas founders têm acesso à Secretária' }, { status: 403 })
   }
-  if (!profile.organization_id) {
-    return NextResponse.json({ error: 'Organização não encontrada' }, { status: 404 })
-  }
 
   const ip = request.headers.get('x-forwarded-for') ?? user!.id
   if (!rateLimit(`assistant:${ip}`, 30, 60_000)) {
     return NextResponse.json({ error: 'Limite de mensagens atingido. Aguarde 1 minuto.' }, { status: 429 })
   }
+
+  // Server client: uses user JWT + RLS — works regardless of profile.organization_id
+  const supabase = await createClient()
 
   const body = await request.json() as {
     message?: string
@@ -232,7 +250,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (body.execute_action) {
-    const result = await executeAction(body.execute_action, profile.organization_id)
+    // For mutations, resolve org_id from multiple sources
+    const orgId = profile.organization_id ?? await resolveOrgId(supabase, user!.id)
+    if (!orgId) {
+      return NextResponse.json({ success: false, message: 'Não foi possível identificar a organização para executar a ação.' })
+    }
+    const result = await executeAction(body.execute_action, orgId)
     return NextResponse.json(result)
   }
 
@@ -243,8 +266,8 @@ export async function POST(request: NextRequest) {
   const model = ['gpt-4o', 'gpt-4o-mini'].includes(body.model) ? body.model : 'gpt-4o'
 
   const [context, openai] = await Promise.all([
-    buildContext(profile.organization_id),
-    getOpenAIClient(profile.organization_id),
+    buildContext(supabase),
+    getOpenAIClient(supabase),
   ])
 
   const systemPrompt = `Você é Layla, assistente executiva pessoal do gestor da organização. Você tem acesso completo aos dados operacionais em tempo real.
