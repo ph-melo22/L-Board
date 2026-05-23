@@ -30,6 +30,9 @@ yarn-error.log*
 # Claude Code
 .claude/
 
+# Security reports
+report.md
+
 # vercel
 .vercel
 
