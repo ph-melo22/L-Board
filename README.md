@@ -21,6 +21,34 @@ O **L Board** é uma plataforma SaaS de gestão operacional voltada para fundado
 
 ---
 
+## Screenshots
+
+| Dashboard | Clientes |
+|---|---|
+| ![Dashboard](public/screenshots/dashboard.png) | ![Clientes](public/screenshots/clients.png) |
+
+| Financeiro | Contador |
+|---|---|
+| ![Financeiro](public/screenshots/financial.png) | ![Contador](public/screenshots/contador.png) |
+
+| Demandas (Kanban) | Projetos |
+|---|---|
+| ![Demandas](public/screenshots/demands.png) | ![Projetos](public/screenshots/projects.png) |
+
+| Founder Board | Secretária — Assistente de IA (Layla) |
+|---|---|
+| ![Founder Board](public/screenshots/founder.png) | ![Assistente IA](public/screenshots/assistant.png) |
+
+| Documentação Técnica | Equipe |
+|---|---|
+| ![Documentação](public/screenshots/docs.png) | ![Equipe](public/screenshots/team.png) |
+
+| Configurações |  |
+|---|---|
+| ![Configurações](public/screenshots/settings.png) |  |
+
+---
+
 ## O problema que o L Board resolve
 
 Gestores de agências e startups brasileiras lidam diariamente com informação espalhada em dezenas de ferramentas — planilhas no Google Sheets, tarefas no Notion, financeiro no Excel, clientes no WhatsApp e métricas sem lugar fixo. O resultado é perda de tempo, decisões baseadas em dados desatualizados e equipes desalinhadas.
