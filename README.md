@@ -21,6 +21,25 @@ O **L Board** é uma plataforma SaaS de gestão operacional voltada para fundado
 
 ---
 
+## O problema que o L Board resolve
+
+Gestores de agências e startups brasileiras lidam diariamente com informação espalhada em dezenas de ferramentas — planilhas no Google Sheets, tarefas no Notion, financeiro no Excel, clientes no WhatsApp e métricas sem lugar fixo. O resultado é perda de tempo, decisões baseadas em dados desatualizados e equipes desalinhadas.
+
+| Dor | Como o L Board resolve |
+|---|---|
+| **"Não sei quanto estou faturando esse mês"** | Dashboard financeiro em tempo real com entradas, despesas e resultado líquido do mês atual |
+| **"Não sei o status das demandas da equipe"** | Kanban completo com prioridade, responsável, prazo e filtros — tudo em um lugar |
+| **"Perco horas em reunião de alinhamento"** | Cada membro acessa apenas o que precisa — o founder vê tudo, o developer só vê demandas e docs |
+| **"Não consigo acompanhar meus OKRs"** | Founder Board com OKRs, key results com progresso numérico e projetos estratégicos |
+| **"Preciso de contexto rápido sobre o negócio"** | Assistente de IA (Layla) com acesso a todos os dados da organização em tempo real — faz perguntas e ela responde com base nos seus dados reais |
+| **"Perco tempo criando tarefas manualmente"** | A IA cria demandas, atualiza status e cria projetos estratégicos via conversa, com confirmação antes de executar |
+| **"Difícil controlar quem tem acesso ao quê"** | Sistema de roles com 5 níveis — cada colaborador vê apenas o que é relevante para ele |
+| **"Convidar alguém novo é trabalhoso"** | Convite por e-mail em um clique — o membro recebe o link, define a senha e já entra na organização certa |
+| **"Tenho clientes com contratos e receitas diferentes"** | Módulo de clientes com perfil individual, status e receita mensal por cliente |
+| **"Minha equipe é brasileira mas atendo clientes internacionais"** | Interface disponível em 6 idiomas com troca instantânea |
+
+---
+
 ## Funcionalidades
 
 ### Dashboard
