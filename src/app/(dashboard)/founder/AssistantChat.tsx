@@ -31,6 +31,9 @@ interface TokenUsage {
 
 const CONTEXT_WINDOW = 128_000
 
+// Tools that execute automatically without user confirmation
+const AUTO_EXECUTE_TOOLS = new Set(['sincronizar_demanda_calendario'])
+
 const PRICING: Record<Model, { input: number; output: number }> = {
   'gpt-4o': { input: 2.5, output: 10.0 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
@@ -101,13 +104,29 @@ export function AssistantChat() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido')
 
+      const rawToolCalls = (data.tool_calls as { type: string; params: Record<string, unknown> }[] | undefined) ?? []
+
+      // Auto-execute low-risk tools immediately
+      const autoResults: Record<number, 'confirmed' | 'pending'> = {}
+      await Promise.all(rawToolCalls.map(async (tc, i) => {
+        if (!AUTO_EXECUTE_TOOLS.has(tc.type)) return
+        try {
+          await fetch('/api/assistant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, history: [], execute_action: { type: tc.type, params: tc.params } }),
+          })
+          autoResults[i] = 'confirmed'
+        } catch { /* silently fail — user can retry manually */ }
+      }))
+
       const assistantMsg: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: data.reply as string,
-        toolCalls: (data.tool_calls as { type: string; params: Record<string, unknown> }[] | undefined)?.map(tc => ({
+        toolCalls: rawToolCalls.map((tc, i) => ({
           ...tc,
-          status: 'pending' as const,
+          status: (autoResults[i] ?? 'pending') as ToolCall['status'],
         })),
       }
 
