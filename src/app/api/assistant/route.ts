@@ -58,6 +58,7 @@ async function buildContext(supabase: SupabaseClient, userId: string): Promise<s
     { data: team },
     { data: financialEntries },
     { data: financialExpenses },
+    { data: projects },
   ] = await Promise.all([
     supabase.from('clients').select('id, name, status, monthly_revenue, product').eq('status', 'active'),
     supabase.from('tasks').select('id, title, status, priority, responsible, due_date').neq('status', 'done').order('priority', { ascending: false }),
@@ -66,6 +67,7 @@ async function buildContext(supabase: SupabaseClient, userId: string): Promise<s
     supabase.from('profiles').select('full_name, role'),
     supabase.from('financial_entries').select('value').gte('date', `${currentMonth}-01`).eq('status', 'confirmed'),
     supabase.from('financial_expenses').select('value').gte('date', `${currentMonth}-01`),
+    supabase.from('projects').select('id, title, status, priority, end_date, project_tasks(id, title, completed, due_date, description)').neq('status', 'completed').order('created_at', { ascending: false }),
   ])
 
   const totalRevenue = (financialEntries ?? []).reduce((sum, e) => sum + e.value, 0)
@@ -88,6 +90,16 @@ async function buildContext(supabase: SupabaseClient, userId: string): Promise<s
   const projectsText = (strategicProjects ?? []).map((p: { title: string; status: string; priority: string; due_date?: string }) =>
     `• ${p.title} [${p.status}/${p.priority}]${p.due_date ? ` — prazo: ${p.due_date}` : ''}`
   ).join('\n') || 'Nenhum projeto estratégico'
+
+  type ProjectTask = { id: string; title: string; completed: boolean; due_date: string | null; description: string | null }
+  type ProjectRow = { id: string; title: string; status: string; priority: string; end_date: string | null; project_tasks: ProjectTask[] }
+  const projectsWithTasksText = (projects as ProjectRow[] ?? []).map(p => {
+    const pending = (p.project_tasks ?? []).filter(t => !t.completed)
+    const taskLines = pending.length
+      ? pending.map(t => `  ↳ [atividade] ${t.title}${t.due_date ? ` | prazo: ${t.due_date}` : ''} (id: ${t.id})`).join('\n')
+      : '  (sem atividades pendentes)'
+    return `• ${p.title} [${p.status}/${p.priority}]${p.end_date ? ` — entrega: ${p.end_date}` : ''} (id: ${p.id})\n${taskLines}`
+  }).join('\n\n') || 'Nenhum projeto ativo'
 
   const teamText = (team ?? []).map((m: { full_name: string; role: string }) =>
     `• ${m.full_name} (${m.role})`
@@ -144,6 +156,9 @@ ${okrsText}
 
 === PROJETOS ESTRATÉGICOS ===
 ${projectsText}
+
+=== PROJETOS ATIVOS COM ATIVIDADES PENDENTES ===
+${projectsWithTasksText}
 
 === EQUIPE ===
 ${teamText}
@@ -204,6 +219,55 @@ const TOOLS: OpenAI.ChatCompletionTool[] = [
           due_date: { type: 'string', description: 'YYYY-MM-DD' },
         },
         required: ['title', 'priority', 'status'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'atualizar_prazo_demanda',
+      description: 'Define ou atualiza a data de prazo de uma demanda existente no Kanban',
+      parameters: {
+        type: 'object',
+        properties: {
+          demand_id: { type: 'string', description: 'ID da demanda (UUID)' },
+          demand_title: { type: 'string', description: 'Título da demanda para confirmação' },
+          due_date: { type: 'string', description: 'Nova data de prazo no formato YYYY-MM-DD' },
+        },
+        required: ['demand_id', 'demand_title', 'due_date'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'sincronizar_demanda_calendario',
+      description: 'Cria um evento no Google Calendar para o prazo de entrega de uma demanda do Kanban',
+      parameters: {
+        type: 'object',
+        properties: {
+          demand_title: { type: 'string', description: 'Título da demanda' },
+          due_date: { type: 'string', description: 'Data de prazo no formato YYYY-MM-DD' },
+          start_time: { type: 'string', description: 'Horário de início no formato HH:MM (padrão: 09:00)' },
+          duration_hours: { type: 'number', description: 'Duração em horas (padrão: 1)' },
+        },
+        required: ['demand_title', 'due_date'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'marcar_atividade_projeto_concluida',
+      description: 'Marca uma atividade de projeto como concluída',
+      parameters: {
+        type: 'object',
+        properties: {
+          task_id: { type: 'string', description: 'ID da atividade do projeto (UUID)' },
+          task_title: { type: 'string', description: 'Título da atividade para confirmação' },
+          project_title: { type: 'string', description: 'Título do projeto ao qual a atividade pertence' },
+        },
+        required: ['task_id', 'task_title', 'project_title'],
       },
     },
   },
@@ -279,6 +343,42 @@ async function executeAction(
     })
     if (error) return { success: false, message: error.message }
     return { success: true, message: `Projeto "${p.title}" criado com sucesso!` }
+  }
+
+  if (action.type === 'atualizar_prazo_demanda') {
+    const p = action.params as { demand_id: string; demand_title: string; due_date: string }
+    const { error } = await supabase.from('tasks').update({ due_date: p.due_date })
+      .eq('id', p.demand_id).eq('organization_id', orgId)
+    if (error) return { success: false, message: error.message }
+    return { success: true, message: `Prazo de "${p.demand_title}" atualizado para ${p.due_date}!` }
+  }
+
+  if (action.type === 'sincronizar_demanda_calendario') {
+    const p = action.params as { demand_title: string; due_date: string; start_time?: string; duration_hours?: number }
+    const startTime = p.start_time ?? '09:00'
+    const duration = p.duration_hours ?? 1
+    const start = `${p.due_date}T${startTime}:00`
+    const endDate = new Date(`${p.due_date}T${startTime}:00`)
+    endDate.setHours(endDate.getHours() + duration)
+    const end = endDate.toISOString().slice(0, 16)
+    try {
+      await createEvent(userId, {
+        title: `⚡ Prazo: ${p.demand_title}`,
+        description: `Prazo de entrega da demanda "${p.demand_title}" no L Board.`,
+        start,
+        end,
+      })
+      return { success: true, message: `Evento de prazo para "${p.demand_title}" criado no Google Calendar em ${p.due_date}!` }
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Erro ao criar evento' }
+    }
+  }
+
+  if (action.type === 'marcar_atividade_projeto_concluida') {
+    const p = action.params as { task_id: string; task_title: string; project_title: string }
+    const { error } = await supabase.from('project_tasks').update({ completed: true }).eq('id', p.task_id)
+    if (error) return { success: false, message: error.message }
+    return { success: true, message: `Atividade "${p.task_title}" do projeto "${p.project_title}" marcada como concluída!` }
   }
 
   if (action.type === 'criar_evento_calendario') {

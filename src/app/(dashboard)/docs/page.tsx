@@ -6,9 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.8.1'
+const VERSION = '1.8.2'
 
 const CHANGELOG = [
+  {
+    version: '1.8.2',
+    date: '2026-06-16',
+    changes: [
+      'Layla passa a ver todos os projetos ativos com suas atividades pendentes no contexto (tabela projects + project_tasks)',
+      'Novo tool atualizar_prazo_demanda: define ou muda o due_date de uma demanda no Kanban',
+      'Novo tool sincronizar_demanda_calendario: cria evento no Google Calendar para o prazo de uma demanda',
+      'Novo tool marcar_atividade_projeto_concluida: marca project_task como completed=true',
+      'Labels dos novos tools adicionados ao card de confirmação no AssistantChat',
+      'Layla tem controle operacional completo: projetos, atividades, demandas, prazos e calendário',
+    ],
+  },
   {
     version: '1.8.1',
     date: '2026-06-16',

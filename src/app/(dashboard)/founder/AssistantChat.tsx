@@ -52,6 +52,12 @@ function getActionLabel(type: string, params: Record<string, unknown>): { label:
       return { label: `Criar projeto estratégico: "${params.title}" [${params.status}]`, icon: null }
     case 'criar_evento_calendario':
       return { label: `Criar evento: "${params.title}" em ${params.start}`, icon: <CalendarPlus className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" /> }
+    case 'atualizar_prazo_demanda':
+      return { label: `Definir prazo de "${params.demand_title}" → ${params.due_date}`, icon: null }
+    case 'sincronizar_demanda_calendario':
+      return { label: `Criar evento de prazo: "${params.demand_title}" em ${params.due_date}`, icon: <CalendarPlus className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" /> }
+    case 'marcar_atividade_projeto_concluida':
+      return { label: `Concluir atividade: "${params.task_title}" (${params.project_title})`, icon: null }
     default:
       return { label: type, icon: null }
   }
