@@ -6,9 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.8.0'
+const VERSION = '1.8.1'
 
 const CHANGELOG = [
+  {
+    version: '1.8.1',
+    date: '2026-06-16',
+    changes: [
+      'Adiciona entrada de áudio na Layla: botão de microfone no chat com estados ocioso, gravando (vermelho) e transcrevendo',
+      'Gravação via MediaRecorder API (WebM/OGG/MP4 conforme suporte do browser)',
+      'Rota POST /api/transcribe: recebe áudio, chama OpenAI Whisper-1, retorna texto transcrito em português',
+      'Após transcrição, texto é colocado no input automaticamente para revisão antes de enviar',
+      'Rate limit: 20 transcrições/min por IP; acessível apenas por founders',
+      'Adiciona label e ícone CalendarPlus no card de confirmação do tool criar_evento_calendario',
+    ],
+  },
   {
     version: '1.8.0',
     date: '2026-06-16',

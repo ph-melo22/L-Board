@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Bot, User, Loader2, Check, X, Cpu, Trash2 } from 'lucide-react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { Send, Bot, User, Loader2, Check, X, Cpu, Trash2, Mic, MicOff, CalendarPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
@@ -42,16 +42,18 @@ function calcCost(model: Model, promptTokens: number, completionTokens: number):
   return ((promptTokens * p.input + completionTokens * p.output) / 1_000_000) * USD_BRL
 }
 
-function getActionLabel(type: string, params: Record<string, unknown>): string {
+function getActionLabel(type: string, params: Record<string, unknown>): { label: string; icon: React.ReactNode } {
   switch (type) {
     case 'criar_demanda':
-      return `Criar demanda: "${params.title}" [${params.priority}]`
+      return { label: `Criar demanda: "${params.title}" [${params.priority}]`, icon: null }
     case 'atualizar_status_demanda':
-      return `Mover "${params.demand_title}" → ${params.new_status}`
+      return { label: `Mover "${params.demand_title}" → ${params.new_status}`, icon: null }
     case 'criar_projeto_estrategico':
-      return `Criar projeto estratégico: "${params.title}" [${params.status}]`
+      return { label: `Criar projeto estratégico: "${params.title}" [${params.status}]`, icon: null }
+    case 'criar_evento_calendario':
+      return { label: `Criar evento: "${params.title}" em ${params.start}`, icon: <CalendarPlus className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" /> }
     default:
-      return type
+      return { label: type, icon: null }
   }
 }
 
@@ -61,8 +63,12 @@ export function AssistantChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
   const [usage, setUsage] = useState<TokenUsage>({ promptTokens: 0, completionTokens: 0, totalTokens: 0 })
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -149,6 +155,59 @@ export function AssistantChat() {
       ...m,
       toolCalls: m.toolCalls?.map((tc, i) => i === callIdx ? { ...tc, status: 'rejected' as const } : tc),
     } : m))
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop())
+        const mimeType = audioChunksRef.current[0]?.type ?? 'audio/webm'
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm'
+        const audioFile = new File([audioBlob], `recording.${ext}`, { type: mimeType })
+
+        setTranscribing(true)
+        try {
+          const form = new FormData()
+          form.append('audio', audioFile)
+          const res = await fetch('/api/transcribe', { method: 'POST', body: form })
+          const data = await res.json() as { text?: string; error?: string }
+          if (!res.ok) throw new Error(data.error ?? 'Erro na transcrição')
+          const text = data.text?.trim() ?? ''
+          if (text) {
+            setInput(text)
+          }
+        } catch (e) {
+          toast({ title: e instanceof Error ? e.message : 'Erro ao transcrever áudio', variant: 'destructive' })
+        } finally {
+          setTranscribing(false)
+        }
+      }
+
+      mediaRecorder.start()
+      setRecording(true)
+    } catch {
+      toast({ title: 'Permissão de microfone negada', variant: 'destructive' })
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop()
+    setRecording(false)
+  }
+
+  function toggleRecording() {
+    if (recording) stopRecording()
+    else void startRecording()
   }
 
   function clearChat() {
@@ -239,7 +298,10 @@ export function AssistantChat() {
                 }`}>
                   <CardContent className="p-3 space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium leading-snug">{getActionLabel(tc.type, tc.params)}</p>
+                      <div className="flex items-start gap-1.5">
+                        {getActionLabel(tc.type, tc.params).icon}
+                        <p className="font-medium leading-snug">{getActionLabel(tc.type, tc.params).label}</p>
+                      </div>
                       {tc.status === 'confirmed' && <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />}
                       {tc.status === 'rejected' && <X className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />}
                     </div>
@@ -287,17 +349,34 @@ export function AssistantChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() } }}
-            placeholder="Mensagem para a Layla… (Enter envia, Shift+Enter nova linha)"
+            placeholder={recording ? 'Gravando… clique no microfone para parar' : transcribing ? 'Transcrevendo…' : 'Mensagem para a Layla… (Enter envia, Shift+Enter nova linha)'}
             className="min-h-[52px] max-h-[120px] text-sm resize-none"
-            disabled={loading}
+            disabled={loading || recording || transcribing}
           />
-          <Button
-            className="h-9 w-9 p-0 shrink-0"
-            onClick={() => void send()}
-            disabled={loading || !input.trim()}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <Button
+              type="button"
+              size="icon"
+              className={`h-9 w-9 p-0 transition-colors ${recording ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' : ''}`}
+              variant={recording ? 'default' : 'outline'}
+              onClick={toggleRecording}
+              disabled={loading || transcribing}
+              title={recording ? 'Parar gravação' : 'Gravar áudio'}
+            >
+              {transcribing
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : recording
+                ? <MicOff className="h-4 w-4" />
+                : <Mic className="h-4 w-4" />}
+            </Button>
+            <Button
+              className="h-9 w-9 p-0"
+              onClick={() => void send()}
+              disabled={loading || !input.trim() || recording || transcribing}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         {usage.totalTokens > 0 && (
