@@ -512,10 +512,10 @@ Diretrizes de execução:
     // Save messages to history (fire-and-forget)
     const reply = choice.message.content ?? ''
     const adminDb = createAdminClient()
-    adminDb.from('assistant_chat_messages').insert([
+    void Promise.resolve(adminDb.from('assistant_chat_messages').insert([
       { user_id: user!.id, role: 'user', content: body.message },
       ...(reply ? [{ user_id: user!.id, role: 'assistant', content: reply }] : []),
-    ]).then(() => {}).catch(() => {})
+    ])).catch(() => {})
 
     return NextResponse.json({
       reply,
