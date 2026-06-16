@@ -31,8 +31,16 @@ interface TokenUsage {
 
 const CONTEXT_WINDOW = 128_000
 
-// Tools that execute automatically without user confirmation
-const AUTO_EXECUTE_TOOLS = new Set(['sincronizar_demanda_calendario'])
+// All tools execute automatically — Layla acts as a full executive assistant
+const AUTO_EXECUTE_TOOLS = new Set([
+  'criar_demanda',
+  'atualizar_status_demanda',
+  'criar_projeto_estrategico',
+  'criar_evento_calendario',
+  'atualizar_prazo_demanda',
+  'sincronizar_demanda_calendario',
+  'marcar_atividade_projeto_concluida',
+])
 
 const PRICING: Record<Model, { input: number; output: number }> = {
   'gpt-4o': { input: 2.5, output: 10.0 },
