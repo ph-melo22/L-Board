@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Bot, User, Loader2, Check, X, Cpu, Trash2, Mic, MicOff, CalendarPlus } from 'lucide-react'
+import { Send, Bot, User, Loader2, Check, X, Cpu, Trash2, Mic, MicOff, CalendarPlus, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
@@ -80,12 +80,29 @@ export function AssistantChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(true)
   const [recording, setRecording] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
   const [usage, setUsage] = useState<TokenUsage>({ promptTokens: 0, completionTokens: 0, totalTokens: 0 })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/assistant')
+        if (!res.ok) return
+        const data = await res.json() as { id: string; role: 'user' | 'assistant'; content: string }[]
+        if (data.length > 0) {
+          setMessages(data.map(m => ({ id: m.id, role: m.role, content: m.content })))
+        }
+      } catch { /* ignore */ } finally {
+        setLoadingHistory(false)
+      }
+    }
+    void loadHistory()
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -250,9 +267,10 @@ export function AssistantChat() {
     else void startRecording()
   }
 
-  function clearChat() {
+  async function clearChat() {
     setMessages([])
     setUsage({ promptTokens: 0, completionTokens: 0, totalTokens: 0 })
+    await fetch('/api/assistant', { method: 'DELETE' }).catch(() => {})
   }
 
   const totalCost = calcCost(model, usage.promptTokens, usage.completionTokens)
@@ -276,7 +294,7 @@ export function AssistantChat() {
               <SelectItem value="gpt-4o-mini">GPT-4o mini</SelectItem>
             </SelectContent>
           </Select>
-          {messages.length > 0 && (
+          {!loadingHistory && messages.length > 0 && (
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={clearChat}>
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -286,7 +304,13 @@ export function AssistantChat() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0">
-        {messages.length === 0 && (
+        {loadingHistory && (
+          <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+            <History className="h-4 w-4 animate-pulse" />
+            <span className="text-sm">Carregando histórico…</span>
+          </div>
+        )}
+        {!loadingHistory && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
             <Bot className="h-12 w-12 text-muted-foreground/30" />
             <div>

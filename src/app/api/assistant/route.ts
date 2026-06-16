@@ -402,6 +402,30 @@ async function executeAction(
   return { success: false, message: 'Ação desconhecida' }
 }
 
+export async function GET() {
+  const { user, error: authError } = await requireAuth()
+  if (authError) return authError
+
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('assistant_chat_messages')
+    .select('id, role, content, created_at')
+    .eq('user_id', user!.id)
+    .order('created_at', { ascending: true })
+    .limit(100)
+
+  return NextResponse.json(data ?? [])
+}
+
+export async function DELETE() {
+  const { user, error: authError } = await requireAuth()
+  if (authError) return authError
+
+  const supabase = createAdminClient()
+  await supabase.from('assistant_chat_messages').delete().eq('user_id', user!.id)
+  return NextResponse.json({ success: true })
+}
+
 export async function POST(request: NextRequest) {
   const { user, profile, error: authError } = await requireAuth()
   if (authError) return authError
@@ -485,8 +509,16 @@ Diretrizes de execução:
       params: JSON.parse(tc.function.arguments as string) as Record<string, unknown>,
     }))
 
+    // Save messages to history (fire-and-forget)
+    const reply = choice.message.content ?? ''
+    const adminDb = createAdminClient()
+    adminDb.from('assistant_chat_messages').insert([
+      { user_id: user!.id, role: 'user', content: body.message },
+      ...(reply ? [{ user_id: user!.id, role: 'assistant', content: reply }] : []),
+    ]).then(() => {}).catch(() => {})
+
     return NextResponse.json({
-      reply: choice.message.content ?? '',
+      reply,
       tool_calls: toolCalls,
       usage: {
         prompt_tokens: usage?.prompt_tokens ?? 0,
