@@ -98,23 +98,40 @@ async function buildContext(supabase: SupabaseClient, userId: string): Promise<s
   try {
     const connected = await isConnected(userId)
     if (connected) {
-      const events = await listEvents(userId, 7)
+      const events = await listEvents(userId, 14)
       if (events.length > 0) {
         calendarText = events.map(e => {
-          const start = new Date(e.start).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-          return `• ${e.title} — ${start}${e.location ? ` | local: ${e.location}` : ''}${e.attendees?.length ? ` | participantes: ${e.attendees.join(', ')}` : ''}`
+          const isAllDay = !e.start.includes('T')
+          let startStr: string
+          if (isAllDay) {
+            // All-day events: parse as local date to avoid UTC offset shifting the day
+            const [y, m, d] = e.start.split('-').map(Number)
+            startStr = new Date(y, m - 1, d).toLocaleDateString('pt-BR', {
+              weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+            }) + ' (dia inteiro)'
+          } else {
+            startStr = new Date(e.start).toLocaleString('pt-BR', {
+              weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+              timeZone: 'America/Sao_Paulo',
+            })
+          }
+          const endStr = e.end && !isAllDay
+            ? ' até ' + new Date(e.end).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
+            : ''
+          return `• ${e.title} — ${startStr}${endStr}${e.location ? ` | local: ${e.location}` : ''}${e.attendees?.length ? ` | participantes: ${e.attendees.join(', ')}` : ''}`
         }).join('\n')
       } else {
-        calendarText = 'Nenhum compromisso nos próximos 7 dias'
+        calendarText = 'Nenhum compromisso nos próximos 14 dias'
       }
     }
   } catch { /* Google Calendar não disponível */ }
 
   const calendarSection = calendarText
-    ? `\n=== AGENDA — PRÓXIMOS 7 DIAS ===\n${calendarText}`
+    ? `\n=== AGENDA — PRÓXIMOS 14 DIAS ===\n${calendarText}`
     : ''
 
-  return `Data de hoje: ${now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+  return `Data de hoje: ${now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Sao_Paulo' })} | Horário atual em Brasília: ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
 
 === CLIENTES ATIVOS (${(clients ?? []).length}) ===
 ${clientsText}
