@@ -12,7 +12,12 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-geist-sans' })
 
 export const metadata: Metadata = {
   title: 'L Board — Hub Operacional',
-  description: 'Gestão de clientes, financeiro e demandas',
+  description: 'Hub operacional para gestores e equipes de agências e startups',
+  appleWebApp: {
+    capable: true,
+    title: 'L Board',
+    statusBarStyle: 'black-translucent',
+  },
 }
 
 export const viewport: Viewport = {

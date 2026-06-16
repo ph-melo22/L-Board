@@ -6,9 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.7.0'
+const VERSION = '1.7.1'
 
 const CHANGELOG = [
+  {
+    version: '1.7.1',
+    date: '2026-06-16',
+    changes: [
+      'Adiciona suporte completo a PWA para iOS Safari (instalação via "Adicionar à Tela de Início")',
+      'Adiciona meta tags Apple Web App no layout raiz: apple-mobile-web-app-capable, apple-mobile-web-app-title, apple-mobile-web-app-status-bar-style (black-translucent)',
+      'Atualiza manifest.ts: nome completo, categorias business/productivity e ícones para 32x32, 180x180, 192x192 e 512x512',
+      'Confirma existência de src/app/icon.tsx e src/app/apple-icon.tsx gerados via ImageResponse (next/og)',
+    ],
+  },
   {
     version: '1.7.0',
     date: '2026-05-09',
