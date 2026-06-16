@@ -119,13 +119,20 @@ export function AssistantChat() {
       await Promise.all(rawToolCalls.map(async (tc, i) => {
         if (!AUTO_EXECUTE_TOOLS.has(tc.type)) return
         try {
-          await fetch('/api/assistant', {
+          const res = await fetch('/api/assistant', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ model, history: [], execute_action: { type: tc.type, params: tc.params } }),
           })
-          autoResults[i] = 'confirmed'
-        } catch { /* silently fail — user can retry manually */ }
+          const data = await res.json() as { success: boolean; message: string }
+          if (data.success) {
+            autoResults[i] = 'confirmed'
+          } else {
+            toast({ title: `Ação falhou: ${data.message}`, variant: 'destructive' })
+          }
+        } catch (e) {
+          toast({ title: e instanceof Error ? e.message : 'Erro ao executar ação', variant: 'destructive' })
+        }
       }))
 
       const assistantMsg: Message = {
