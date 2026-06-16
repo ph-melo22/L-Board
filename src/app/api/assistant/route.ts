@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { decrypt } from '@/lib/crypto'
 import { rateLimit } from '@/lib/rateLimit'
+import { listEvents, createEvent, isConnected } from '@/lib/googleCalendar'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 async function getOpenAIClient(supabase: SupabaseClient): Promise<OpenAI> {
@@ -45,7 +46,7 @@ async function resolveOrgId(supabase: SupabaseClient, userId: string): Promise<s
   return null
 }
 
-async function buildContext(supabase: SupabaseClient): Promise<string> {
+async function buildContext(supabase: SupabaseClient, userId: string): Promise<string> {
   const now = new Date()
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
@@ -92,6 +93,27 @@ async function buildContext(supabase: SupabaseClient): Promise<string> {
     `• ${m.full_name} (${m.role})`
   ).join('\n') || 'Nenhum membro'
 
+  // Google Calendar events (if connected)
+  let calendarText = ''
+  try {
+    const connected = await isConnected(userId)
+    if (connected) {
+      const events = await listEvents(userId, 7)
+      if (events.length > 0) {
+        calendarText = events.map(e => {
+          const start = new Date(e.start).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+          return `• ${e.title} — ${start}${e.location ? ` | local: ${e.location}` : ''}${e.attendees?.length ? ` | participantes: ${e.attendees.join(', ')}` : ''}`
+        }).join('\n')
+      } else {
+        calendarText = 'Nenhum compromisso nos próximos 7 dias'
+      }
+    }
+  } catch { /* Google Calendar não disponível */ }
+
+  const calendarSection = calendarText
+    ? `\n=== AGENDA — PRÓXIMOS 7 DIAS ===\n${calendarText}`
+    : ''
+
   return `Data de hoje: ${now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
 === CLIENTES ATIVOS (${(clients ?? []).length}) ===
@@ -112,7 +134,7 @@ ${teamText}
 === FINANCEIRO — MÊS ATUAL ===
 Receita confirmada: ${fmt(totalRevenue)}
 Despesas: ${fmt(totalExpenses)}
-Resultado: ${fmt(totalRevenue - totalExpenses)}`
+Resultado: ${fmt(totalRevenue - totalExpenses)}${calendarSection}`
 }
 
 const TOOLS: OpenAI.ChatCompletionTool[] = [
@@ -168,11 +190,30 @@ const TOOLS: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'criar_evento_calendario',
+      description: 'Cria um novo evento no Google Calendar do founder',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Título do evento' },
+          description: { type: 'string', description: 'Descrição ou pauta' },
+          start: { type: 'string', description: 'Data e hora de início no formato ISO 8601 (ex: 2026-06-20T10:00:00)' },
+          end: { type: 'string', description: 'Data e hora de término no formato ISO 8601 (ex: 2026-06-20T11:00:00)' },
+          attendees: { type: 'array', items: { type: 'string' }, description: 'Lista de e-mails dos participantes' },
+        },
+        required: ['title', 'start', 'end'],
+      },
+    },
+  },
 ]
 
 async function executeAction(
   action: { type: string; params: Record<string, unknown> },
-  orgId: string
+  orgId: string,
+  userId: string
 ): Promise<{ success: boolean; message: string }> {
   const supabase = createAdminClient()
 
@@ -223,6 +264,24 @@ async function executeAction(
     return { success: true, message: `Projeto "${p.title}" criado com sucesso!` }
   }
 
+  if (action.type === 'criar_evento_calendario') {
+    const p = action.params as {
+      title: string; description?: string; start: string; end: string; attendees?: string[]
+    }
+    try {
+      await createEvent(userId, {
+        title: p.title,
+        description: p.description,
+        start: p.start,
+        end: p.end,
+        attendees: p.attendees,
+      })
+      return { success: true, message: `Evento "${p.title}" criado no Google Calendar!` }
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Erro ao criar evento' }
+    }
+  }
+
   return { success: false, message: 'Ação desconhecida' }
 }
 
@@ -255,7 +314,7 @@ export async function POST(request: NextRequest) {
     if (!orgId) {
       return NextResponse.json({ success: false, message: 'Não foi possível identificar a organização para executar a ação.' })
     }
-    const result = await executeAction(body.execute_action, orgId)
+    const result = await executeAction(body.execute_action, orgId, user!.id)
     return NextResponse.json(result)
   }
 
@@ -266,7 +325,7 @@ export async function POST(request: NextRequest) {
   const model = ['gpt-4o', 'gpt-4o-mini'].includes(body.model) ? body.model : 'gpt-4o'
 
   const [context, openai] = await Promise.all([
-    buildContext(supabase),
+    buildContext(supabase, user!.id),
     getOpenAIClient(supabase),
   ])
 

@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Settings, KeyRound, Plus, Trash2, Eye, EyeOff, AlertTriangle, Building2, Check, X,
+  CalendarDays, Link2, Link2Off,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -57,12 +59,18 @@ export default function SettingsPage() {
   const t = useTranslations('settings')
   const tc = useTranslations('common')
   const { toast } = useToast()
+  const searchParams = useSearchParams()
 
   // Org state
   const [org, setOrg] = useState<Organization | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [newName, setNewName] = useState('')
   const [savingName, setSavingName] = useState(false)
+
+  // Google Calendar state
+  const [gcalConnected, setGcalConnected] = useState<boolean | null>(null)
+  const [gcalConnectedAt, setGcalConnectedAt] = useState<string | null>(null)
+  const [disconnecting, setDisconnecting] = useState(false)
 
   // API keys state
   const [keys, setKeys] = useState<OrgApiKey[]>([])
@@ -71,6 +79,26 @@ export default function SettingsPage() {
   const [addForm, setAddForm] = useState({ provider: 'openai' as Provider, label: '', api_key: '' })
   const [showKey, setShowKey] = useState(false)
   const [adding, setAdding] = useState(false)
+
+  async function loadGCalStatus() {
+    const res = await fetch('/api/google/status')
+    if (res.ok) {
+      const data = await res.json()
+      setGcalConnected(data.connected)
+      setGcalConnectedAt(data.created_at)
+    }
+  }
+
+  async function handleDisconnectGCal() {
+    setDisconnecting(true)
+    const res = await fetch('/api/google/disconnect', { method: 'DELETE' })
+    if (res.ok) {
+      setGcalConnected(false)
+      setGcalConnectedAt(null)
+      toast({ title: 'Google Calendar desconectado' })
+    }
+    setDisconnecting(false)
+  }
 
   async function loadOrg() {
     const res = await fetch('/api/settings')
@@ -91,7 +119,18 @@ export default function SettingsPage() {
   useEffect(() => {
     loadOrg()
     loadKeys()
+    loadGCalStatus()
   }, [])
+
+  useEffect(() => {
+    const google = searchParams.get('google')
+    if (google === 'success') {
+      toast({ title: 'Google Calendar conectado com sucesso!' })
+      loadGCalStatus()
+    } else if (google === 'error') {
+      toast({ title: 'Erro ao conectar Google Calendar', variant: 'destructive' })
+    }
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveName() {
     setSavingName(true)
@@ -192,6 +231,51 @@ export default function SettingsPage() {
                 <Settings className="mr-1.5 h-3.5 w-3.5" /> {tc('edit')}
               </Button>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Google Calendar card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <CalendarDays className="h-4 w-4" />
+            Google Calendar
+          </CardTitle>
+          <p className="text-xs text-muted-foreground pt-1">
+            Conecte sua agenda para a Layla ter acesso aos seus compromissos e criar eventos.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {gcalConnected === null ? (
+            <div className="h-10 w-48 animate-pulse rounded-md bg-muted" />
+          ) : gcalConnected ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <div>
+                  <p className="text-sm font-medium text-emerald-600">Conectado</p>
+                  {gcalConnectedAt && (
+                    <p className="text-xs text-muted-foreground">desde {formatDate(gcalConnectedAt)}</p>
+                  )}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={handleDisconnectGCal}
+                disabled={disconnecting}
+              >
+                <Link2Off className="mr-1.5 h-3.5 w-3.5" />
+                {disconnecting ? 'Desconectando...' : 'Desconectar'}
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" onClick={() => window.location.href = '/api/google/auth'}>
+              <Link2 className="mr-1.5 h-4 w-4" />
+              Conectar Google Calendar
+            </Button>
           )}
         </CardContent>
       </Card>

@@ -6,9 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.7.1'
+const VERSION = '1.8.0'
 
 const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '2026-06-16',
+    changes: [
+      'Integração Google Calendar: founder pode conectar sua agenda Google em Configurações via OAuth 2.0',
+      'Refresh token armazenado criptografado (AES-256-GCM) na tabela google_oauth_tokens do Supabase',
+      'Layla passa a incluir no contexto os compromissos dos próximos 7 dias quando a agenda estiver conectada',
+      'Novo tool criar_evento_calendario: Layla pode criar eventos no Google Calendar com título, horário e participantes (com confirmação do usuário)',
+      'Card "Google Calendar" adicionado à página de Configurações com status de conexão e botão de desconectar',
+      'Rotas criadas: GET /api/google/auth, GET /api/google/callback, GET /api/google/status, DELETE /api/google/disconnect',
+      'Serviço src/lib/googleCalendar.ts com funções listEvents, createEvent e isConnected',
+    ],
+  },
   {
     version: '1.7.1',
     date: '2026-06-16',
