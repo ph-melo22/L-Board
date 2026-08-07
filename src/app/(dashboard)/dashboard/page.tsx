@@ -16,6 +16,8 @@ import type { DashboardMetrics, RevenueChartData, GrowthProjection, GrowthSimula
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useTranslations } from 'next-intl'
+import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
+import { AnimatedNumber } from '@/components/motion/AnimatedNumber'
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
@@ -205,13 +207,13 @@ export default function DashboardPage() {
   if (!metrics) return null
 
   const cards = [
-    { title: tm('mrr'),          value: formatCurrency(metrics.mrr),          icon: DollarSign,  description: tm('mrrDesc'),          color: 'text-emerald-600' },
-    { title: tm('revenue'),      value: formatCurrency(metrics.totalRevenue),  icon: TrendingUp,  description: revDiff !== null ? tm('vsPrevMonth', { pct: `${revDiff >= 0 ? '+' : ''}${revDiff.toFixed(1)}` }) : tm('allEntries'), color: 'text-blue-600' },
-    { title: tm('totalCosts'),   value: formatCurrency(metrics.totalCosts),    icon: TrendingDown,description: tm('costsDesc'),         color: 'text-red-500' },
-    { title: tm('profit'),       value: formatCurrency(metrics.profit),        icon: TrendingUp,  description: tm('profitDesc'),        color: metrics.profit >= 0 ? 'text-emerald-600' : 'text-red-500' },
-    { title: tm('activeClients'),value: String(metrics.activeClients),         icon: Users,       description: tm('churnedDesc', { count: metrics.churnedClients }), color: 'text-blue-600' },
-    { title: tm('pendingTasks'), value: String(metrics.pendingTasks),          icon: ListTodo,    description: tm('pendingTasksDesc'),  color: 'text-amber-600' },
-    { title: tm('revenueAtRisk'),value: formatCurrency(metrics.revenueAtRisk), icon: AlertTriangle,description: tm('riskDesc'),         color: 'text-red-500' },
+    { title: tm('mrr'),          value: metrics.mrr,          format: formatCurrency,       icon: DollarSign,  description: tm('mrrDesc'),          color: 'text-emerald-600' },
+    { title: tm('revenue'),      value: metrics.totalRevenue,  format: formatCurrency,       icon: TrendingUp,  description: revDiff !== null ? tm('vsPrevMonth', { pct: `${revDiff >= 0 ? '+' : ''}${revDiff.toFixed(1)}` }) : tm('allEntries'), color: 'text-blue-600' },
+    { title: tm('totalCosts'),   value: metrics.totalCosts,    format: formatCurrency,       icon: TrendingDown,description: tm('costsDesc'),         color: 'text-red-500' },
+    { title: tm('profit'),       value: metrics.profit,        format: formatCurrency,       icon: TrendingUp,  description: tm('profitDesc'),        color: metrics.profit >= 0 ? 'text-emerald-600' : 'text-red-500' },
+    { title: tm('activeClients'),value: metrics.activeClients, format: (n: number) => String(Math.round(n)), icon: Users,       description: tm('churnedDesc', { count: metrics.churnedClients }), color: 'text-blue-600' },
+    { title: tm('pendingTasks'), value: metrics.pendingTasks,  format: (n: number) => String(Math.round(n)), icon: ListTodo,    description: tm('pendingTasksDesc'),  color: 'text-amber-600' },
+    { title: tm('revenueAtRisk'),value: metrics.revenueAtRisk, format: formatCurrency,       icon: AlertTriangle,description: tm('riskDesc'),         color: 'text-red-500' },
   ]
 
   return (
@@ -240,20 +242,26 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <RevealGroup className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {cards.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">{card.title}</CardTitle>
-              <card.icon className={`h-4 w-4 ${card.color}`} />
-            </CardHeader>
-            <CardContent>
-              <p className={`text-xl font-bold ${card.color}`}>{card.value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
-            </CardContent>
-          </Card>
+          <RevealItem key={card.title}>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-medium text-muted-foreground">{card.title}</CardTitle>
+                <card.icon className={`h-4 w-4 ${card.color}`} />
+              </CardHeader>
+              <CardContent>
+                <AnimatedNumber
+                  value={card.value}
+                  format={card.format}
+                  className={`text-xl font-bold ${card.color}`}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
+              </CardContent>
+            </Card>
+          </RevealItem>
         ))}
-      </div>
+      </RevealGroup>
 
       <Card>
         <CardHeader>

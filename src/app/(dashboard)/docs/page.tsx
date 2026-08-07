@@ -6,9 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.9.0'
+const VERSION = '1.10.0'
 
 const CHANGELOG = [
+  {
+    version: '1.10.0',
+    date: '2026-08-07',
+    changes: [
+      'Nova identidade visual no app: cor de marca indigo/roxo (#6366f1) substitui o tema cinza/preto do shadcn em globals.css (light + dark) — botões, foco, badges e sidebar herdam automaticamente',
+      'Adiciona src/components/motion/: PageTransition (fade+slide entre rotas), RevealGroup/RevealItem (stagger reveal) e AnimatedNumber (contador animado)',
+      'DashboardShell envolve o conteúdo das páginas com PageTransition — toda navegação no app ganha transição de entrada/saída',
+      'Card ganha hover global (leve elevação + sombra colorida); Button ganha active:scale e hover mais expressivo — aplicado automaticamente em todo o app',
+      'Sidebar: indicador do item ativo agora é um pill animado (framer-motion layoutId) que desliza entre as opções ao navegar',
+      'Dashboard: KPIs usam RevealGroup/RevealItem (entrada escalonada) e AnimatedNumber (contam do zero até o valor real)',
+    ],
+  },
   {
     version: '1.9.0',
     date: '2026-08-07',
@@ -642,6 +654,7 @@ const INFRA = [
   { file: 'src/components/layout/DashboardShell.tsx', desc: 'Client component que gerencia o estado do menu mobile (sidebarOpen). Renderiza Sidebar, overlay, Header e children.' },
   { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral dinâmico. No mobile funciona como drawer: oculto por padrão, desliza da esquerda ao abrir. Fecha automaticamente ao navegar.' },
   { file: 'src/components/layout/Header.tsx', desc: 'Barra superior com título/descrição da página. Inclui botão hamburger (☰) visível apenas no mobile (md:hidden).' },
+  { file: 'src/components/motion/', desc: 'PageTransition.tsx (transição de rota), Reveal.tsx (RevealGroup/RevealItem — stagger reveal via framer-motion) e AnimatedNumber.tsx (contador animado imperativo com animate()).' },
   { file: 'src/lib/supabase/client.ts', desc: 'Cliente Supabase para uso no browser (componentes "use client").' },
   { file: 'src/lib/supabase/server.ts', desc: 'Cliente Supabase server-side para Server Components e API Routes.' },
   { file: 'src/lib/supabase/admin.ts', desc: 'Cliente Supabase com service_role key. Exclusivo para API routes — nunca expor no client-side.' },

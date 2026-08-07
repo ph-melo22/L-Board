@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings,
 } from 'lucide-react'
@@ -113,15 +114,22 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               href={item.href}
               onClick={onClose}
               className={cn(
-                'group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'text-primary-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               )}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1">{t(`nav.${item.key}`)}</span>
-              {isActive && <ChevronRight className="h-3 w-3" />}
+              {isActive && (
+                <motion.span
+                  layoutId="sidebar-active-pill"
+                  className="absolute inset-0 rounded-md bg-primary shadow-sm shadow-primary/30"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                />
+              )}
+              <item.icon className="relative z-10 h-4 w-4 shrink-0" />
+              <span className="relative z-10 flex-1">{t(`nav.${item.key}`)}</span>
+              {isActive && <ChevronRight className="relative z-10 h-3 w-3" />}
             </Link>
           )
         })}

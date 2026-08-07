@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import { PageTransition } from '@/components/motion/PageTransition'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -21,7 +22,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
     </div>
