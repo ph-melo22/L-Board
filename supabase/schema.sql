@@ -123,7 +123,7 @@ CREATE TABLE profiles (
   full_name  text        NOT NULL,
   email      text        NOT NULL UNIQUE,
   role       text        NOT NULL DEFAULT 'employee'
-                         CHECK (role IN ('founder', 'employee', 'developer')),
+                         CHECK (role IN ('founder', 'manager', 'financial', 'developer', 'employee')),
   created_at timestamptz NOT NULL DEFAULT now()
 );
 

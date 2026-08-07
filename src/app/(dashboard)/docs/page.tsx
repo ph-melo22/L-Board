@@ -638,7 +638,7 @@ const MODELS = [
 ]
 
 const INFRA = [
-  { file: 'src/middleware.ts', desc: 'Intercepta todas as rotas. Autentica usuário, auto-cria perfil no primeiro login, redireciona por role. Libera /auth/callback, /auth/reset-password e /auth/forgot-password mesmo com sessão ativa.' },
+  { file: 'src/middleware.ts', desc: 'Intercepta todas as rotas. Autentica usuário, auto-cria perfil no primeiro login, redireciona por role. Libera /auth/callback, /auth/confirm, /auth/reset-password e /auth/forgot-password mesmo com sessão ativa.' },
   { file: 'src/components/layout/DashboardShell.tsx', desc: 'Client component que gerencia o estado do menu mobile (sidebarOpen). Renderiza Sidebar, overlay, Header e children.' },
   { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral dinâmico. No mobile funciona como drawer: oculto por padrão, desliza da esquerda ao abrir. Fecha automaticamente ao navegar.' },
   { file: 'src/components/layout/Header.tsx', desc: 'Barra superior com título/descrição da página. Inclui botão hamburger (☰) visível apenas no mobile (md:hidden).' },
@@ -648,7 +648,7 @@ const INFRA = [
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
   { file: 'supabase/projects_schema.sql', desc: 'SQL do módulo Projetos: 4 tabelas (projects, project_members, project_tasks, project_subtasks) + RLS. Executar separadamente no Supabase.' },
-  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, ENCRYPTION_KEY (32 bytes hex — AES-256 para API Keys), NEXT_PUBLIC_APP_URL. Nunca commitar no git.' },
+  { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, RESEND_FROM (remetente verificado, ex: "L Board <noreply@lboard.com.br>" — sem isso cai no sandbox onboarding@resend.dev, que só entrega pro e-mail dono da conta Resend), ENCRYPTION_KEY (32 bytes hex — AES-256 para API Keys), NEXT_PUBLIC_APP_URL. Nunca commitar no git.' },
   { file: 'next.config.mjs', desc: 'serverExternalPackages: [\'pdf-parse\'] para evitar problemas de bundling no Next.js 14. serverActions com allowedOrigins.' },
 ]
 

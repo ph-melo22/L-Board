@@ -67,8 +67,9 @@ src/
 │   ├── auth/
 │   │   ├── login/
 │   │   ├── forgot-password/
-│   │   ├── reset-password/
-│   │   └── callback/         # Route handler PKCE
+│   │   ├── reset-password/    # Checklist de senha forte em tempo real
+│   │   ├── callback/         # Route handler PKCE — só fluxos iniciados no navegador (forgot-password)
+│   │   └── confirm/          # Route handler verifyOtp(token_hash) — links gerados server-side (convite)
 │   └── api/team/             # invite / remove / role
 ├── components/layout/
 │   ├── DashboardShell.tsx    # Estado do menu mobile
@@ -85,8 +86,12 @@ src/
 | Role | Acesso |
 |---|---|
 | `founder` | Tudo, incluindo /team |
-| `developer` | /dashboard, /demands, /docs |
-| `employee` | /dashboard, /demands |
+| `manager` | /dashboard, /clients, /demands, /projects |
+| `financial` | /dashboard, /financial, /contador, /clients |
+| `developer` | /dashboard, /demands, /docs, /projects |
+| `employee` | /dashboard, /demands, /projects |
+
+A constraint `profiles_role_check` no banco (`supabase/schema.sql`) precisa aceitar os 5 valores acima — se um role for adicionado só no código (middleware/UI) e não na constraint, o convite quebra silenciosamente depois de já criar o usuário órfão no Supabase Auth.
 
 ### Variáveis de ambiente necessárias
 
@@ -94,13 +99,18 @@ src/
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
+RESEND_API_KEY
+RESEND_FROM      # remetente com domínio verificado no Resend, ex: "L Board <noreply@seudominio.com>"
+                 # sem isso cai no sandbox onboarding@resend.dev, que só entrega pro e-mail dono da conta Resend
 ```
 
 ### Configuração Supabase obrigatória
 
 No painel Supabase → Authentication → URL Configuration:
 - **Site URL**: URL base do app (ex: `https://seu-app.vercel.app`)
-- **Redirect URLs**: `{SITE_URL}/auth/callback`
+- **Redirect URLs**: `{SITE_URL}/auth/callback` — usado apenas pelo fluxo "esqueci minha senha" (PKCE, iniciado no navegador do próprio usuário)
+
+Convites de equipe (`/api/team/invite`) **não** passam pelo allow-list de Redirect URLs: o link aponta direto para `/auth/confirm?token_hash=...&type=invite`, que troca o token por sessão via `verifyOtp` no servidor — sem PKCE, porque `supabase.auth.admin.generateLink()` é chamado no servidor e o destinatário do convite nunca tem o `code_verifier` que o navegador de quem inicia o fluxo guardaria.
 
 ---
 
