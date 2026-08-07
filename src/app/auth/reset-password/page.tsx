@@ -6,8 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, Check, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+
+const REQUIREMENTS = [
+  { key: 'reqMinLength', test: (p: string) => p.length >= 8 },
+  { key: 'reqUppercase', test: (p: string) => /[A-Z]/.test(p) },
+  { key: 'reqLowercase', test: (p: string) => /[a-z]/.test(p) },
+  { key: 'reqNumber',    test: (p: string) => /[0-9]/.test(p) },
+  { key: 'reqSymbol',    test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+] as const
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -19,12 +27,16 @@ export default function ResetPasswordPage() {
   const [done, setDone]             = useState(false)
   const [error, setError]           = useState<string | null>(null)
 
+  const results  = REQUIREMENTS.map((r) => ({ ...r, met: r.test(password) }))
+  const metCount = results.filter((r) => r.met).length
+  const allMet   = metCount === REQUIREMENTS.length
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 8) { setError(t('errorMinLength')); return }
-    if (password !== confirm) { setError(t('errorMismatch'));  return }
+    if (!allMet) { setError(t('errorRequirements')); return }
+    if (password !== confirm) { setError(t('errorMismatch')); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -42,8 +54,8 @@ export default function ResetPasswordPage() {
 
   const strength =
     password.length === 0 ? null :
-    password.length < 8   ? t('strengthWeak')   :
-    password.length < 12  ? t('strengthMedium') : t('strengthStrong')
+    metCount <= 2 ? t('strengthWeak')   :
+    metCount <= 4 ? t('strengthMedium') : t('strengthStrong')
 
   if (done) {
     return (
@@ -113,21 +125,42 @@ export default function ResetPasswordPage() {
 
             {password.length > 0 && strength && (
               <div className="space-y-1">
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${
-                      password.length < 8  ? 'w-1/4 bg-red-500' :
-                      password.length < 12 ? 'w-2/4 bg-amber-500' : 'w-full bg-emerald-500'
-                    }`}
-                  />
+                <div className="flex gap-1">
+                  {REQUIREMENTS.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                        i >= metCount
+                          ? 'bg-muted'
+                          : metCount <= 2 ? 'bg-red-500'
+                          : metCount <= 4 ? 'bg-amber-500'
+                          : 'bg-emerald-500'
+                      }`}
+                    />
+                  ))}
                 </div>
                 <p className="text-xs text-muted-foreground">{strength}</p>
               </div>
             )}
 
+            <ul className="space-y-1.5 rounded-lg border bg-muted/30 p-3">
+              {results.map((r) => (
+                <li key={r.key} className="flex items-center gap-2 text-xs">
+                  {r.met ? (
+                    <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                  ) : (
+                    <X className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className={r.met ? 'text-foreground' : 'text-muted-foreground'}>
+                    {t(r.key)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !allMet || password !== confirm}>
               {loading ? t('submitting') : t('submit')}
             </Button>
           </form>

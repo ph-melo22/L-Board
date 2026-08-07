@@ -127,11 +127,16 @@
       "strengthWeak": "Fraca",
       "strengthMedium": "Média",
       "strengthStrong": "Forte",
+      "reqMinLength": "Mínimo de 8 caracteres",
+      "reqUppercase": "Uma letra maiúscula (A-Z)",
+      "reqLowercase": "Uma letra minúscula (a-z)",
+      "reqNumber": "Um número (0-9)",
+      "reqSymbol": "Um símbolo (ex: ! @ # $ %)",
       "submit": "Definir senha e entrar",
       "submitting": "Salvando...",
       "success": "Senha definida com sucesso!",
       "redirecting": "Redirecionando para o dashboard...",
-      "errorMinLength": "A senha deve ter pelo menos 8 caracteres.",
+      "errorRequirements": "A senha não atende a todos os requisitos de segurança.",
       "errorMismatch": "As senhas não coincidem.",
       "errorExpired": "Não foi possível atualizar a senha. O link pode ter expirado."
     }

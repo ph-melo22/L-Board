@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'invite',
       email,
-      options: { redirectTo: `${appUrl}/auth/callback` },
+      options: { redirectTo: `${appUrl}/auth/confirm` },
     })
     if (linkError) throw linkError
 
@@ -103,7 +103,11 @@ export async function POST(request: NextRequest) {
     })
     if (profileError) throw profileError
 
-    const inviteUrl = linkData.properties.action_link
+    // Usa nossa própria rota /auth/confirm (verifyOtp com token_hash) em vez do
+    // action_link cru do Supabase: links gerados via admin API não têm um
+    // code_verifier PKCE no navegador de quem recebe o convite, então o fluxo
+    // via /auth/callback (exchangeCodeForSession) sempre falha para eles.
+    const inviteUrl = `${appUrl}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=invite`
 
     await sendEmail({
       to: email,
@@ -121,7 +125,8 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true })
-  } catch {
+  } catch (err) {
+    console.error('[team/invite] falha ao processar convite:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Erro ao processar convite' }, { status: 400 })
   }
 }

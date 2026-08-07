@@ -6,9 +6,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.8.2'
+const VERSION = '1.9.0'
 
 const CHANGELOG = [
+  {
+    version: '1.9.0',
+    date: '2026-08-07',
+    changes: [
+      'Nova rota GET /auth/confirm: completa o login via verifyOtp(token_hash, type), sem depender de PKCE',
+      'Corrige o fluxo de convite: links gerados por supabase.auth.admin.generateLink() não têm code_verifier no navegador de quem recebe, então /auth/callback (exchangeCodeForSession) sempre falhava com "link inválido ou expirou" para convites e recuperação de senha admin-side',
+      'Rota POST /api/team/invite passa a montar o link de convite como /auth/confirm?token_hash=...&type=invite em vez de usar o action_link cru do Supabase',
+      'Tela /auth/reset-password ganha checklist de requisitos de senha em tempo real: mínimo 8 caracteres, maiúscula, minúscula, número e símbolo — botão de definir senha só libera com todos os requisitos atendidos',
+      'Adiciona traduções reqMinLength/reqUppercase/reqLowercase/reqNumber/reqSymbol/errorRequirements em messages/pt.json',
+      'Corrige constraint profiles_role_check no banco: papéis "manager" e "financial" (usados pelo dropdown de convite) não estavam liberados, travando qualquer convite com esses papéis após já criar o usuário órfão no Supabase Auth',
+    ],
+  },
+  {
+    version: '1.8.3',
+    date: '2026-08-06',
+    changes: [
+      'Corrige rota POST /api/team/invite: passa a logar a causa real do erro no servidor (console.error) quando o convite falha, mantendo a mensagem genérica para o cliente',
+      'Diagnostica falha de envio de convites: domínio lboard.com.br não verificado no Resend fazia o envio cair no sandbox onboarding@resend.dev, que só entrega para o e-mail da própria conta',
+    ],
+  },
   {
     version: '1.8.2',
     date: '2026-06-16',
@@ -483,8 +503,9 @@ const PAGES = [
   { route: '/', file: 'src/app/page.tsx', description: 'Landing page pública. Dark e moderno com hero, features grid, stats e CTA. Usuário autenticado é redirecionado para /dashboard pelo middleware.', type: 'público' },
   { route: '/auth/login', file: 'src/app/auth/login/page.tsx', description: 'Tela de login com e-mail e senha. Link "Esqueci minha senha" abaixo do campo de senha.', type: 'público' },
   { route: '/auth/forgot-password', file: 'src/app/auth/forgot-password/page.tsx', description: 'Formulário para recuperação de senha. Envia e-mail com link via Supabase e exibe confirmação visual.', type: 'público' },
-  { route: '/auth/callback', file: 'src/app/auth/callback/route.ts', description: 'Route handler que recebe o redirect do Supabase (convite ou recuperação). Troca o code por sessão (PKCE) e redireciona para /auth/reset-password.', type: 'público' },
-  { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Inclui indicador de força de senha e confirmação.', type: 'público' },
+  { route: '/auth/callback', file: 'src/app/auth/callback/route.ts', description: 'Route handler PKCE (exchangeCodeForSession). Usado apenas por fluxos iniciados no navegador do próprio usuário, como "Esqueci minha senha".', type: 'público' },
+  { route: '/auth/confirm', file: 'src/app/auth/confirm/route.ts', description: 'Route handler que completa login via verifyOtp(token_hash, type) — sem PKCE. Usado por links gerados server-side (convite de equipe), já que o destinatário não tem code_verifier no navegador.', type: 'público' },
+  { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Checklist de requisitos em tempo real (8+ caracteres, maiúscula, minúscula, número, símbolo) — botão só libera com tudo atendido.', type: 'público' },
   { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
   { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo. Tabela com scroll horizontal no mobile.', type: 'founder' },
   { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações, tarefas vinculadas e card de Integrações (API Keys).', type: 'founder' },
@@ -499,7 +520,7 @@ const PAGES = [
   { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
-  { route: '/api/team/invite', file: 'src/app/api/team/invite/route.ts', description: 'POST — convida usuário por e-mail (redirectTo dinâmico para /auth/callback) e pré-cria perfil com role.', type: 'api' },
+  { route: '/api/team/invite', file: 'src/app/api/team/invite/route.ts', description: 'POST — convida usuário por e-mail (link para /auth/confirm com token_hash) e pré-cria perfil com role.', type: 'api' },
   { route: '/api/team/remove/[id]', file: 'src/app/api/team/remove/[id]/route.ts', description: 'DELETE — remove usuário do Supabase Auth (cascata no profiles).', type: 'api' },
   { route: '/api/team/role', file: 'src/app/api/team/role/route.ts', description: 'PATCH — atualiza o role de um membro da equipe.', type: 'api' },
 ]
