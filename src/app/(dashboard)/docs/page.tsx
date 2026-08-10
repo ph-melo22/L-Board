@@ -6,9 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.11.0'
+const VERSION = '1.12.0'
 
 const CHANGELOG = [
+  {
+    version: '1.12.0',
+    date: '2026-08-10',
+    changes: [
+      'Nova página /marketing (founder/manager): KPIs de investimento, retorno de vendas, leads, CAC, ROI e taxa de conversão, com gráfico de investimento x retorno por canal e CRUD de campanhas',
+      'Nova tabela marketing_campaigns (organization_id, channel, status, investment, traffic, leads_generated, conversions, revenue_generated) — RLS restrita a founder/manager da mesma organização',
+      'Adiciona src/services/marketing.ts com CRUD de campanhas e summarizeCampaigns() para os KPIs e o gráfico',
+      'Nova página /comunicacao (founder/manager): mural estilo Slack com múltiplos canais criáveis pela UI e mensagens persistidas com autor e data/hora — sem tempo real, sem edição/exclusão de mensagens',
+      'Novas tabelas communication_channels e communication_messages — RLS restrita a founder/manager da mesma organização, autor da mensagem sempre = usuário autenticado',
+      'Adiciona src/services/communication.ts (getChannels, createChannel, getMessages, sendMessage)',
+      'Novo arquivo supabase/marketing_communication_schema.sql com as 3 tabelas e as policies de RLS',
+      'Sidebar, Header e middleware ganham as rotas /marketing e /comunicacao, liberadas para founder e manager',
+    ],
+  },
   {
     version: '1.11.0',
     date: '2026-08-07',
@@ -494,13 +508,13 @@ const ROLES = [
     role: 'founder',
     label: 'Founder',
     color: 'text-amber-700 bg-amber-50 border-amber-200',
-    acesso: 'Acesso total: Dashboard, Comercial, Clientes, Financeiro, Contador, Demandas, Projetos, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
+    acesso: 'Acesso total: Dashboard, Comercial, Marketing, Clientes, Financeiro, Contador, Demandas, Projetos, Comunicação, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
   },
   {
     role: 'manager',
     label: 'Gestor',
     color: 'text-orange-700 bg-orange-50 border-orange-200',
-    acesso: 'Dashboard, Clientes, Demandas, Projetos. Gerencia entregas e clientes sem acesso ao financeiro interno.',
+    acesso: 'Dashboard, Marketing, Clientes, Demandas, Projetos, Comunicação. Gerencia entregas, campanhas e clientes sem acesso ao financeiro interno.',
   },
   {
     role: 'financial',
@@ -531,6 +545,7 @@ const PAGES = [
   { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Checklist de requisitos em tempo real (8+ caracteres, maiúscula, minúscula, número, símbolo) — botão só libera com tudo atendido.', type: 'público' },
   { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
   { route: '/comercial', file: 'src/app/(dashboard)/comercial/page.tsx', description: 'Dashboard comercial: metas diária, semanal, mensal e do semestre (comparadas à receita de financial_entries). Gráfico de barras do semestre com linha de ritmo mensal necessário. Metas editáveis, salvas em localStorage.', type: 'founder' },
+  { route: '/marketing', file: 'src/app/(dashboard)/marketing/page.tsx', description: 'Dashboard de marketing: KPIs de investimento, retorno de vendas, leads, CAC, ROI e taxa de conversão. Gráfico de investimento x retorno por canal. CRUD de campanhas (canal, status, datas, tráfego, leads, conversões).', type: 'founder/manager' },
   { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo. Tabela com scroll horizontal no mobile.', type: 'founder' },
   { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações, tarefas vinculadas e card de Integrações (API Keys).', type: 'founder' },
   { route: '/api/clients/api-keys', file: 'src/app/api/clients/api-keys/route.ts', description: 'GET (lista keys do cliente) e POST (cria key com criptografia AES-256-GCM). Requer ENCRYPTION_KEY no ambiente.', type: 'api' },
@@ -541,6 +556,7 @@ const PAGES = [
   { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros, campos detalhados e botão "Importar via IA" para gerar tasks a partir de PDF.', type: 'founder' },
   { route: '/api/projects/[id]/ai-tasks', file: 'src/app/api/projects/[id]/ai-tasks/route.ts', description: 'POST — recebe PDF via multipart/form-data, extrai texto com pdf-parse, envia ao GPT-4o e retorna JSON com tasks e subtasks gerados.', type: 'api' },
   { route: '/api/notify/task-assigned', file: 'src/app/api/notify/task-assigned/route.ts', description: 'POST — envia e-mail via Resend ao membro delegado. Falha silenciosamente se RESEND_API_KEY não estiver configurada.', type: 'api' },
+  { route: '/comunicacao', file: 'src/app/(dashboard)/comunicacao/page.tsx', description: 'Mural de comunicação da equipe estilo Slack: múltiplos canais criáveis pela UI, mensagens com autor e data/hora persistidas no Supabase. Sem edição/exclusão de mensagens e sem tempo real (recarrega após enviar).', type: 'founder/manager' },
   { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
@@ -575,6 +591,27 @@ const SERVICES = [
     tabela: 'financial_entries',
     funcoes: [
       { name: 'getCommercialSummary()', desc: 'Soma financial_entries (não cancelados) do dia, da semana (seg-dom), do mês e do semestre atual, mais o breakdown mês a mês do semestre. Usado na página /comercial.' },
+    ],
+  },
+  {
+    file: 'src/services/marketing.ts',
+    tabela: 'marketing_campaigns',
+    funcoes: [
+      { name: 'getCampaigns()', desc: 'Lista campanhas da organização (RLS restringe a founder/manager).' },
+      { name: 'createCampaign(formData)', desc: 'Cria campanha com organization_id do usuário logado.' },
+      { name: 'updateCampaign(id, formData)', desc: 'Atualiza campanha.' },
+      { name: 'deleteCampaign(id)', desc: 'Remove campanha.' },
+      { name: 'summarizeCampaigns(campaigns)', desc: 'Calcula investimento/leads/tráfego/conversões/receita totais, CAC, ROI, taxa de conversão e breakdown por canal a partir da lista já carregada. Usado na página /marketing.' },
+    ],
+  },
+  {
+    file: 'src/services/communication.ts',
+    tabela: 'communication_channels + communication_messages',
+    funcoes: [
+      { name: 'getChannels()', desc: 'Lista canais da organização.' },
+      { name: 'createChannel(formData)', desc: 'Cria canal com organization_id e created_by do usuário logado.' },
+      { name: 'getMessages(channelId)', desc: 'Lista mensagens do canal com nome do autor (join em profiles).' },
+      { name: 'sendMessage(channelId, content)', desc: 'Envia mensagem como o usuário logado (author_id = auth.uid()).' },
     ],
   },
   {
@@ -666,6 +703,9 @@ const MODELS = [
   { name: 'ProjectMember', tabela: 'project_members', campos: ['id', 'project_id', 'user_id', 'created_at'] },
   { name: 'ProjectTask', tabela: 'project_tasks', campos: ['id', 'project_id', 'title', 'description', 'assigned_to', 'due_date', 'position', 'completed', 'created_at', '+project_subtasks'] },
   { name: 'ProjectSubtask', tabela: 'project_subtasks', campos: ['id', 'task_id', 'title', 'assigned_to', 'due_date', 'completed', 'created_at'] },
+  { name: 'MarketingCampaign', tabela: 'marketing_campaigns', campos: ['id', 'organization_id', 'name', 'channel', 'status', 'start_date', 'end_date', 'investment', 'traffic', 'leads_generated', 'conversions', 'revenue_generated', 'notes', 'created_at'] },
+  { name: 'CommunicationChannel', tabela: 'communication_channels', campos: ['id', 'organization_id', 'name', 'description', 'created_by', 'created_at'] },
+  { name: 'CommunicationMessage', tabela: 'communication_messages', campos: ['id', 'channel_id', 'author_id', 'content', 'created_at', '+profiles join (full_name)'] },
 ]
 
 const INFRA = [
@@ -702,6 +742,7 @@ function TypeBadge({ type }: { type: string }) {
     privado:   'text-blue-600 bg-blue-50 border-blue-200',
     público:   'text-emerald-600 bg-emerald-50 border-emerald-200',
     founder:   'text-amber-600 bg-amber-50 border-amber-200',
+    'founder/manager': 'text-orange-600 bg-orange-50 border-orange-200',
     dev:       'text-purple-600 bg-purple-50 border-purple-200',
     api:       'text-gray-600 bg-gray-50 border-gray-200',
     redirect:  'text-gray-400 bg-gray-50 border-gray-200',

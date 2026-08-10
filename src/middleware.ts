@@ -4,8 +4,8 @@ import type { CookieMethodsServer } from '@supabase/ssr'
 
 // Access control per role
 const ROLE_ALLOWED: Record<string, string[]> = {
-  founder:   ['/dashboard', '/comercial', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects', '/settings'],
-  manager:   ['/dashboard', '/clients', '/demands', '/projects'],
+  founder:   ['/dashboard', '/comercial', '/marketing', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects', '/comunicacao', '/settings'],
+  manager:   ['/dashboard', '/marketing', '/clients', '/demands', '/projects', '/comunicacao'],
   financial: ['/dashboard', '/financial', '/contador', '/clients'],
   developer: ['/dashboard', '/demands', '/docs', '/projects'],
   employee:  ['/dashboard', '/demands', '/projects'],
@@ -15,9 +15,16 @@ const AUTH_UTILITY_PATHS = ['/auth/reset-password', '/auth/callback', '/auth/for
 const AUTH_PUBLIC_PATHS  = ['/auth/register']
 
 function buildCSP(nonce: string) {
+  // 'unsafe-eval' só em dev: o webpack do `next dev` empacota módulos com eval()
+  // (source maps), o que a CSP de produção corretamente bloqueia. Sem isso, o
+  // bundle inteiro falha ao hidratar em `next dev` e a UI fica sem interatividade.
+  const scriptSrc = process.env.NODE_ENV === 'development'
+    ? `script-src 'self' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`
+
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`,
+    scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",

@@ -2,11 +2,13 @@
   "nav": {
     "dashboard": "Dashboard",
     "comercial": "Comercial",
+    "marketing": "Marketing",
     "clients": "Clientes",
     "financial": "Financeiro",
     "contador": "Contador",
     "demands": "Demandas",
     "projects": "Projetos",
+    "comunicacao": "Comunicação",
     "founderBoard": "Founder Board",
     "docs": "Documentação",
     "team": "Equipe",
@@ -25,17 +27,19 @@
     "openMenu": "Abrir menu",
     "toggleTheme": "Alternar tema",
     "pages": {
-      "dashboard":  { "title": "Dashboard",      "description": "Visão geral do negócio" },
-      "comercial":  { "title": "Comercial",       "description": "Metas e desempenho comercial" },
-      "clients":    { "title": "Clientes",        "description": "Gestão da base de clientes" },
-      "financial":  { "title": "Financeiro",      "description": "Receitas, despesas e fluxo de caixa" },
-      "contador":   { "title": "Contador",        "description": "Dashboard financeiro executivo" },
-      "demands":    { "title": "Demandas",        "description": "Tarefas e entregas do time" },
-      "founder":    { "title": "Founder Board",   "description": "OKRs, projetos e notas estratégicas" },
-      "docs":       { "title": "Documentação",    "description": "Relatório técnico" },
-      "team":       { "title": "Equipe",          "description": "Membros, convites e permissões" },
-      "projects":   { "title": "Projetos",        "description": "Gestão de projetos e atividades" },
-      "settings":   { "title": "Configurações",   "description": "Organização e chaves de IA" }
+      "dashboard":    { "title": "Dashboard",      "description": "Visão geral do negócio" },
+      "comercial":    { "title": "Comercial",       "description": "Metas e desempenho comercial" },
+      "marketing":    { "title": "Marketing",       "description": "Campanhas, leads, CAC e ROI" },
+      "clients":      { "title": "Clientes",        "description": "Gestão da base de clientes" },
+      "financial":    { "title": "Financeiro",      "description": "Receitas, despesas e fluxo de caixa" },
+      "contador":     { "title": "Contador",        "description": "Dashboard financeiro executivo" },
+      "demands":      { "title": "Demandas",        "description": "Tarefas e entregas do time" },
+      "founder":      { "title": "Founder Board",   "description": "OKRs, projetos e notas estratégicas" },
+      "docs":         { "title": "Documentação",    "description": "Relatório técnico" },
+      "team":         { "title": "Equipe",          "description": "Membros, convites e permissões" },
+      "projects":     { "title": "Projetos",        "description": "Gestão de projetos e atividades" },
+      "comunicacao":  { "title": "Comunicação",     "description": "Mural e canais da equipe" },
+      "settings":     { "title": "Configurações",   "description": "Organização e chaves de IA" }
     }
   },
   "language": {
@@ -586,6 +590,86 @@
         "monthly": "Meta Mensal (R$)",
         "semester": "Meta do Semestre (R$)"
       }
+    }
+  },
+  "marketing": {
+    "errorLoading": "Erro ao carregar dados de marketing.",
+    "notFound": "Nenhuma campanha encontrada.",
+    "newCampaign": "Nova Campanha",
+    "editCampaign": "Editar Campanha",
+    "deleteTitle": "Remover campanha?",
+    "chartTitle": "Investimento x Retorno por canal",
+    "kpi": {
+      "investment": "Investimento",
+      "revenue": "Retorno de Vendas",
+      "leads": "Leads",
+      "cac": "CAC",
+      "roi": "ROI",
+      "conversionRate": "Taxa de Conversão"
+    },
+    "columns": {
+      "name": "Campanha",
+      "channel": "Canal",
+      "status": "Status",
+      "investment": "Investimento",
+      "leads": "Leads",
+      "conversions": "Conversões",
+      "revenue": "Retorno"
+    },
+    "channel": {
+      "paid_search": "Busca Paga",
+      "paid_social": "Social Pago",
+      "seo": "SEO",
+      "content": "Conteúdo",
+      "email": "E-mail",
+      "referral": "Indicação",
+      "other": "Outro"
+    },
+    "status": {
+      "planning": "Planejando",
+      "active": "Ativa",
+      "paused": "Pausada",
+      "completed": "Concluída"
+    },
+    "form": {
+      "name": "Nome da campanha",
+      "channel": "Canal",
+      "status": "Status",
+      "startDate": "Data de início",
+      "endDate": "Data de término",
+      "investment": "Investimento (R$)",
+      "revenue": "Retorno de vendas (R$)",
+      "traffic": "Tráfego (visitas)",
+      "leads": "Leads gerados",
+      "conversions": "Conversões (vendas)",
+      "notes": "Observações"
+    },
+    "toast": {
+      "created": "Campanha criada",
+      "updated": "Campanha atualizada",
+      "deleted": "Campanha removida",
+      "saveError": "Erro ao salvar campanha",
+      "deleteError": "Erro ao remover campanha"
+    }
+  },
+  "comunicacao": {
+    "errorLoading": "Erro ao carregar canais de comunicação.",
+    "channels": "Canais",
+    "noChannels": "Nenhum canal ainda.",
+    "noChannelSelected": "Crie um canal para começar a conversar.",
+    "noMessages": "Nenhuma mensagem neste canal ainda.",
+    "unknownAuthor": "Usuário",
+    "messagePlaceholder": "Escreva uma mensagem...",
+    "newChannel": "Novo Canal",
+    "form": {
+      "channelName": "Nome do canal",
+      "channelNamePlaceholder": "ex: avisos",
+      "channelDescription": "Descrição (opcional)"
+    },
+    "toast": {
+      "loadMessagesError": "Erro ao carregar mensagens",
+      "sendError": "Erro ao enviar mensagem",
+      "createChannelError": "Erro ao criar canal"
     }
   },
   "financial": {

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings, TrendingUp,
+  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings, TrendingUp, Megaphone, MessagesSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -13,23 +13,27 @@ import type { UserRole } from '@/types'
 
 const NAV_ITEMS = {
   founder:   [
-    { href: '/dashboard', key: 'dashboard',   icon: LayoutDashboard },
-    { href: '/comercial', key: 'comercial',   icon: TrendingUp },
-    { href: '/clients',   key: 'clients',     icon: Users },
-    { href: '/financial', key: 'financial',   icon: DollarSign },
-    { href: '/contador',  key: 'contador',    icon: Calculator },
-    { href: '/demands',   key: 'demands',     icon: ListTodo },
-    { href: '/projects',  key: 'projects',    icon: FolderKanban },
-    { href: '/founder',   key: 'founderBoard',icon: Compass },
-    { href: '/docs',      key: 'docs',        icon: FileText },
-    { href: '/team',      key: 'team',        icon: UsersRound },
-    { href: '/settings',  key: 'settings',    icon: Settings },
+    { href: '/dashboard',    key: 'dashboard',    icon: LayoutDashboard },
+    { href: '/comercial',    key: 'comercial',    icon: TrendingUp },
+    { href: '/marketing',    key: 'marketing',    icon: Megaphone },
+    { href: '/clients',      key: 'clients',      icon: Users },
+    { href: '/financial',    key: 'financial',    icon: DollarSign },
+    { href: '/contador',     key: 'contador',     icon: Calculator },
+    { href: '/demands',      key: 'demands',      icon: ListTodo },
+    { href: '/projects',     key: 'projects',     icon: FolderKanban },
+    { href: '/comunicacao',  key: 'comunicacao',  icon: MessagesSquare },
+    { href: '/founder',      key: 'founderBoard', icon: Compass },
+    { href: '/docs',         key: 'docs',         icon: FileText },
+    { href: '/team',         key: 'team',         icon: UsersRound },
+    { href: '/settings',     key: 'settings',     icon: Settings },
   ],
   manager:   [
-    { href: '/dashboard', key: 'dashboard', icon: LayoutDashboard },
-    { href: '/clients',   key: 'clients',   icon: Users },
-    { href: '/demands',   key: 'demands',   icon: ListTodo },
-    { href: '/projects',  key: 'projects',  icon: FolderKanban },
+    { href: '/dashboard',   key: 'dashboard',   icon: LayoutDashboard },
+    { href: '/marketing',   key: 'marketing',   icon: Megaphone },
+    { href: '/clients',     key: 'clients',     icon: Users },
+    { href: '/demands',     key: 'demands',     icon: ListTodo },
+    { href: '/projects',    key: 'projects',    icon: FolderKanban },
+    { href: '/comunicacao', key: 'comunicacao', icon: MessagesSquare },
   ],
   financial: [
     { href: '/dashboard', key: 'dashboard', icon: LayoutDashboard },

@@ -281,6 +281,64 @@ export type ProjectFormData = Omit<Project, 'id' | 'created_at'>
 export type ProjectTaskFormData = Omit<ProjectTask, 'id' | 'created_at' | 'project_subtasks'>
 export type ProjectSubtaskFormData = Omit<ProjectSubtask, 'id' | 'created_at'>
 
+// ─── Marketing ────────────────────────────────────────────────────────────────
+
+export type MarketingChannel = 'paid_search' | 'paid_social' | 'seo' | 'content' | 'email' | 'referral' | 'other'
+export type MarketingCampaignStatus = 'planning' | 'active' | 'paused' | 'completed'
+
+export interface MarketingCampaign {
+  id: string
+  organization_id: string
+  name: string
+  channel: MarketingChannel
+  status: MarketingCampaignStatus
+  start_date: string | null
+  end_date: string | null
+  investment: number
+  traffic: number
+  leads_generated: number
+  conversions: number
+  revenue_generated: number
+  notes: string | null
+  created_at: string
+}
+
+export type MarketingCampaignFormData = Omit<MarketingCampaign, 'id' | 'organization_id' | 'created_at'>
+
+export interface MarketingSummary {
+  totalInvestment: number
+  totalTraffic: number
+  totalLeads: number
+  totalConversions: number
+  totalRevenue: number
+  cac: number
+  roi: number
+  conversionRate: number
+  byChannel: { channel: MarketingChannel; investment: number; revenue: number }[]
+}
+
+// ─── Communication ────────────────────────────────────────────────────────────
+
+export interface CommunicationChannel {
+  id: string
+  organization_id: string
+  name: string
+  description: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export type CommunicationChannelFormData = Pick<CommunicationChannel, 'name' | 'description'>
+
+export interface CommunicationMessage {
+  id: string
+  channel_id: string
+  author_id: string
+  content: string
+  created_at: string
+  profiles?: Pick<Profile, 'full_name'>
+}
+
 // ─── Client API Keys ──────────────────────────────────────────────────────────
 
 export type ApiKeyProvider = 'openai' | 'anthropic' | 'gemini' | 'grok' | 'deepseek' | 'other'

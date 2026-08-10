@@ -7,17 +7,19 @@ import { useTranslations, useLocale } from 'next-intl'
 import { setLocale } from '@/actions/setLocale'
 
 const PAGE_KEYS: Record<string, string> = {
-  '/dashboard': 'dashboard',
-  '/comercial': 'comercial',
-  '/clients':   'clients',
-  '/financial': 'financial',
-  '/contador':  'contador',
-  '/demands':   'demands',
-  '/founder':   'founder',
-  '/docs':      'docs',
-  '/team':      'team',
-  '/projects':  'projects',
-  '/settings':  'settings',
+  '/dashboard':   'dashboard',
+  '/comercial':   'comercial',
+  '/marketing':   'marketing',
+  '/clients':     'clients',
+  '/financial':   'financial',
+  '/contador':    'contador',
+  '/demands':     'demands',
+  '/founder':     'founder',
+  '/docs':        'docs',
+  '/team':        'team',
+  '/projects':    'projects',
+  '/comunicacao': 'comunicacao',
+  '/settings':    'settings',
 }
 
 const LANGS = ['pt', 'en', 'es', 'fr', 'de', 'zh'] as const
