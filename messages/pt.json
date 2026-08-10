@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Dashboard",
+    "comercial": "Comercial",
     "clients": "Clientes",
     "financial": "Financeiro",
     "contador": "Contador",
@@ -25,6 +26,7 @@
     "toggleTheme": "Alternar tema",
     "pages": {
       "dashboard":  { "title": "Dashboard",      "description": "Visão geral do negócio" },
+      "comercial":  { "title": "Comercial",       "description": "Metas e desempenho comercial" },
       "clients":    { "title": "Clientes",        "description": "Gestão da base de clientes" },
       "financial":  { "title": "Financeiro",      "description": "Receitas, despesas e fluxo de caixa" },
       "contador":   { "title": "Contador",        "description": "Dashboard financeiro executivo" },
@@ -557,6 +559,33 @@
       "keyAdded": "Chave adicionada",
       "keyRemoved": "Chave removida",
       "error": "Erro ao salvar"
+    }
+  },
+  "comercial": {
+    "errorLoading": "Erro ao carregar dados comerciais.",
+    "semesterSubtitle": "Receita fechada em cada mês do semestre atual",
+    "goals": {
+      "title": "Metas Comerciais",
+      "edit": "Editar Metas",
+      "set": "Definir Metas",
+      "daily": "Meta Diária",
+      "weekly": "Meta Semanal",
+      "monthly": "Meta Mensal",
+      "semesterTitle": "Meta do Semestre",
+      "monthlyPace": "ritmo mensal",
+      "ofGoal": "da meta",
+      "achieved": "Atingida",
+      "onTrack": "Em progresso",
+      "critical": "Crítico",
+      "manualCheck": "Marcar meta como batida",
+      "form": {
+        "title": "Metas Comerciais",
+        "subtitle": "Deixe 0 para não exibir a meta",
+        "daily": "Meta Diária (R$)",
+        "weekly": "Meta Semanal (R$)",
+        "monthly": "Meta Mensal (R$)",
+        "semester": "Meta do Semestre (R$)"
+      }
     }
   },
   "financial": {

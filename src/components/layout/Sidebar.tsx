@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings,
+  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings, TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -14,6 +14,7 @@ import type { UserRole } from '@/types'
 const NAV_ITEMS = {
   founder:   [
     { href: '/dashboard', key: 'dashboard',   icon: LayoutDashboard },
+    { href: '/comercial', key: 'comercial',   icon: TrendingUp },
     { href: '/clients',   key: 'clients',     icon: Users },
     { href: '/financial', key: 'financial',   icon: DollarSign },
     { href: '/contador',  key: 'contador',    icon: Calculator },

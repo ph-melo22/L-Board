@@ -6,9 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.10.0'
+const VERSION = '1.11.0'
 
 const CHANGELOG = [
+  {
+    version: '1.11.0',
+    date: '2026-08-07',
+    changes: [
+      'Nova página /comercial (founder only): dashboard de desempenho comercial com metas diária, semanal, mensal e do semestre',
+      'Metas comerciais ficam salvas em localStorage (lboard_commercial_goals), mesmo padrão já usado em /financial — editáveis via dialog, 0 = meta oculta',
+      'Adiciona src/services/commercial.ts::getCommercialSummary() — calcula receita de hoje, da semana (seg-dom) e do mês, além do total e breakdown mensal do semestre atual, a partir de financial_entries',
+      'Gráfico de barras do semestre com linha de referência para o "ritmo mensal" necessário para bater a meta do semestre (meta do semestre / 6)',
+      'Sidebar, Header e middleware ganham a rota /comercial restrita a founders',
+    ],
+  },
   {
     version: '1.10.0',
     date: '2026-08-07',
@@ -483,7 +494,7 @@ const ROLES = [
     role: 'founder',
     label: 'Founder',
     color: 'text-amber-700 bg-amber-50 border-amber-200',
-    acesso: 'Acesso total: Dashboard, Clientes, Financeiro, Contador, Demandas, Projetos, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
+    acesso: 'Acesso total: Dashboard, Comercial, Clientes, Financeiro, Contador, Demandas, Projetos, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
   },
   {
     role: 'manager',
@@ -519,6 +530,7 @@ const PAGES = [
   { route: '/auth/confirm', file: 'src/app/auth/confirm/route.ts', description: 'Route handler que completa login via verifyOtp(token_hash, type) — sem PKCE. Usado por links gerados server-side (convite de equipe), já que o destinatário não tem code_verifier no navegador.', type: 'público' },
   { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Checklist de requisitos em tempo real (8+ caracteres, maiúscula, minúscula, número, símbolo) — botão só libera com tudo atendido.', type: 'público' },
   { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
+  { route: '/comercial', file: 'src/app/(dashboard)/comercial/page.tsx', description: 'Dashboard comercial: metas diária, semanal, mensal e do semestre (comparadas à receita de financial_entries). Gráfico de barras do semestre com linha de ritmo mensal necessário. Metas editáveis, salvas em localStorage.', type: 'founder' },
   { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo. Tabela com scroll horizontal no mobile.', type: 'founder' },
   { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações, tarefas vinculadas e card de Integrações (API Keys).', type: 'founder' },
   { route: '/api/clients/api-keys', file: 'src/app/api/clients/api-keys/route.ts', description: 'GET (lista keys do cliente) e POST (cria key com criptografia AES-256-GCM). Requer ENCRYPTION_KEY no ambiente.', type: 'api' },
@@ -556,6 +568,13 @@ const SERVICES = [
       { name: 'updateClient(id, formData)', desc: 'Atualiza dados de um cliente.' },
       { name: 'deleteClient(id)', desc: 'Remove um cliente.' },
       { name: 'getClientOptions()', desc: 'Lista id e nome dos clientes. Usado nos selects.' },
+    ],
+  },
+  {
+    file: 'src/services/commercial.ts',
+    tabela: 'financial_entries',
+    funcoes: [
+      { name: 'getCommercialSummary()', desc: 'Soma financial_entries (não cancelados) do dia, da semana (seg-dom), do mês e do semestre atual, mais o breakdown mês a mês do semestre. Usado na página /comercial.' },
     ],
   },
   {

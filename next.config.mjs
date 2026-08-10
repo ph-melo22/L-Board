@@ -10,8 +10,8 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'lboard.com.br', 'www.lboard.com.br'],
       bodySizeLimit: '50mb',
     },
-    serverComponentsExternalPackages: ['pdf-parse', 'mammoth'],
   },
+  serverExternalPackages: ['pdf-parse', 'mammoth'],
   async headers() {
     return [
       {

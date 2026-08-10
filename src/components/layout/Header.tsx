@@ -8,6 +8,7 @@ import { setLocale } from '@/actions/setLocale'
 
 const PAGE_KEYS: Record<string, string> = {
   '/dashboard': 'dashboard',
+  '/comercial': 'comercial',
   '/clients':   'clients',
   '/financial': 'financial',
   '/contador':  'contador',
