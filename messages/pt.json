@@ -306,6 +306,7 @@
     "removeDescription": "O acesso ao sistema será revogado imediatamente. Essa ação não pode ser desfeita.",
     "removing": "Removendo...",
     "removeAccess": "Remover acesso",
+    "resendInvite": "Reenviar e-mail de convite",
     "emailInfo": "A pessoa receberá um e-mail com um link para criar a senha e acessar o sistema.",
     "form": {
       "fullName": "Nome completo",
@@ -332,7 +333,9 @@
       "memberRemoved": "Membro removido",
       "removeError": "Erro ao remover membro",
       "roleUpdated": "Função atualizada",
-      "roleError": "Erro ao atualizar função"
+      "roleError": "Erro ao atualizar função",
+      "inviteResent": "Convite reenviado",
+      "inviteResendError": "Erro ao reenviar convite"
     }
   },
   "dashboard": {
@@ -777,6 +780,7 @@
     "noNotes": "Nenhuma nota registrada.",
     "noTeam": "Nenhum membro cadastrado. Convide seu primeiro funcionário.",
     "invite": "Convidar",
+    "resendInvite": "Reenviar e-mail de convite",
     "inviteTitle": "Convidar Funcionário",
     "newProject": "Novo Projeto",
     "editProject": "Editar Projeto",
@@ -815,6 +819,8 @@
       "inviteSent": "Convite enviado",
       "inviteSentDesc": "{email} receberá um email de acesso.",
       "inviteError": "Erro ao convidar",
+      "inviteResent": "Convite reenviado",
+      "inviteResendError": "Erro ao reenviar convite",
       "memberRemoved": "Membro removido",
       "memberRemoveError": "Erro ao remover",
       "roleUpdated": "Função atualizada",

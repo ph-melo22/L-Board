@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Shield, User, Code2, AlertTriangle, Mail, Briefcase, BarChart2 } from 'lucide-react'
+import { Plus, Trash2, Shield, User, Code2, AlertTriangle, Mail, MailPlus, Briefcase, BarChart2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import {
-  getTeam, getCurrentProfile, inviteTeamMember, removeTeamMember, updateMemberRole,
+  getTeam, getCurrentProfile, inviteTeamMember, removeTeamMember, updateMemberRole, resendInvite,
 } from '@/services/team'
 import { useTranslations } from 'next-intl'
 import type { Profile, UserRole } from '@/types'
@@ -46,6 +46,7 @@ export default function TeamPage() {
   const [inviting, setInviting]             = useState(false)
   const [removeId, setRemoveId]             = useState<string | null>(null)
   const [removing, setRemoving]             = useState(false)
+  const [resendingId, setResendingId]       = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -86,6 +87,16 @@ export default function TeamPage() {
     } catch {
       toast({ title: t('toast.removeError'), variant: 'destructive' })
     } finally { setRemoving(false) }
+  }
+
+  async function handleResendInvite(id: string) {
+    setResendingId(id)
+    try {
+      await resendInvite(id)
+      toast({ title: t('toast.inviteResent') })
+    } catch {
+      toast({ title: t('toast.inviteResendError'), variant: 'destructive' })
+    } finally { setResendingId(null) }
   }
 
   async function handleRoleChange(id: string, newRole: UserRole) {
@@ -153,11 +164,25 @@ export default function TeamPage() {
                         <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                       </div>
                     </div>
-                    {canRemove(member) && (
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setRemoveId(member.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isFounder && !isSelf && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={t('resendInvite')}
+                          disabled={resendingId === member.id}
+                          onClick={() => handleResendInvite(member.id)}
+                        >
+                          <MailPlus className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {canRemove(member) && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setRemoveId(member.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5">

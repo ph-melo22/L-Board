@@ -6,9 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.12.0'
+const VERSION = '1.13.0'
 
 const CHANGELOG = [
+  {
+    version: '1.13.0',
+    date: '2026-08-10',
+    changes: [
+      'Novo botão "Reenviar e-mail de convite" na lista de equipe (/team e aba Equipe de /founder), ao lado das ações de função/remoção',
+      'Nova rota POST /api/team/resend-invite/[id] (founder only): gera um novo link via generateLink(type: "recovery") — o usuário já existe no Supabase Auth desde o convite original, então type "invite" retornaria "User already registered" — e reenvia o e-mail de convite',
+      'Extrai o template de e-mail de convite (antes só em /api/team/invite) para src/lib/emailTemplates.ts (escapeHtml + inviteEmailHtml), reaproveitado pela nova rota de reenvio',
+      'Adiciona resendInvite(id) em src/services/team.ts',
+      'auditLog registra a ação team.invite_resent com o e-mail de destino',
+    ],
+  },
   {
     version: '1.12.0',
     date: '2026-08-10',
@@ -561,6 +572,7 @@ const PAGES = [
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
   { route: '/docs', file: 'src/app/(dashboard)/docs/page.tsx', description: 'Esta página. Documentação técnica atualizada a cada versão.', type: 'dev' },
   { route: '/api/team/invite', file: 'src/app/api/team/invite/route.ts', description: 'POST — convida usuário por e-mail (link para /auth/confirm com token_hash) e pré-cria perfil com role.', type: 'api' },
+  { route: '/api/team/resend-invite/[id]', file: 'src/app/api/team/resend-invite/[id]/route.ts', description: 'POST — reenvia o e-mail de convite para um membro já pré-criado, usando generateLink(type: "recovery") (o usuário já existe, "invite" falharia).', type: 'api' },
   { route: '/api/team/remove/[id]', file: 'src/app/api/team/remove/[id]/route.ts', description: 'DELETE — remove usuário do Supabase Auth (cascata no profiles).', type: 'api' },
   { route: '/api/team/role', file: 'src/app/api/team/role/route.ts', description: 'PATCH — atualiza o role de um membro da equipe.', type: 'api' },
 ]
@@ -681,6 +693,7 @@ const SERVICES = [
       { name: 'getTeam()', desc: 'Lista todos os membros (profiles) ordenados por criação.' },
       { name: 'getCurrentProfile()', desc: 'Retorna o perfil do usuário logado.' },
       { name: 'inviteTeamMember(name, email, role)', desc: 'Chama /api/team/invite para enviar convite e criar perfil.' },
+      { name: 'resendInvite(id)', desc: 'Chama /api/team/resend-invite/[id] para reenviar o e-mail de convite a um membro já criado.' },
       { name: 'removeTeamMember(id)', desc: 'Chama /api/team/remove/[id] para revogar acesso.' },
       { name: 'updateMemberRole(id, role)', desc: 'Chama /api/team/role para alterar função.' },
     ],

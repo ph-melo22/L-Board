@@ -43,6 +43,14 @@ export async function removeTeamMember(id: string): Promise<void> {
   }
 }
 
+export async function resendInvite(id: string): Promise<void> {
+  const res = await fetch(`/api/team/resend-invite/${id}`, { method: 'POST' })
+  if (!res.ok) {
+    const body = await res.json()
+    throw new Error(body.error ?? 'Erro ao reenviar convite')
+  }
+}
+
 export async function updateMemberRole(id: string, role: UserRole): Promise<void> {
   const res = await fetch('/api/team/role', {
     method: 'PATCH',

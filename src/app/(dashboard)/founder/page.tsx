@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, AlertTriangle, UserPlus, Crown, User } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, AlertTriangle, UserPlus, Crown, User, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -22,7 +22,7 @@ import {
   getProjects, createProject, updateProject, deleteProject,
   getNotes, upsertNote, deleteNote,
 } from '@/services/founder'
-import { getTeam, inviteTeamMember, removeTeamMember, updateMemberRole } from '@/services/team'
+import { getTeam, inviteTeamMember, removeTeamMember, updateMemberRole, resendInvite } from '@/services/team'
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils'
 import type { OKR, OKRStatus, KeyResult, StrategicProject, StrategicNote, Profile, UserRole } from '@/types'
 import { useTranslations } from 'next-intl'
@@ -214,6 +214,7 @@ export default function FounderPage() {
   const [inviteForm, setInviteForm] = useState({ full_name: '', email: '', role: 'employee' as UserRole })
   const [inviting, setInviting] = useState(false)
   const [removeMemberId, setRemoveMemberId] = useState<string | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
 
   // OKR dialog
   const [okrOpen, setOkrOpen] = useState(false)
@@ -328,6 +329,16 @@ export default function FounderPage() {
     } catch {
       toast({ title: t('toast.memberRemoveError'), variant: 'destructive' })
     } finally { setRemoveMemberId(null) }
+  }
+
+  async function handleResendInvite(id: string) {
+    setResendingId(id)
+    try {
+      await resendInvite(id)
+      toast({ title: t('toast.inviteResent') })
+    } catch {
+      toast({ title: t('toast.inviteResendError'), variant: 'destructive' })
+    } finally { setResendingId(null) }
   }
 
   async function handleRoleChange(id: string, role: UserRole) {
@@ -523,6 +534,16 @@ export default function FounderPage() {
                           <SelectItem value="employee">{tTeam('roles.employee.label')}</SelectItem>
                         </SelectContent>
                       </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title={t('resendInvite')}
+                        disabled={resendingId === member.id}
+                        onClick={() => handleResendInvite(member.id)}
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
