@@ -4,11 +4,11 @@ import type { CookieMethodsServer } from '@supabase/ssr'
 
 // Access control per role
 const ROLE_ALLOWED: Record<string, string[]> = {
-  founder:   ['/dashboard', '/comercial', '/marketing', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects', '/comunicacao', '/settings'],
-  manager:   ['/dashboard', '/marketing', '/clients', '/demands', '/projects', '/comunicacao'],
+  founder:   ['/dashboard', '/comercial', '/marketing', '/clients', '/financial', '/contador', '/demands', '/founder', '/docs', '/team', '/projects', '/crm', '/comunicacao', '/settings'],
+  manager:   ['/dashboard', '/marketing', '/clients', '/demands', '/projects', '/crm', '/comunicacao'],
   financial: ['/dashboard', '/financial', '/contador', '/clients'],
-  developer: ['/dashboard', '/demands', '/docs', '/projects'],
-  employee:  ['/dashboard', '/demands', '/projects'],
+  developer: ['/dashboard', '/demands', '/docs', '/projects', '/crm'],
+  employee:  ['/dashboard', '/demands', '/projects', '/crm'],
 }
 
 const AUTH_UTILITY_PATHS = ['/auth/reset-password', '/auth/callback', '/auth/forgot-password']

@@ -85,6 +85,7 @@ export interface Task {
   title: string
   description: string | null
   client_id: string | null
+  lead_id: string | null
   squad: string | null
   responsible: string | null
   priority: TaskPriority
@@ -337,6 +338,66 @@ export interface CommunicationMessage {
   content: string
   created_at: string
   profiles?: Pick<Profile, 'full_name'>
+}
+
+// ─── CRM (Leads) ──────────────────────────────────────────────────────────────
+
+export type CrmLeadStage = 'novo' | 'qualificacao' | 'proposta' | 'negociacao' | 'ganho' | 'perdido'
+export type CrmLeadPriority = 'low' | 'medium' | 'high'
+
+export interface CrmLead {
+  id: string
+  organization_id: string
+  owner_id: string | null
+  name: string
+  company: string | null
+  role_title: string | null
+  email: string | null
+  phone: string | null
+  stage: CrmLeadStage
+  source: string | null
+  product_interest: string | null
+  deal_value: number
+  win_probability: number | null
+  expected_close_date: string | null
+  loss_reason: string | null
+  industry: string | null
+  company_size: string | null
+  priority: CrmLeadPriority
+  tags: string[]
+  client_id: string | null
+  next_follow_up_date: string | null
+  last_interaction_at: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  profiles?: Pick<Profile, 'full_name'>
+}
+
+export type CrmLeadFormData = Omit<
+  CrmLead,
+  'id' | 'organization_id' | 'client_id' | 'last_interaction_at' | 'created_at' | 'updated_at' | 'profiles'
+>
+
+export type CrmLeadInteractionType = 'note' | 'call' | 'email' | 'meeting' | 'stage_change'
+
+export interface CrmLeadInteraction {
+  id: string
+  lead_id: string
+  author_id: string | null
+  type: CrmLeadInteractionType
+  content: string
+  created_at: string
+  profiles?: Pick<Profile, 'full_name'>
+}
+
+export interface CrmLeadMessage {
+  id: string
+  lead_id: string
+  user_id: string | null
+  role: 'user' | 'assistant'
+  content: string
+  created_at: string
 }
 
 // ─── Client API Keys ──────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings, TrendingUp, Megaphone, MessagesSquare,
+  LayoutDashboard, Users, DollarSign, ListTodo, Compass, LogOut, ChevronRight, FileText, UsersRound, FolderKanban, Calculator, Settings, TrendingUp, Megaphone, MessagesSquare, Handshake,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -21,6 +21,7 @@ const NAV_ITEMS = {
     { href: '/contador',     key: 'contador',     icon: Calculator },
     { href: '/demands',      key: 'demands',      icon: ListTodo },
     { href: '/projects',     key: 'projects',     icon: FolderKanban },
+    { href: '/crm',          key: 'crm',          icon: Handshake },
     { href: '/comunicacao',  key: 'comunicacao',  icon: MessagesSquare },
     { href: '/founder',      key: 'founderBoard', icon: Compass },
     { href: '/docs',         key: 'docs',         icon: FileText },
@@ -33,6 +34,7 @@ const NAV_ITEMS = {
     { href: '/clients',     key: 'clients',     icon: Users },
     { href: '/demands',     key: 'demands',     icon: ListTodo },
     { href: '/projects',    key: 'projects',    icon: FolderKanban },
+    { href: '/crm',         key: 'crm',         icon: Handshake },
     { href: '/comunicacao', key: 'comunicacao', icon: MessagesSquare },
   ],
   financial: [
@@ -45,12 +47,14 @@ const NAV_ITEMS = {
     { href: '/dashboard', key: 'dashboard', icon: LayoutDashboard },
     { href: '/demands',   key: 'demands',   icon: ListTodo },
     { href: '/projects',  key: 'projects',  icon: FolderKanban },
+    { href: '/crm',       key: 'crm',       icon: Handshake },
     { href: '/docs',      key: 'docs',      icon: FileText },
   ],
   employee:  [
     { href: '/dashboard', key: 'dashboard', icon: LayoutDashboard },
     { href: '/demands',   key: 'demands',   icon: ListTodo },
     { href: '/projects',  key: 'projects',  icon: FolderKanban },
+    { href: '/crm',       key: 'crm',       icon: Handshake },
   ],
 }
 

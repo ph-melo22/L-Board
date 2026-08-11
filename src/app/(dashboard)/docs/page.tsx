@@ -6,9 +6,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.13.0'
+const VERSION = '1.15.0'
 
 const CHANGELOG = [
+  {
+    version: '1.15.0',
+    date: '2026-08-10',
+    changes: [
+      'Novo botão "Importar via IA" em /crm: sobe um arquivo (CSV, PDF, Word, imagem, TXT…), o GPT-4o extrai os leads em JSON estruturado, e uma tela de pré-visualização com checkbox deixa escolher quais criar — mesmo padrão já usado em "Importar via IA" de Projetos',
+      'Nova rota POST /api/crm/ai-import (founder/manager/developer/employee): reaproveita extractContent() e getOpenAIClient(), retorna até 200 leads extraídos (name, company, email, phone, deal_value, etc.)',
+      'Extrai extractContent() (PDF via pdf-parse, DOCX via mammoth, imagem para GPT-4o vision, ou texto puro) de /api/projects/[id]/ai-tasks/route.ts para src/lib/fileExtract.ts, reaproveitado pela nova rota — comportamento de /api/projects/[id]/ai-tasks inalterado',
+      'Founder/manager escolhem um responsável único para todos os leads do lote antes de importar; demais roles importam sempre para si mesmos',
+    ],
+  },
+  {
+    version: '1.14.0',
+    date: '2026-08-10',
+    changes: [
+      'Novo módulo CRM (/crm e /crm/[id]): Kanban de leads com 6 estágios (Novo, Qualificação, Proposta, Negociação, Ganho, Perdido), movido por botões ←/→ (mesmo padrão de /demands)',
+      'Novas tabelas crm_leads, crm_lead_interactions (timeline de notas/ligações/e-mails/reuniões/mudanças de estágio) e crm_lead_messages (transcript do chat de IA), além da coluna tasks.lead_id — follow-ups criados no CRM aparecem também em /demands',
+      'RLS de crm_leads: acesso restrito a founder/manager/developer/employee (financial não entra), e cada pessoa só vê os leads em que é owner — founder/manager veem todos',
+      'Página /crm/[id]: detalhe do lead (dados, timeline de interações, follow-ups) com painel de chat de IA fixo ao lado, e botão "Converter em Cliente" (manual, com formulário pré-preenchido) quando o lead está Ganho',
+      'Nova rota POST /api/crm/assistant com 5 tools (mudar_estagio_lead, atualizar_lead, registrar_interacao, criar_tarefa_followup — automáticas; fechar_negocio — sempre pede confirmação por fechar Ganho/Perdido), contexto escopado a um lead só, histórico em crm_lead_messages',
+      'Extrai getOpenAIClient() de /api/assistant/route.ts para src/lib/openai.ts, reaproveitado pela nova rota do CRM',
+      'Adiciona src/services/crm.ts (CRUD de leads, timeline, follow-ups) e src/services/crmAssistant.ts (chat da IA do CRM)',
+      'Sidebar, Header e middleware ganham a rota /crm para founder, manager, developer e employee',
+    ],
+  },
   {
     version: '1.13.0',
     date: '2026-08-10',
@@ -519,31 +543,31 @@ const ROLES = [
     role: 'founder',
     label: 'Founder',
     color: 'text-amber-700 bg-amber-50 border-amber-200',
-    acesso: 'Acesso total: Dashboard, Comercial, Marketing, Clientes, Financeiro, Contador, Demandas, Projetos, Comunicação, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros.',
+    acesso: 'Acesso total: Dashboard, Comercial, Marketing, Clientes, Financeiro, Contador, Demandas, Projetos, CRM, Comunicação, Founder Board, Documentação, Equipe. Pode convidar, alterar roles e remover membros. No CRM, vê os leads de todos.',
   },
   {
     role: 'manager',
     label: 'Gestor',
     color: 'text-orange-700 bg-orange-50 border-orange-200',
-    acesso: 'Dashboard, Marketing, Clientes, Demandas, Projetos, Comunicação. Gerencia entregas, campanhas e clientes sem acesso ao financeiro interno.',
+    acesso: 'Dashboard, Marketing, Clientes, Demandas, Projetos, CRM, Comunicação. Gerencia entregas, campanhas e clientes sem acesso ao financeiro interno. No CRM, vê os leads de todos.',
   },
   {
     role: 'financial',
     label: 'Financeiro',
     color: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-    acesso: 'Dashboard, Clientes, Financeiro, Contador. Visão financeira completa sem acesso a demandas ou projetos.',
+    acesso: 'Dashboard, Clientes, Financeiro, Contador. Visão financeira completa sem acesso a demandas, projetos ou CRM.',
   },
   {
     role: 'developer',
     label: 'Dev / TI',
     color: 'text-blue-700 bg-blue-50 border-blue-200',
-    acesso: 'Dashboard, Demandas, Projetos, Documentação.',
+    acesso: 'Dashboard, Demandas, Projetos, CRM, Documentação. No CRM, só vê os leads em que é responsável.',
   },
   {
     role: 'employee',
     label: 'Funcionário',
     color: 'text-muted-foreground bg-muted border-border',
-    acesso: 'Dashboard, Demandas, Projetos.',
+    acesso: 'Dashboard, Demandas, Projetos, CRM. No CRM, só vê os leads em que é responsável.',
   },
 ]
 
@@ -567,6 +591,10 @@ const PAGES = [
   { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros, campos detalhados e botão "Importar via IA" para gerar tasks a partir de PDF.', type: 'founder' },
   { route: '/api/projects/[id]/ai-tasks', file: 'src/app/api/projects/[id]/ai-tasks/route.ts', description: 'POST — recebe PDF via multipart/form-data, extrai texto com pdf-parse, envia ao GPT-4o e retorna JSON com tasks e subtasks gerados.', type: 'api' },
   { route: '/api/notify/task-assigned', file: 'src/app/api/notify/task-assigned/route.ts', description: 'POST — envia e-mail via Resend ao membro delegado. Falha silenciosamente se RESEND_API_KEY não estiver configurada.', type: 'api' },
+  { route: '/crm', file: 'src/app/(dashboard)/crm/page.tsx', description: 'Kanban de leads (Novo/Qualificação/Proposta/Negociação/Ganho/Perdido), movido por botões ←/→. Badge "Atrasado" quando o follow-up vence. Filtro por responsável (só founder/manager).', type: 'privado' },
+  { route: '/crm/[id]', file: 'src/app/(dashboard)/crm/[id]/page.tsx', description: 'Detalhe do lead: dados editáveis, timeline de interações, follow-ups vinculados, botão "Converter em Cliente" (Ganho) e painel de chat de IA fixo (LeadChat.tsx).', type: 'privado' },
+  { route: '/api/crm/assistant', file: 'src/app/api/crm/assistant/route.ts', description: 'GET/DELETE (histórico em crm_lead_messages) e POST (chat + execute_action) — assistente de IA escopado a um lead, com 5 tools. Acesso verificado via RLS (lead só retorna se o usuário pode vê-lo).', type: 'api' },
+  { route: '/api/crm/ai-import', file: 'src/app/api/crm/ai-import/route.ts', description: 'POST — recebe arquivo via multipart/form-data (CSV, PDF, Word, imagem, TXT), extrai com extractContent() e pede ao GPT-4o uma lista estruturada de leads (até 200) para revisão antes de criar.', type: 'api' },
   { route: '/comunicacao', file: 'src/app/(dashboard)/comunicacao/page.tsx', description: 'Mural de comunicação da equipe estilo Slack: múltiplos canais criáveis pela UI, mensagens com autor e data/hora persistidas no Supabase. Sem edição/exclusão de mensagens e sem tempo real (recarrega após enviar).', type: 'founder/manager' },
   { route: '/founder', file: 'src/app/(dashboard)/founder/page.tsx', description: 'OKRs, Projetos Estratégicos e Notas estratégicas.', type: 'founder' },
   { route: '/team', file: 'src/app/(dashboard)/team/page.tsx', description: 'Gestão de equipe exclusiva para founders. Lista membros, convida por e-mail com role, altera permissões e remove acesso.', type: 'founder' },
@@ -614,6 +642,26 @@ const SERVICES = [
       { name: 'updateCampaign(id, formData)', desc: 'Atualiza campanha.' },
       { name: 'deleteCampaign(id)', desc: 'Remove campanha.' },
       { name: 'summarizeCampaigns(campaigns)', desc: 'Calcula investimento/leads/tráfego/conversões/receita totais, CAC, ROI, taxa de conversão e breakdown por canal a partir da lista já carregada. Usado na página /marketing.' },
+    ],
+  },
+  {
+    file: 'src/services/crm.ts',
+    tabela: 'crm_leads + crm_lead_interactions + tasks',
+    funcoes: [
+      { name: 'getLeads() / getLead(id)', desc: 'Lista/busca leads com nome do responsável (join em profiles!owner_id). RLS já filtra por visibilidade (owner ou founder/manager).' },
+      { name: 'createLead / updateLead / deleteLead', desc: 'CRUD de leads.' },
+      { name: 'moveLeadStage(id, stage, lossReason?)', desc: 'Atualiza o estágio e registra uma interação stage_change na timeline.' },
+      { name: 'getLeadInteractions(id) / addLeadInteraction(id, type, content)', desc: 'Timeline do lead — toda interação atualiza também crm_leads.last_interaction_at.' },
+      { name: 'getLeadFollowUpTasks(id) / createFollowUpTask(id, formData)', desc: 'Follow-ups são tarefas normais (tabela tasks) com lead_id setado — aparecem também em /demands.' },
+    ],
+  },
+  {
+    file: 'src/services/crmAssistant.ts',
+    tabela: 'crm_lead_messages (via /api/crm/assistant)',
+    funcoes: [
+      { name: 'getLeadChatHistory(leadId) / clearLeadChat(leadId)', desc: 'Histórico do chat de IA daquele lead.' },
+      { name: 'sendLeadChatMessage(leadId, message, model, history)', desc: 'Envia mensagem e recebe reply + tool_calls sugeridos pela IA.' },
+      { name: 'executeLeadAction(leadId, action)', desc: 'Executa (ou confirma) uma tool call específica.' },
     ],
   },
   {
@@ -704,7 +752,7 @@ const MODELS = [
   { name: 'Client / ClientWithProfit', tabela: 'clients', campos: ['id', 'name', 'product', 'monthly_revenue', 'operational_cost', 'start_date', 'renewal_date', 'status', 'created_at', '+profit', '+margin'] },
   { name: 'FinancialEntry', tabela: 'financial_entries', campos: ['id', 'client_id', 'value', 'type', 'category', 'status', 'date', 'description', 'created_at', '+clients join'] },
   { name: 'FinancialExpense', tabela: 'financial_expenses', campos: ['id', 'supplier', 'category', 'cost_center', 'value', 'type', 'date', 'description', 'created_at'] },
-  { name: 'Task', tabela: 'tasks', campos: ['id', 'title', 'description', 'client_id', 'squad', 'responsible', 'priority', 'impacts_revenue', 'revenue_impact_value', 'due_date', 'status', 'created_at'] },
+  { name: 'Task', tabela: 'tasks', campos: ['id', 'title', 'description', 'client_id', 'lead_id', 'squad', 'responsible', 'priority', 'impacts_revenue', 'revenue_impact_value', 'due_date', 'status', 'created_at'] },
   { name: 'OKR', tabela: 'okrs', campos: ['id', 'objective', 'status', 'quarter', 'created_at', '+key_results'] },
   { name: 'KeyResult', tabela: 'key_results', campos: ['id', 'okr_id', 'description', 'target', 'current', 'unit', 'created_at'] },
   { name: 'StrategicProject', tabela: 'strategic_projects', campos: ['id', 'title', 'description', 'status', 'priority', 'due_date', 'created_at'] },
@@ -719,6 +767,9 @@ const MODELS = [
   { name: 'MarketingCampaign', tabela: 'marketing_campaigns', campos: ['id', 'organization_id', 'name', 'channel', 'status', 'start_date', 'end_date', 'investment', 'traffic', 'leads_generated', 'conversions', 'revenue_generated', 'notes', 'created_at'] },
   { name: 'CommunicationChannel', tabela: 'communication_channels', campos: ['id', 'organization_id', 'name', 'description', 'created_by', 'created_at'] },
   { name: 'CommunicationMessage', tabela: 'communication_messages', campos: ['id', 'channel_id', 'author_id', 'content', 'created_at', '+profiles join (full_name)'] },
+  { name: 'CrmLead', tabela: 'crm_leads', campos: ['id', 'organization_id', 'owner_id', 'name', 'company', 'role_title', 'email', 'phone', 'stage', 'source', 'product_interest', 'deal_value', 'win_probability', 'expected_close_date', 'loss_reason', 'industry', 'company_size', 'priority', 'tags[]', 'client_id', 'next_follow_up_date', 'last_interaction_at', 'notes', 'created_at', 'updated_at', '+profiles join (full_name)'] },
+  { name: 'CrmLeadInteraction', tabela: 'crm_lead_interactions', campos: ['id', 'lead_id', 'author_id', 'type', 'content', 'created_at', '+profiles join (full_name)'] },
+  { name: 'CrmLeadMessage', tabela: 'crm_lead_messages', campos: ['id', 'lead_id', 'user_id', 'role', 'content', 'created_at'] },
 ]
 
 const INFRA = [

@@ -8,6 +8,7 @@
     "contador": "Contador",
     "demands": "Demandas",
     "projects": "Projetos",
+    "crm": "CRM",
     "comunicacao": "Comunicação",
     "founderBoard": "Founder Board",
     "docs": "Documentação",
@@ -38,6 +39,7 @@
       "docs":         { "title": "Documentação",    "description": "Relatório técnico" },
       "team":         { "title": "Equipe",          "description": "Membros, convites e permissões" },
       "projects":     { "title": "Projetos",        "description": "Gestão de projetos e atividades" },
+      "crm":          { "title": "CRM",             "description": "Kanban de leads com IA" },
       "comunicacao":  { "title": "Comunicação",     "description": "Mural e canais da equipe" },
       "settings":     { "title": "Configurações",   "description": "Organização e chaves de IA" }
     }
@@ -673,6 +675,169 @@
       "loadMessagesError": "Erro ao carregar mensagens",
       "sendError": "Erro ao enviar mensagem",
       "createChannelError": "Erro ao criar canal"
+    }
+  },
+  "crm": {
+    "errorLoading": "Erro ao carregar o CRM.",
+    "newLead": "Novo Lead",
+    "aiImport": "Importar via IA",
+    "aiImportTitle": "Importar Leads via IA",
+    "aiUploadDesc": "Faça upload de uma planilha, lista ou qualquer arquivo (CSV, PDF, Word, imagem, TXT…) e o GPT-4o vai extrair os leads automaticamente.",
+    "aiSelectFile": "Clique para selecionar o arquivo",
+    "aiMaxSize": "Máx. 300 MB · CSV, PDF, Word, imagem, TXT e mais",
+    "aiRemoveFile": "Remover arquivo",
+    "aiOwnerLabel": "Responsável pelos leads importados",
+    "aiOwnerPlaceholder": "Selecione um membro da equipe",
+    "aiAnalyzing": "Analisando...",
+    "aiGenerateBtn": "Analisar arquivo",
+    "aiCreatingBtn": "Importando...",
+    "aiGenerated": "{count, plural, one {1 lead encontrado} other {# leads encontrados}}. Selecione os que deseja importar:",
+    "aiCreateBtn": "{count, plural, one {Importar 1 lead} other {Importar # leads}}",
+    "aiSelectAll": "Selecionar todos",
+    "aiDeselectAll": "Desmarcar todos",
+    "aiBack": "Voltar",
+    "searchPlaceholder": "Buscar por nome ou empresa...",
+    "allOwners": "Todos os donos",
+    "clearFilters": "Limpar filtros",
+    "addCard": "+ Adicionar lead",
+    "deleteTitle": "Remover este lead?",
+    "overdueCount": "{count, plural, one {# lead está com follow-up atrasado} other {# leads estão com follow-up atrasado}}",
+    "overdue": "Atrasado",
+    "lossReasonTitle": "Motivo da perda",
+    "markLost": "Marcar como Perdido",
+    "stage": {
+      "novo": "Novo",
+      "qualificacao": "Qualificação",
+      "proposta": "Proposta",
+      "negociacao": "Negociação",
+      "ganho": "Ganho",
+      "perdido": "Perdido"
+    },
+    "priority": {
+      "low": "Baixa",
+      "medium": "Média",
+      "high": "Alta"
+    },
+    "form": {
+      "name": "Nome",
+      "company": "Empresa",
+      "roleTitle": "Cargo",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "source": "Origem",
+      "productInterest": "Produto de interesse",
+      "dealValue": "Valor do negócio (R$)",
+      "priority": "Prioridade",
+      "expectedCloseDate": "Previsão de fechamento",
+      "nextFollowUp": "Próximo follow-up",
+      "owner": "Responsável",
+      "tags": "Tags",
+      "tagsPlaceholder": "separadas por vírgula",
+      "notes": "Notas",
+      "lossReason": "Motivo"
+    },
+    "toast": {
+      "created": "Lead criado",
+      "saveError": "Erro ao salvar lead",
+      "deleted": "Lead removido",
+      "deleteError": "Erro ao remover lead",
+      "moveError": "Erro ao mover lead",
+      "importSuccess": "{count, plural, one {1 lead importado} other {# leads importados}}",
+      "importError": "Erro ao importar leads"
+    }
+  },
+  "crmDetail": {
+    "back": "Voltar",
+    "errorLoading": "Erro ao carregar o lead.",
+    "leadNotFound": "Lead não encontrado.",
+    "convertToClient": "Converter em Cliente",
+    "editLead": "Editar Lead",
+    "deleteLeadTitle": "Remover este lead?",
+    "metrics": {
+      "dealValue": "Valor do negócio",
+      "winProbability": "Probabilidade",
+      "priority": "Prioridade",
+      "expectedCloseDate": "Previsão de fechamento"
+    },
+    "info": "Informações",
+    "fields": {
+      "email": "E-mail",
+      "phone": "Telefone",
+      "source": "Origem",
+      "productInterest": "Produto de interesse",
+      "industry": "Indústria",
+      "companySize": "Porte da empresa",
+      "owner": "Responsável",
+      "nextFollowUp": "Próximo follow-up",
+      "tags": "Tags",
+      "notes": "Notas",
+      "lossReason": "Motivo de perda"
+    },
+    "followUps": "Follow-ups ({count})",
+    "newFollowUp": "Novo follow-up",
+    "noFollowUps": "Nenhum follow-up cadastrado.",
+    "timeline": "Timeline",
+    "registerInteraction": "Registrar interação",
+    "noInteractions": "Nenhuma interação registrada ainda.",
+    "systemAuthor": "Sistema",
+    "interactionType": {
+      "note": "Nota",
+      "call": "Ligação",
+      "email": "E-mail",
+      "meeting": "Reunião",
+      "stage_change": "Mudança de estágio"
+    },
+    "interactionDialog": {
+      "title": "Registrar Interação",
+      "type": "Tipo",
+      "content": "O que aconteceu?"
+    },
+    "followUpDialog": {
+      "title": "Novo Follow-up",
+      "taskTitle": "Título",
+      "dueDate": "Prazo",
+      "priority": "Prioridade"
+    },
+    "convertDialog": {
+      "title": "Converter em Cliente",
+      "hint": "Revise os dados antes de criar o cliente — o valor do negócio foi sugerido como receita mensal, ajuste se necessário.",
+      "name": "Nome",
+      "product": "Produto",
+      "monthlyRevenue": "Receita mensal (R$)",
+      "operationalCost": "Custo operacional (R$)",
+      "submit": "Criar Cliente",
+      "submitting": "Criando..."
+    },
+    "toast": {
+      "leadUpdated": "Lead atualizado",
+      "saveError": "Erro ao salvar lead",
+      "leadDeleted": "Lead removido",
+      "deleteError": "Erro ao remover lead",
+      "interactionAdded": "Interação registrada",
+      "interactionError": "Erro ao registrar interação",
+      "followUpAdded": "Follow-up criado",
+      "followUpError": "Erro ao criar follow-up",
+      "converted": "Cliente criado a partir do lead!",
+      "convertError": "Erro ao converter lead em cliente"
+    },
+    "chat": {
+      "title": "Assistente do lead",
+      "emptyTitle": "Converse sobre este lead",
+      "emptyDesc": "Pergunte, registre interações ou peça para mudar o estágio.",
+      "placeholder": "Mensagem sobre este lead… (Enter envia)",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "actionFailed": "Ação falhou: {message}",
+      "actionError": "Erro ao executar ação",
+      "sendError": "Erro ao enviar mensagem",
+      "toolLabel": {
+        "mudar_estagio_lead": "Mover lead para \"{stage}\"",
+        "fechar_negocio": "Fechar negócio como \"{resultado}\"",
+        "fechar_negocio_reason": "Fechar negócio como \"{resultado}\" — {reason}",
+        "atualizar_lead": "Atualizar campos: {fields}",
+        "registrar_interacao": "Registrar {type}: \"{content}\"",
+        "criar_tarefa_followup": "Criar follow-up: \"{title}\" em {due}"
+      }
     }
   },
   "financial": {

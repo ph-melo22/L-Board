@@ -24,7 +24,7 @@ import type { Task, TaskFormData, TaskPriority, TaskStatus } from '@/types'
 const STATUSES: TaskStatus[] = ['backlog', 'todo', 'in_progress', 'review', 'done']
 
 const EMPTY_FORM: TaskFormData = {
-  title: '', description: null, client_id: null, squad: null, responsible: null,
+  title: '', description: null, client_id: null, lead_id: null, squad: null, responsible: null,
   priority: 'medium', impacts_revenue: false, revenue_impact_value: null, due_date: null, status: 'backlog',
 }
 
@@ -66,7 +66,7 @@ export default function DemandsPage() {
   }
   function openEdit(tk: Task) {
     setEditing(tk)
-    setForm({ title: tk.title, description: tk.description, client_id: tk.client_id, squad: tk.squad, responsible: tk.responsible, priority: tk.priority, impacts_revenue: tk.impacts_revenue, revenue_impact_value: tk.revenue_impact_value, due_date: tk.due_date, status: tk.status })
+    setForm({ title: tk.title, description: tk.description, client_id: tk.client_id, lead_id: tk.lead_id, squad: tk.squad, responsible: tk.responsible, priority: tk.priority, impacts_revenue: tk.impacts_revenue, revenue_impact_value: tk.revenue_impact_value, due_date: tk.due_date, status: tk.status })
     setDialogOpen(true)
   }
 

@@ -3,29 +3,10 @@ import OpenAI from 'openai'
 import { requireAuth } from '@/lib/requireAuth'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { decrypt } from '@/lib/crypto'
+import { getOpenAIClient } from '@/lib/openai'
 import { rateLimit } from '@/lib/rateLimit'
 import { listEvents, createEvent, isConnected } from '@/lib/googleCalendar'
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-async function getOpenAIClient(supabase: SupabaseClient): Promise<OpenAI> {
-  try {
-    const { data: orgKey } = await supabase
-      .from('organization_api_keys')
-      .select('encrypted_key, iv, auth_tag')
-      .eq('provider', 'openai')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (orgKey) {
-      const apiKey = decrypt(orgKey.encrypted_key, orgKey.iv, orgKey.auth_tag)
-      return new OpenAI({ apiKey })
-    }
-  } catch { /* fall through */ }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-}
 
 async function resolveOrgId(supabase: SupabaseClient, userId: string): Promise<string | null> {
   // Try profile first

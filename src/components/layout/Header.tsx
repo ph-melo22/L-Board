@@ -18,6 +18,7 @@ const PAGE_KEYS: Record<string, string> = {
   '/docs':        'docs',
   '/team':        'team',
   '/projects':    'projects',
+  '/crm':         'crm',
   '/comunicacao': 'comunicacao',
   '/settings':    'settings',
 }
