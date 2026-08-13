@@ -239,11 +239,11 @@ export default function CrmPage() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[160px] flex-1 sm:flex-none sm:min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('searchPlaceholder')} className="pl-8 h-9 text-sm w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={t('searchPlaceholder')} className="pl-8 h-10 text-base w-full md:h-9 md:text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         {isManager && (
           <Select value={filterOwner} onValueChange={setFilterOwner}>
-            <SelectTrigger className="flex-1 sm:flex-none sm:w-44 h-9 text-sm"><SelectValue placeholder={t('allOwners')} /></SelectTrigger>
+            <SelectTrigger className="flex-1 sm:flex-none sm:w-44 h-10 text-base md:h-9 md:text-sm"><SelectValue placeholder={t('allOwners')} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('allOwners')}</SelectItem>
               {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}

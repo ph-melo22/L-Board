@@ -507,7 +507,7 @@ export default function ContadorPage() {
           <div className="flex items-center gap-3">
             <Label className="text-xs text-muted-foreground shrink-0">{t('period')}</Label>
             <Select value={drePeriod} onValueChange={setDrePeriod}>
-              <SelectTrigger className="w-56 h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-56 h-10 text-base md:h-9 md:text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {periodOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
@@ -563,7 +563,7 @@ export default function ContadorPage() {
         <TabsContent value="caixa" className="space-y-4 pt-4">
           {loading ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">{[1,2,3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">{[1,2,3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
               <Skeleton className="h-64" />
             </div>
           ) : (
@@ -599,7 +599,7 @@ export default function ContadorPage() {
 
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('caixa.projection')}</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
                     { label: t('caixa.days30'), value: saldoEstimado + avgNet },
                     { label: t('caixa.days60'), value: saldoEstimado + avgNet * 2 },

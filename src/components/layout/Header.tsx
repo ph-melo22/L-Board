@@ -57,11 +57,11 @@ export function Header({ onMenuClick }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-14 items-center gap-3 border-b border-border bg-background px-4 md:px-6">
+    <header className="flex min-h-14 items-center gap-3 border-b border-border bg-background px-4 pt-[env(safe-area-inset-top)] md:px-6">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuClick}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
         aria-label={t('header.openMenu')}
       >
         <Menu className="h-5 w-5" />
@@ -78,7 +78,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="relative">
         <button
           onClick={() => setLangOpen((o) => !o)}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label={t('language.label')}
         >
           <Globe className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       {mounted && (
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label={t('header.toggleTheme')}
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

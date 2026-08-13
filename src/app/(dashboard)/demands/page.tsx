@@ -137,10 +137,10 @@ export default function DemandsPage() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[160px] flex-1 sm:flex-none sm:min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('searchPlaceholder')} className="pl-8 h-9 text-sm w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder={t('searchPlaceholder')} className="pl-8 h-10 text-base w-full md:h-9 md:text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={filterClient} onValueChange={setFilterClient}>
-          <SelectTrigger className="flex-1 sm:flex-none sm:w-40 h-9 text-sm"><SelectValue placeholder={t('allClients')} /></SelectTrigger>
+          <SelectTrigger className="flex-1 sm:flex-none sm:w-40 h-10 text-base md:h-9 md:text-sm"><SelectValue placeholder={t('allClients')} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('allClients')}</SelectItem>
             {clientOptions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -185,8 +185,8 @@ export default function DemandsPage() {
                       <div className="flex items-start justify-between gap-1">
                         <p className="text-xs font-medium leading-tight line-clamp-2">{task.title}</p>
                         <div className="flex shrink-0 gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEdit(task)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive" onClick={() => setDeleteId(task.id)}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(task)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(task.id)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
@@ -203,10 +203,10 @@ export default function DemandsPage() {
                       {task.due_date && <p className="text-xs text-muted-foreground">{formatDate(task.due_date)}</p>}
                       <div className="flex gap-1 pt-1 border-t border-border/40">
                         {STATUSES.indexOf(status) > 0 && (
-                          <button onClick={() => handleMoveStatus(task, STATUSES[STATUSES.indexOf(status) - 1])} className="flex-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors py-0.5">←</button>
+                          <button onClick={() => handleMoveStatus(task, STATUSES[STATUSES.indexOf(status) - 1])} className="flex-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors py-1.5">←</button>
                         )}
                         {STATUSES.indexOf(status) < STATUSES.length - 1 && (
-                          <button onClick={() => handleMoveStatus(task, STATUSES[STATUSES.indexOf(status) + 1])} className="flex-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors py-0.5">→</button>
+                          <button onClick={() => handleMoveStatus(task, STATUSES[STATUSES.indexOf(status) + 1])} className="flex-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors py-1.5">→</button>
                         )}
                       </div>
                     </CardContent>

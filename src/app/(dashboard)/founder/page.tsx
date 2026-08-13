@@ -150,7 +150,7 @@ function OKRCard({ okr, onReload }: { okr: OKR; onReload: () => void }) {
               <Label>{t('kr.description')}</Label>
               <Input value={krForm.description} onChange={(e) => setKrForm({ ...krForm, description: e.target.value })} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1.5">
                 <Label>{t('kr.target')}</Label>
                 <Input type="number" value={krForm.target} onChange={(e) => setKrForm({ ...krForm, target: Number(e.target.value) })} />

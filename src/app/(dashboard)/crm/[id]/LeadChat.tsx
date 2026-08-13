@@ -157,14 +157,14 @@ export function LeadChat({ leadId, onLeadChanged }: { leadId: string; onLeadChan
   }
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 10rem)' }}>
+    <div className="flex flex-col" style={{ height: 'calc(100dvh - 10rem)' }}>
       <div className="flex items-center justify-between pb-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <Bot className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">{t('title')}</span>
         </div>
         {!loadingHistory && messages.length > 0 && (
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={clearChat}>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={clearChat}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         )}
@@ -246,10 +246,10 @@ export function LeadChat({ leadId, onLeadChanged }: { leadId: string; onLeadChan
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() } }}
             placeholder={t('placeholder')}
-            className="min-h-[52px] max-h-[120px] text-sm resize-none"
+            className="min-h-[52px] max-h-[120px] text-base resize-none md:text-sm"
             disabled={loading}
           />
-          <Button className="h-9 w-9 p-0 shrink-0" onClick={() => void send()} disabled={loading || !input.trim()}>
+          <Button className="h-11 w-11 p-0 shrink-0 md:h-9 md:w-9" onClick={() => void send()} disabled={loading || !input.trim()}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

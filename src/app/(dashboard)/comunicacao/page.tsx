@@ -106,9 +106,9 @@ export default function ComunicacaoPage() {
   const activeChannel = channels.find((c) => c.id === activeChannelId) ?? null
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4">
+    <div className="flex h-[calc(100dvh-8rem)] flex-col gap-4 md:flex-row">
       {/* Lista de canais */}
-      <Card className="w-56 shrink-0 flex flex-col p-3">
+      <Card className="w-full max-h-48 shrink-0 flex flex-col p-3 min-h-0 md:h-full md:w-56 md:max-h-none">
         <div className="flex items-center justify-between px-1 pb-2">
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t('channels')}</p>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setChannelDialogOpen(true)}>
@@ -138,7 +138,7 @@ export default function ComunicacaoPage() {
       </Card>
 
       {/* Mensagens */}
-      <Card className="flex-1 flex flex-col min-w-0">
+      <Card className="flex-1 flex flex-col min-w-0 min-h-0">
         {!activeChannel ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center p-6">
             <MessagesSquare className="h-8 w-8 text-muted-foreground" />

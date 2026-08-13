@@ -98,7 +98,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-border px-6">
+      <div className="flex min-h-16 items-center gap-3 border-b border-border px-6 pt-[env(safe-area-inset-top)]">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
           <span className="text-sm font-bold text-primary-foreground">L</span>
         </div>
@@ -123,7 +123,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               href={item.href}
               onClick={onClose}
               className={cn(
-                'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                'group relative flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors',
                 isActive
                   ? 'text-primary-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -145,10 +145,10 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4 w-4" />
           {t('nav.logout')}

@@ -183,7 +183,7 @@ export default function ClientDetailPage() {
             <div className="h-3 w-24 animate-pulse rounded bg-muted" />
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[1,2,3,4].map((i) => <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />)}
         </div>
         <div className="h-32 animate-pulse rounded-lg bg-muted" />

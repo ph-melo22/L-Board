@@ -6,9 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.15.0'
+const VERSION = '1.15.1'
 
 const CHANGELOG = [
+  {
+    version: '1.15.1',
+    date: '2026-08-13',
+    changes: [
+      'Otimização mobile ampla em todo o sistema (preparação para empacotamento como app de loja): Input, Textarea e Select ganham text-base (16px) no mobile e md:text-sm no desktop, evitando o zoom automático do iOS Safari ao focar campos',
+      'Button, Select, Dialog, DropdownMenu, Checkbox e Toast (src/components/ui/) ganham alvos de toque maiores no mobile (≥40-44px) mantendo o tamanho compacto original em md: para desktop',
+      'DialogContent agora aplica max-h-[90dvh] + overflow-y-auto e margem lateral (w-[calc(100%-2rem)]) por padrão, sem depender de cada página lembrar de configurar isso',
+      'TabsList ganha scroll horizontal automático quando os tabs não cabem na largura da tela',
+      'Header, Sidebar e DashboardShell ganham padding de safe-area (env(safe-area-inset-*)) para não ficar atrás do notch/home-indicator em iPhones; removido maximumScale: 1 do viewport (src/app/layout.tsx) para permitir pinch-zoom (acessibilidade)',
+      'Corrige AssistantChat.tsx, LeadChat.tsx e comunicacao/page.tsx: altura calculada com 100vh (não considera a barra de endereço do navegador mobile) trocada por 100dvh; comunicacao/page.tsx empilha lista de canais e chat verticalmente no mobile',
+      'Corrige grids de 3/4 colunas fixas sem fallback mobile: diálogo de KR em founder/page.tsx, cards de projeção 30/60/90 dias em contador/page.tsx, skeleton de loading em clients/[id]/page.tsx',
+      'Clients (clients/page.tsx) e Financial — abas Entradas e Despesas (financial/page.tsx): tabelas largas ganham uma visão em cards no mobile (md:hidden) e mantêm a tabela original a partir de md:, em vez de depender só de scroll horizontal',
+      'Botões de ação em linhas de tabela/kanban (Clients, kanban de Demands, paginação, cabeçalho dos chats de IA) aumentados para alvo de toque adequado',
+    ],
+  },
   {
     version: '1.15.0',
     date: '2026-08-10',

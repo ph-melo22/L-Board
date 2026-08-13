@@ -186,57 +186,98 @@ export default function ClientsPage() {
           ) : paginated.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">{t('notFound')}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground">
-                    <SortTh col="name"            label={t('columns.client')} />
-                    <th className="px-4 py-3 text-left font-medium">{t('columns.product')}</th>
-                    <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
-                    <SortTh col="monthly_revenue" label={t('columns.revenue')} />
-                    <SortTh col="margin"          label={t('columns.margin')} />
-                    <SortTh col="renewal_date"    label={t('columns.renewal')} />
-                    <th className="px-4 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((c) => (
-                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                      <td className="px-4 py-3 font-medium">{c.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.product}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(c.status)}`}>
-                          {t(`status.${c.status}`)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(c.monthly_revenue)}</td>
-                      <td className="px-4 py-3 text-right">{formatPercent(c.margin)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(c.renewal_date)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link href={`/clients/${c.id}`}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button>
-                          </Link>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </div>
-                      </td>
+            <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-border md:hidden">
+                {paginated.map((c) => (
+                  <div key={c.id} className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/clients/${c.id}`} className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{c.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{c.product}</p>
+                      </Link>
+                      <span className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(c.status)}`}>
+                        {t(`status.${c.status}`)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('columns.revenue')}</p>
+                        <p className="font-medium">{formatCurrency(c.monthly_revenue)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('columns.margin')}</p>
+                        <p className="font-medium">{formatPercent(c.margin)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('columns.renewal')}</p>
+                        <p className="font-medium">{formatDate(c.renewal_date)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-1">
+                      <Link href={`/clients/${c.id}`}>
+                        <Button variant="ghost" size="icon"><ExternalLink className="h-4 w-4" /></Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-xs text-muted-foreground">
+                      <SortTh col="name"            label={t('columns.client')} />
+                      <th className="px-4 py-3 text-left font-medium">{t('columns.product')}</th>
+                      <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
+                      <SortTh col="monthly_revenue" label={t('columns.revenue')} />
+                      <SortTh col="margin"          label={t('columns.margin')} />
+                      <SortTh col="renewal_date"    label={t('columns.renewal')} />
+                      <th className="px-4 py-3" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {paginated.map((c) => (
+                      <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                        <td className="px-4 py-3 font-medium">{c.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{c.product}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(c.status)}`}>
+                            {t(`status.${c.status}`)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(c.monthly_revenue)}</td>
+                        <td className="px-4 py-3 text-right">{formatPercent(c.margin)}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{formatDate(c.renewal_date)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <Link href={`/clients/${c.id}`}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                            </Link>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex flex-col items-start gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>{tc('page')} {page} {tc('of')} {totalPages}</span>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>{tc('previous')}</Button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="w-8" onClick={() => setPage(p)}>{p}</Button>
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="w-9" onClick={() => setPage(p)}>{p}</Button>
             ))}
             <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>{tc('next')}</Button>
           </div>

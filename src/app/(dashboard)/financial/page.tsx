@@ -250,7 +250,7 @@ export default function FinancialPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <Label className="text-xs text-muted-foreground shrink-0">{t('period')}</Label>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-full sm:w-52 h-9 text-sm"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-52 h-10 text-base md:h-9 md:text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             {monthOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
           </SelectContent>
@@ -332,41 +332,67 @@ export default function FinancialPage() {
               ) : filteredEntries.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground">{t('noEntries')}</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-xs text-muted-foreground">
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.date')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.client')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.category')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.type')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
-                        <th className="px-4 py-3 text-right font-medium">{t('columns.value')}</th>
-                        <th className="px-4 py-3" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredEntries.map((e) => (
-                        <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                          <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
-                          <td className="px-4 py-3">{e.clients?.name ?? '—'}</td>
-                          <td className="px-4 py-3">{tl(e.category as never)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{tl(e.type as never)}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(e.status)}`}>{tl(e.status as never)}</span>
-                          </td>
-                          <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(e)}><Pencil className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteEntryId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                            </div>
-                          </td>
+                <>
+                  {/* Mobile card list */}
+                  <div className="divide-y divide-border md:hidden">
+                    {filteredEntries.map((e) => (
+                      <div key={e.id} className="space-y-2 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{e.clients?.name ?? '—'}</p>
+                            <p className="text-xs text-muted-foreground">{formatDate(e.date)} · {tl(e.category as never)}</p>
+                          </div>
+                          <span className={`shrink-0 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(e.status)}`}>{tl(e.status as never)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground">{tl(e.type as never)}</p>
+                          <p className="font-medium">{formatCurrency(e.value)}</p>
+                        </div>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEditEntry(e)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteEntryId(e.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-xs text-muted-foreground">
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.date')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.client')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.category')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.type')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('columns.value')}</th>
+                          <th className="px-4 py-3" />
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {filteredEntries.map((e) => (
+                          <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                            <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
+                            <td className="px-4 py-3">{e.clients?.name ?? '—'}</td>
+                            <td className="px-4 py-3">{tl(e.category as never)}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{tl(e.type as never)}</td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(e.status)}`}>{tl(e.status as never)}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(e)}><Pencil className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteEntryId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -399,39 +425,62 @@ export default function FinancialPage() {
               ) : filteredExpenses.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground">{t('noExpenses')}</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-xs text-muted-foreground">
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.date')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.supplier')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.category')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.type')}</th>
-                        <th className="px-4 py-3 text-left font-medium">{t('columns.costCenter')}</th>
-                        <th className="px-4 py-3 text-right font-medium">{t('columns.value')}</th>
-                        <th className="px-4 py-3" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredExpenses.map((e) => (
-                        <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                          <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
-                          <td className="px-4 py-3 font-medium">{e.supplier}</td>
-                          <td className="px-4 py-3">{tl(e.category as never)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{tl(e.type as never)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{e.cost_center ?? '—'}</td>
-                          <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditExpense(e)}><Pencil className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteExpenseId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                            </div>
-                          </td>
+                <>
+                  {/* Mobile card list */}
+                  <div className="divide-y divide-border md:hidden">
+                    {filteredExpenses.map((e) => (
+                      <div key={e.id} className="space-y-2 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{e.supplier}</p>
+                            <p className="text-xs text-muted-foreground">{formatDate(e.date)} · {tl(e.category as never)}</p>
+                          </div>
+                          <p className="shrink-0 font-medium">{formatCurrency(e.value)}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{tl(e.type as never)}{e.cost_center ? ` · ${e.cost_center}` : ''}</p>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEditExpense(e)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteExpenseId(e.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-xs text-muted-foreground">
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.date')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.supplier')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.category')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.type')}</th>
+                          <th className="px-4 py-3 text-left font-medium">{t('columns.costCenter')}</th>
+                          <th className="px-4 py-3 text-right font-medium">{t('columns.value')}</th>
+                          <th className="px-4 py-3" />
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {filteredExpenses.map((e) => (
+                          <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                            <td className="px-4 py-3 text-muted-foreground">{formatDate(e.date)}</td>
+                            <td className="px-4 py-3 font-medium">{e.supplier}</td>
+                            <td className="px-4 py-3">{tl(e.category as never)}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{tl(e.type as never)}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{e.cost_center ?? '—'}</td>
+                            <td className="px-4 py-3 text-right font-medium">{formatCurrency(e.value)}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditExpense(e)}><Pencil className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteExpenseId(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
