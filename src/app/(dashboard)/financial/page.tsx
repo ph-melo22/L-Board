@@ -30,6 +30,8 @@ import type {
   FinancialExpense, FinancialExpenseFormData, ExpenseType, ExpenseCategory,
 } from '@/types'
 import { useTranslations } from 'next-intl'
+import { PeriodSelector } from '@/components/shared/PeriodSelector'
+import { toLocalDateStr } from '@/lib/period'
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
@@ -82,28 +84,16 @@ function GoalCard({ label, current, target, inverse = false, tGoals }: {
 
 const EMPTY_ENTRY: FinancialEntryFormData = {
   client_id: null, value: 0, type: 'recurring', category: 'subscription',
-  status: 'confirmed', date: new Date().toISOString().split('T')[0], description: null,
+  status: 'confirmed', date: toLocalDateStr(new Date()), description: null,
 }
 const EMPTY_EXPENSE: FinancialExpenseFormData = {
   supplier: '', category: 'infrastructure', cost_center: null, value: 0,
-  type: 'fixed', date: new Date().toISOString().split('T')[0], description: null,
+  type: 'fixed', date: toLocalDateStr(new Date()), description: null,
 }
 
 const EXPENSE_COLORS: Record<string, string> = {
   infrastructure: '#6366f1', payroll: '#f59e0b', marketing: '#10b981',
   tools: '#3b82f6', office: '#8b5cf6', taxes: '#ef4444', other: '#94a3b8',
-}
-
-function getMonthOptions(allLabel: string) {
-  const opts = [{ value: 'all', label: allLabel }]
-  const now = new Date()
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-    opts.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) })
-  }
-  return opts
 }
 
 export default function FinancialPage() {
@@ -232,7 +222,6 @@ export default function FinancialPage() {
 
   const totalEntries = calcEntriesTotal(filteredEntries)
   const totalExpenses = calcExpensesTotal(filteredExpenses)
-  const monthOptions = getMonthOptions(t('allPeriods'))
   const hasAnyGoal = goals.revenue > 0 || goals.expenses > 0 || goals.result > 0
 
   if (error) {
@@ -247,15 +236,7 @@ export default function FinancialPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <Label className="text-xs text-muted-foreground shrink-0">{t('period')}</Label>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-full sm:w-52 h-10 text-base md:h-9 md:text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {monthOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      <PeriodSelector value={period} onChange={setPeriod} allowAll monthsBack={12} />
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardMetrics, RevenueChartData } from '@/types'
 import { getMonthName } from '@/lib/utils'
+import { getCurrentMonthKey, toLocalDateStr } from '@/lib/period'
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const supabase = createClient()
@@ -42,22 +43,23 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   }
 }
 
-export async function getRevenueChartData(): Promise<RevenueChartData[]> {
+export async function getRevenueChartData(endMonthKey: string = getCurrentMonthKey()): Promise<RevenueChartData[]> {
   const supabase = createClient()
 
-  const now = new Date()
-  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+  const [endYear, endMonth] = endMonthKey.split('-').map(Number)
+  const endDate = new Date(endYear, endMonth - 1, 1)
+  const sixMonthsAgo = new Date(endDate.getFullYear(), endDate.getMonth() - 5, 1)
 
   const [entriesRes, expensesRes] = await Promise.all([
     supabase
       .from('financial_entries')
       .select('value, date, status')
-      .gte('date', sixMonthsAgo.toISOString().split('T')[0])
+      .gte('date', toLocalDateStr(sixMonthsAgo))
       .neq('status', 'cancelled'),
     supabase
       .from('financial_expenses')
       .select('value, date')
-      .gte('date', sixMonthsAgo.toISOString().split('T')[0]),
+      .gte('date', toLocalDateStr(sixMonthsAgo)),
   ])
 
   const entries = entriesRes.data ?? []
@@ -66,7 +68,7 @@ export async function getRevenueChartData(): Promise<RevenueChartData[]> {
   const months: RevenueChartData[] = []
 
   for (let i = 5; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const date = new Date(endDate.getFullYear(), endDate.getMonth() - i, 1)
     const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     const label = `${getMonthName(date.getMonth())}/${String(date.getFullYear()).slice(2)}`
 

@@ -18,6 +18,8 @@ import type { CommercialSummary } from '@/services/commercial'
 import { useTranslations } from 'next-intl'
 import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import { AnimatedNumber } from '@/components/motion/AnimatedNumber'
+import { PeriodSelector } from '@/components/shared/PeriodSelector'
+import { getCurrentMonthKey } from '@/lib/period'
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
@@ -79,6 +81,7 @@ export default function ComercialPage() {
   const [summary, setSummary] = useState<CommercialSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [period, setPeriod] = useState(getCurrentMonthKey())
 
   const [goals, setGoals] = useState<CommercialGoals>(EMPTY_GOALS)
   const [goalsOpen, setGoalsOpen] = useState(false)
@@ -116,7 +119,7 @@ export default function ComercialPage() {
   async function load() {
     setLoading(true)
     try {
-      const s = await getCommercialSummary()
+      const s = await getCommercialSummary(period)
       setSummary(s)
       setError(false)
     } catch {
@@ -126,7 +129,7 @@ export default function ComercialPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [period])
 
   if (error) {
     return (
@@ -147,6 +150,8 @@ export default function ComercialPage() {
 
   return (
     <div className="space-y-6">
+      <PeriodSelector value={period} onChange={setPeriod} />
+
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{tg('title')}</h2>
         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={openGoals}>
@@ -185,7 +190,7 @@ export default function ComercialPage() {
         <Card className="border-primary/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-sm font-semibold">{tg('semesterTitle')}</CardTitle>
+              <CardTitle className="text-sm font-semibold">{tg('semesterTitle')} — {summary.semesterLabel}</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">{t('semesterSubtitle')}</p>
             </div>
             <TrendingUp className="h-4 w-4 text-primary" />

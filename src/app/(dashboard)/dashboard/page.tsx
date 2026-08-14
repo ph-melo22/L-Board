@@ -18,6 +18,8 @@ import { Label } from '@/components/ui/label'
 import { useTranslations } from 'next-intl'
 import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import { AnimatedNumber } from '@/components/motion/AnimatedNumber'
+import { PeriodSelector } from '@/components/shared/PeriodSelector'
+import { getCurrentMonthKey } from '@/lib/period'
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
@@ -156,16 +158,21 @@ export default function DashboardPage() {
   const ts = useTranslations('dashboard.simulator')
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [chartData, setChartData] = useState<RevenueChartData[]>([])
+  const [chartPeriod, setChartPeriod] = useState(getCurrentMonthKey())
   const [clients, setClients] = useState<ClientWithProfit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    Promise.all([getDashboardMetrics(), getRevenueChartData(), getClients()])
-      .then(([m, c, cl]) => { setMetrics(m); setChartData(c); setClients(cl) })
+    Promise.all([getDashboardMetrics(), getClients()])
+      .then(([m, cl]) => { setMetrics(m); setClients(cl) })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    getRevenueChartData(chartPeriod).then(setChartData).catch(() => setError(true))
+  }, [chartPeriod])
 
   const today = new Date()
   const in30 = new Date(today); in30.setDate(in30.getDate() + 30)
@@ -264,8 +271,9 @@ export default function DashboardPage() {
       </RevealGroup>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-sm font-semibold">{t('revenueVsCosts')}</CardTitle>
+          <PeriodSelector value={chartPeriod} onChange={setChartPeriod} />
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { getMonthName } from '@/lib/utils'
+import { getCurrentMonthKey, toLocalDateStr } from '@/lib/period'
 
 export interface CommercialSummary {
   today: number
@@ -7,6 +8,7 @@ export interface CommercialSummary {
   thisMonth: number
   semesterTotal: number
   semesterMonthly: { month: string; value: number }[]
+  semesterLabel: string
 }
 
 function startOfWeek(d: Date): Date {
@@ -17,29 +19,27 @@ function startOfWeek(d: Date): Date {
   return date
 }
 
-function toDateStr(d: Date): string {
-  return d.toISOString().split('T')[0]
-}
-
-export async function getCommercialSummary(): Promise<CommercialSummary> {
+export async function getCommercialSummary(referenceMonthKey: string = getCurrentMonthKey()): Promise<CommercialSummary> {
   const supabase = createClient()
 
   const now = new Date()
-  const currentSemester = now.getMonth() < 6 ? 0 : 1
-  const semesterStart = new Date(now.getFullYear(), currentSemester * 6, 1)
+  const [refYear, refMonth] = referenceMonthKey.split('-').map(Number)
+  const referenceDate = new Date(refYear, refMonth - 1, 1)
+  const currentSemester = referenceDate.getMonth() < 6 ? 0 : 1
+  const semesterStart = new Date(referenceDate.getFullYear(), currentSemester * 6, 1)
 
   const { data, error } = await supabase
     .from('financial_entries')
     .select('value, date, status')
     .neq('status', 'cancelled')
-    .gte('date', toDateStr(semesterStart))
+    .gte('date', toLocalDateStr(semesterStart))
 
   if (error) throw new Error(error.message)
   const entries = data ?? []
 
-  const todayStr = toDateStr(now)
-  const weekStartStr = toDateStr(startOfWeek(now))
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const todayStr = toLocalDateStr(now)
+  const weekStartStr = toLocalDateStr(startOfWeek(now))
+  const monthKey = referenceMonthKey
 
   const today = entries
     .filter((e) => e.date === todayStr)
@@ -56,7 +56,7 @@ export async function getCommercialSummary(): Promise<CommercialSummary> {
   const semesterTotal = entries.reduce((acc, e) => acc + (e.value ?? 0), 0)
 
   const semesterMonthly = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), currentSemester * 6 + i, 1)
+    const d = new Date(referenceDate.getFullYear(), currentSemester * 6 + i, 1)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     const label = `${getMonthName(d.getMonth())}/${String(d.getFullYear()).slice(2)}`
     const value = entries
@@ -65,5 +65,7 @@ export async function getCommercialSummary(): Promise<CommercialSummary> {
     return { month: label, value }
   })
 
-  return { today, thisWeek, thisMonth, semesterTotal, semesterMonthly }
+  const semesterLabel = `${getMonthName(currentSemester * 6)}–${getMonthName(currentSemester * 6 + 5)}/${String(referenceDate.getFullYear()).slice(2)}`
+
+  return { today, thisWeek, thisMonth, semesterTotal, semesterMonthly, semesterLabel }
 }

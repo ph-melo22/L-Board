@@ -6,9 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.15.1'
+const VERSION = '1.16.0'
 
 const CHANGELOG = [
+  {
+    version: '1.16.0',
+    date: '2026-08-14',
+    changes: [
+      'Novo componente compartilhado PeriodSelector (src/components/shared/PeriodSelector.tsx) e utilitário src/lib/period.ts (getCurrentMonthKey, shiftMonthKey, getMonthOptions, toLocalDateStr): navegador de mês com setas ◄ ► + dropdown, reaproveitado em Comercial, Financeiro e Dashboard',
+      'Corrige Comercial (comercial/page.tsx, services/commercial.ts): "Meta Mensal" e "Meta do Semestre" eram sempre calculadas em cima do mês/semestre atual e zeravam ao virar o mês, sem nenhuma forma de ver o período anterior — agora navegáveis via PeriodSelector; getCommercialSummary() recebe o mês de referência como parâmetro',
+      'Financeiro (financial/page.tsx): o dropdown de período simples é substituído pelo PeriodSelector (mesma lógica de filtro, com navegação ◄ ► entre meses)',
+      'Dashboard (dashboard/page.tsx, services/dashboard.ts): o gráfico "Receita vs Custos" ganha PeriodSelector para navegar a janela de 6 meses; os KPIs de topo (Receita Total, MRR, Custos, Lucro) continuam sendo totais acumulados/vitalícios, sem filtro de período — comportamento intencional, não é um bug',
+      'Corrige bug de timezone: toISOString().split("T")[0] (usado em services/commercial.ts, services/dashboard.ts e nas datas padrão de novo lançamento/despesa em financial/page.tsx) convertia para UTC e deslocava a data em 1 dia à noite para usuários em fuso BR — trocado por toLocalDateStr() (date-fns, fuso local)',
+    ],
+  },
   {
     version: '1.15.1',
     date: '2026-08-13',
@@ -625,8 +636,8 @@ const SERVICES = [
     file: 'src/services/dashboard.ts',
     tabela: '—',
     funcoes: [
-      { name: 'getDashboardMetrics()', desc: 'Métricas gerais: MRR, receita total, custos, lucro, clientes ativos/churned, tarefas pendentes, receita em risco.' },
-      { name: 'getRevenueChartData()', desc: 'Dados dos últimos 6 meses por mês: receita, custos e lucro. Usado no gráfico de área.' },
+      { name: 'getDashboardMetrics()', desc: 'Métricas gerais (totais acumulados, sem filtro de período): MRR, receita total, custos, lucro, clientes ativos/churned, tarefas pendentes, receita em risco.' },
+      { name: 'getRevenueChartData(endMonthKey?)', desc: '6 meses por mês (receita, custos, lucro) terminando em endMonthKey ("YYYY-MM", default mês atual). Navegável via PeriodSelector no gráfico de área.' },
     ],
   },
   {
@@ -645,7 +656,7 @@ const SERVICES = [
     file: 'src/services/commercial.ts',
     tabela: 'financial_entries',
     funcoes: [
-      { name: 'getCommercialSummary()', desc: 'Soma financial_entries (não cancelados) do dia, da semana (seg-dom), do mês e do semestre atual, mais o breakdown mês a mês do semestre. Usado na página /comercial.' },
+      { name: 'getCommercialSummary(referenceMonthKey?)', desc: 'Soma financial_entries (não cancelados) do dia, da semana (seg-dom) — sempre reais/atuais —, do mês e do semestre de referência (default mês atual), mais breakdown mês a mês e semesterLabel. Navegável via PeriodSelector em /comercial.' },
     ],
   },
   {
@@ -793,10 +804,12 @@ const INFRA = [
   { file: 'src/components/layout/Sidebar.tsx', desc: 'Menu lateral dinâmico. No mobile funciona como drawer: oculto por padrão, desliza da esquerda ao abrir. Fecha automaticamente ao navegar.' },
   { file: 'src/components/layout/Header.tsx', desc: 'Barra superior com título/descrição da página. Inclui botão hamburger (☰) visível apenas no mobile (md:hidden).' },
   { file: 'src/components/motion/', desc: 'PageTransition.tsx (transição de rota), Reveal.tsx (RevealGroup/RevealItem — stagger reveal via framer-motion) e AnimatedNumber.tsx (contador animado imperativo com animate()).' },
+  { file: 'src/components/shared/PeriodSelector.tsx', desc: 'Navegador de período reutilizável: setas ◄ ► + dropdown de mês (getMonthOptions). Props value/onChange/allowAll/monthsBack. Usado em /comercial, /financial e no gráfico de /dashboard.' },
   { file: 'src/lib/supabase/client.ts', desc: 'Cliente Supabase para uso no browser (componentes "use client").' },
   { file: 'src/lib/supabase/server.ts', desc: 'Cliente Supabase server-side para Server Components e API Routes.' },
   { file: 'src/lib/supabase/admin.ts', desc: 'Cliente Supabase com service_role key. Exclusivo para API routes — nunca expor no client-side.' },
   { file: 'src/lib/utils.ts', desc: 'Funções utilitárias: cn(), formatCurrency(), formatDate(), formatPercent(), getStatusColor(), getPriorityColor(), getLabelByStatus().' },
+  { file: 'src/lib/period.ts', desc: 'getCurrentMonthKey(), shiftMonthKey(key, delta), getMonthOptions(allLabel?, monthsBack?) e toLocalDateStr(date) — formata data em fuso local, evita o off-by-one de toISOString() à noite em fuso BR.' },
   { file: 'supabase/schema.sql', desc: 'SQL completo: 9 tabelas (clients, financial_entries, financial_expenses, tasks, okrs, key_results, strategic_projects, strategic_notes, profiles) + RLS.' },
   { file: 'supabase/projects_schema.sql', desc: 'SQL do módulo Projetos: 4 tabelas (projects, project_members, project_tasks, project_subtasks) + RLS. Executar separadamente no Supabase.' },
   { file: '.env.local', desc: 'NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, RESEND_API_KEY, RESEND_FROM (remetente verificado, ex: "L Board <noreply@lboard.com.br>" — sem isso cai no sandbox onboarding@resend.dev, que só entrega pro e-mail dono da conta Resend), ENCRYPTION_KEY (32 bytes hex — AES-256 para API Keys), NEXT_PUBLIC_APP_URL. Nunca commitar no git.' },
