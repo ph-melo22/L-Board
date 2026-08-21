@@ -369,6 +369,7 @@ export interface CrmLead {
   next_follow_up_date: string | null
   last_interaction_at: string | null
   notes: string | null
+  closed_at: string | null
   created_at: string
   updated_at: string
   profiles?: Pick<Profile, 'full_name'>
@@ -376,7 +377,7 @@ export interface CrmLead {
 
 export type CrmLeadFormData = Omit<
   CrmLead,
-  'id' | 'organization_id' | 'client_id' | 'last_interaction_at' | 'created_at' | 'updated_at' | 'profiles'
+  'id' | 'organization_id' | 'client_id' | 'last_interaction_at' | 'closed_at' | 'created_at' | 'updated_at' | 'profiles'
 >
 
 export type CrmLeadInteractionType = 'note' | 'call' | 'email' | 'meeting' | 'stage_change'
@@ -398,6 +399,31 @@ export interface CrmLeadMessage {
   role: 'user' | 'assistant'
   content: string
   created_at: string
+}
+
+// ─── Sales Goals (metas individuais de vendedor) ─────────────────────────────
+
+export interface SalesGoal {
+  id: string
+  organization_id: string
+  user_id: string
+  daily: number
+  weekly: number
+  monthly: number
+  semester: number
+  updated_at: string
+  profiles?: Pick<Profile, 'full_name'>
+}
+
+export type SalesGoalValues = Pick<SalesGoal, 'daily' | 'weekly' | 'monthly' | 'semester'>
+
+export interface PeriodTotals {
+  today: number
+  thisWeek: number
+  thisMonth: number
+  semesterTotal: number
+  semesterMonthly: { month: string; value: number }[]
+  semesterLabel: string
 }
 
 // ─── Client API Keys ──────────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { useTranslations } from 'next-intl'
@@ -23,6 +24,7 @@ import {
   getLead, updateLead, deleteLead, getLeadInteractions, addLeadInteraction,
   getLeadFollowUpTasks, createFollowUpTask,
 } from '@/services/crm'
+import { updateTaskStatus } from '@/services/demands'
 import { getTeam, getCurrentProfile } from '@/services/team'
 import { createClient_ } from '@/services/clients'
 import { formatCurrency, formatDate, getPriorityColor } from '@/lib/utils'
@@ -140,6 +142,17 @@ export default function LeadDetailPage() {
       setFollowUpOpen(false); setFollowUpForm(EMPTY_FOLLOWUP); load()
     } catch { toast({ title: t('toast.followUpError'), variant: 'destructive' }) }
     finally { setSavingFollowUp(false) }
+  }
+
+  async function handleToggleFollowUp(taskId: string, done: boolean) {
+    const previous = followUps
+    setFollowUps((fu) => fu.map((tk) => tk.id === taskId ? { ...tk, status: done ? 'done' : 'todo' } : tk))
+    try {
+      await updateTaskStatus(taskId, done ? 'done' : 'todo')
+    } catch {
+      setFollowUps(previous)
+      toast({ title: t('toast.followUpUpdateError'), variant: 'destructive' })
+    }
   }
 
   function openConvert() {
@@ -275,15 +288,20 @@ export default function LeadDetailPage() {
                 <p className="p-4 text-sm text-muted-foreground">{t('noFollowUps')}</p>
               ) : (
                 <div className="divide-y divide-border">
-                  {followUps.map((tk) => (
-                    <div key={tk.id} className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm">
-                      <span className="truncate">{tk.title}</span>
-                      <div className="flex items-center gap-2 shrink-0 text-xs text-muted-foreground">
-                        <span>{formatDate(tk.due_date)}</span>
-                        <span className={`rounded-full border px-2 py-0.5 ${tk.status === 'done' ? 'text-emerald-600 border-emerald-200' : ''}`}>{tk.status}</span>
+                  {followUps.map((tk) => {
+                    const isDone = tk.status === 'done'
+                    return (
+                      <div key={tk.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                        <Checkbox
+                          checked={isDone}
+                          onCheckedChange={(v) => handleToggleFollowUp(tk.id, !!v)}
+                          aria-label={t('followUpDialog.taskTitle')}
+                        />
+                        <span className={`flex-1 truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{tk.title}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">{formatDate(tk.due_date)}</span>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </CardContent>

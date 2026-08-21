@@ -597,6 +597,11 @@
         "monthly": "Meta Mensal (R$)",
         "semester": "Meta do Semestre (R$)"
       }
+    },
+    "individualGoal": {
+      "title": "Sua Meta",
+      "subtitle": "Definida pelo seu gerente comercial",
+      "noGoal": "Seu gerente ainda não definiu uma meta para você."
     }
   },
   "marketing": {
@@ -690,6 +695,9 @@
     "aiRemoveFile": "Remover arquivo",
     "aiOwnerLabel": "Responsável pelos leads importados",
     "aiOwnerPlaceholder": "Selecione um membro da equipe",
+    "aiDistributeTeam": "Distribuir entre a equipe",
+    "aiAssignOne": "Atribuir a uma pessoa",
+    "aiDistributeHint": "{count, plural, =0 {Nenhum vendedor na equipe ainda — os leads ficarão com você.} one {Os leads serão distribuídos em rodízio entre você e 1 vendedor.} other {Os leads serão distribuídos em rodízio entre você e # vendedores.}}",
     "aiAnalyzing": "Analisando...",
     "aiGenerateBtn": "Analisar arquivo",
     "aiCreatingBtn": "Importando...",
@@ -746,6 +754,44 @@
       "moveError": "Erro ao mover lead",
       "importSuccess": "{count, plural, one {1 lead importado} other {# leads importados}}",
       "importError": "Erro ao importar leads"
+    },
+    "tabs": {
+      "kanban": "Kanban",
+      "team": "Equipe"
+    },
+    "team": {
+      "errorLoading": "Erro ao carregar os dados da equipe.",
+      "selectGoalTier": "Ver progresso da meta:",
+      "summary": {
+        "approached": "Abordados",
+        "won": "Fechados",
+        "pipeline": "Pipeline aberto",
+        "overdueFollowUps": "Follow-ups atrasados"
+      },
+      "table": {
+        "member": "Vendedor",
+        "leads": "Leads",
+        "approached": "Abordados",
+        "won": "Fechados",
+        "lost": "Perdidos",
+        "pipeline": "Pipeline aberto",
+        "followUps": "Follow-ups",
+        "goal": "Meta",
+        "editGoal": "Editar meta"
+      },
+      "pendingFollowUps": "{count, plural, one {1 pendente} other {# pendentes}}",
+      "overdueFollowUps": "{count, plural, one {1 atrasado} other {# atrasados}}",
+      "noFollowUps": "Nenhum",
+      "noSalesTeam": "Nenhum vendedor cadastrado ainda.",
+      "noSalesTeamHint": "Convide alguém com o papel Vendedor na aba Equipe para começar a acompanhar o desempenho comercial.",
+      "goalDialog": {
+        "title": "Meta de {name}",
+        "subtitle": "Deixe 0 para não definir meta nesse período. Só founder e gestor podem editar."
+      },
+      "toast": {
+        "goalUpdated": "Meta atualizada",
+        "goalError": "Erro ao salvar meta"
+      }
     }
   },
   "crmDetail": {
@@ -819,6 +865,7 @@
       "interactionError": "Erro ao registrar interação",
       "followUpAdded": "Follow-up criado",
       "followUpError": "Erro ao criar follow-up",
+      "followUpUpdateError": "Erro ao atualizar follow-up",
       "converted": "Cliente criado a partir do lead!",
       "convertError": "Erro ao converter lead em cliente"
     },

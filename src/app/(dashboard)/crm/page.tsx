@@ -15,11 +15,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { getLeads, createLead, deleteLead, moveLeadStage } from '@/services/crm'
 import { getTeam, getCurrentProfile } from '@/services/team'
 import { formatCurrency } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
+import { TeamOverview } from './TeamOverview'
 import type { CrmLead, CrmLeadFormData, CrmLeadPriority, CrmLeadStage, Profile } from '@/types'
 
 const STAGES: CrmLeadStage[] = ['novo', 'qualificacao', 'proposta', 'negociacao', 'ganho', 'perdido']
@@ -78,12 +80,14 @@ export default function CrmPage() {
   const [aiStep, setAiStep]             = useState<'upload' | 'preview'>('upload')
   const [aiFile, setAiFile]             = useState<File | null>(null)
   const [aiOwnerId, setAiOwnerId]       = useState<string>('')
+  const [aiDistribute, setAiDistribute] = useState(true)
   const [aiLoading, setAiLoading]       = useState(false)
   const [aiLeads, setAiLeads]           = useState<AILead[]>([])
   const [aiSelected, setAiSelected]     = useState<Set<number>>(new Set())
   const [aiCreating, setAiCreating]     = useState(false)
 
   const isManager = currentProfile?.role === 'founder' || currentProfile?.role === 'manager'
+  const salesTeam = team.filter((m) => m.role === 'sales')
 
   async function load() {
     setLoading(true)
@@ -143,6 +147,7 @@ export default function CrmPage() {
   function openAiImport() {
     setAiFile(null); setAiLeads([]); setAiSelected(new Set())
     setAiOwnerId(isManager ? '' : currentProfile?.id ?? '')
+    setAiDistribute(true)
     setAiStep('upload')
     setAiDialogOpen(true)
   }
@@ -170,9 +175,14 @@ export default function CrmPage() {
   async function handleAiCreate() {
     setAiCreating(true)
     try {
-      const owner_id = aiOwnerId || currentProfile?.id || null
       const selected = aiLeads.filter((_, i) => aiSelected.has(i))
-      for (const lead of selected) {
+      const rotation = isManager && aiDistribute
+        ? [...salesTeam, ...(currentProfile ? [currentProfile] : [])]
+        : []
+      for (const [i, lead] of selected.entries()) {
+        const owner_id = rotation.length > 0
+          ? rotation[i % rotation.length].id
+          : (aiOwnerId || currentProfile?.id || null)
         await createLead({
           ...EMPTY_FORM,
           owner_id,
@@ -215,27 +225,8 @@ export default function CrmPage() {
   const byStage = (stage: CrmLeadStage) => filteredLeads.filter((l) => l.stage === stage)
   const overdueCount = leads.filter(isOverdue).length
 
-  if (error) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-2">
-        <AlertTriangle className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">{t('errorLoading')}</p>
-        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      {overdueCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-800/50 dark:bg-red-950/40">
-          <Clock className="h-4 w-4 text-red-600 shrink-0 dark:text-red-400" />
-          <p className="text-sm font-medium text-red-800 dark:text-red-300">
-            {t('overdueCount', { count: overdueCount })}
-          </p>
-        </div>
-      )}
-
+  const kanbanContent = (
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[160px] flex-1 sm:flex-none sm:min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -321,6 +312,44 @@ export default function CrmPage() {
           ))}
         </div>
       )}
+    </>
+  )
+
+  if (error) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <p className="text-sm font-medium">{t('errorLoading')}</p>
+        <Button size="sm" variant="outline" onClick={load}>{tc('retry')}</Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {overdueCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-800/50 dark:bg-red-950/40">
+          <Clock className="h-4 w-4 text-red-600 shrink-0 dark:text-red-400" />
+          <p className="text-sm font-medium text-red-800 dark:text-red-300">
+            {t('overdueCount', { count: overdueCount })}
+          </p>
+        </div>
+      )}
+
+      {isManager ? (
+        <Tabs defaultValue="kanban">
+          <TabsList>
+            <TabsTrigger value="kanban">{t('tabs.kanban')}</TabsTrigger>
+            <TabsTrigger value="team">{t('tabs.team')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="kanban" className="space-y-4">
+            {kanbanContent}
+          </TabsContent>
+          <TabsContent value="team">
+            <TeamOverview team={team} leads={leads} />
+          </TabsContent>
+        </Tabs>
+      ) : kanbanContent}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg overflow-y-auto max-h-[90vh]">
@@ -444,12 +473,32 @@ export default function CrmPage() {
               {isManager && (
                 <div className="space-y-1.5">
                   <Label>{t('aiOwnerLabel')}</Label>
-                  <Select value={aiOwnerId} onValueChange={setAiOwnerId}>
-                    <SelectTrigger><SelectValue placeholder={t('aiOwnerPlaceholder')} /></SelectTrigger>
-                    <SelectContent>
-                      {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button" size="sm" className="flex-1"
+                      variant={aiDistribute ? 'default' : 'outline'}
+                      onClick={() => setAiDistribute(true)}
+                    >
+                      {t('aiDistributeTeam')}
+                    </Button>
+                    <Button
+                      type="button" size="sm" className="flex-1"
+                      variant={!aiDistribute ? 'default' : 'outline'}
+                      onClick={() => setAiDistribute(false)}
+                    >
+                      {t('aiAssignOne')}
+                    </Button>
+                  </div>
+                  {aiDistribute ? (
+                    <p className="text-xs text-muted-foreground">{t('aiDistributeHint', { count: salesTeam.length })}</p>
+                  ) : (
+                    <Select value={aiOwnerId} onValueChange={setAiOwnerId}>
+                      <SelectTrigger><SelectValue placeholder={t('aiOwnerPlaceholder')} /></SelectTrigger>
+                      <SelectContent>
+                        {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
             </div>

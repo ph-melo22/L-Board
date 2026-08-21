@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
-import type { CrmLead, CrmLeadFormData, CrmLeadStage, CrmLeadInteraction, CrmLeadInteractionType, Task } from '@/types'
+import { computePeriodTotals } from '@/lib/goalPeriods'
+import type { CrmLead, CrmLeadFormData, CrmLeadStage, CrmLeadInteraction, CrmLeadInteractionType, Task, PeriodTotals } from '@/types'
 
 async function getMyOrganizationId(): Promise<string | null> {
   const supabase = createClient()
@@ -69,7 +70,10 @@ export async function moveLeadStage(id: string, stage: CrmLeadStage, lossReason?
   const { data: { user } } = await supabase.auth.getUser()
   const now = new Date().toISOString()
 
-  const updates: Record<string, unknown> = { stage, updated_at: now, last_interaction_at: now }
+  const updates: Record<string, unknown> = {
+    stage, updated_at: now, last_interaction_at: now,
+    closed_at: stage === 'ganho' ? now : null,
+  }
   if (stage === 'perdido') updates.loss_reason = lossReason ?? null
 
   const { error } = await supabase.from('crm_leads').update(updates).eq('id', id)
@@ -154,4 +158,31 @@ export async function createFollowUpTask(
 
   if (error) throw new Error(error.message)
   return data
+}
+
+/** Todas as tarefas de follow-up de leads (para a aba Equipe do CRM agregar por vendedor). */
+export async function getAllLeadFollowUpTasks(): Promise<Task[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .not('lead_id', 'is', null)
+
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
+
+/** Valor fechado (leads em "ganho") por um dono de lead, somado por período. */
+export async function getSalesPerformance(userId: string, referenceMonthKey: string): Promise<PeriodTotals> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('crm_leads')
+    .select('deal_value, closed_at')
+    .eq('owner_id', userId)
+    .eq('stage', 'ganho')
+    .not('closed_at', 'is', null)
+
+  if (error) throw new Error(error.message)
+  const entries = (data ?? []).map((l) => ({ value: l.deal_value ?? 0, date: (l.closed_at as string).split('T')[0] }))
+  return computePeriodTotals(entries, referenceMonthKey)
 }

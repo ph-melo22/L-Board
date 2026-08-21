@@ -13,8 +13,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import { getCommercialSummary } from '@/services/commercial'
+import { getSalesPerformance } from '@/services/crm'
+import { getSalesGoal } from '@/services/salesGoals'
+import { getCurrentProfile } from '@/services/team'
 import { formatCurrency } from '@/lib/utils'
 import type { CommercialSummary } from '@/services/commercial'
+import type { Profile } from '@/types'
 import { useTranslations } from 'next-intl'
 import { RevealGroup, RevealItem } from '@/components/motion/Reveal'
 import { AnimatedNumber } from '@/components/motion/AnimatedNumber'
@@ -83,12 +87,21 @@ export default function ComercialPage() {
   const [error, setError] = useState(false)
   const [period, setPeriod] = useState(getCurrentMonthKey())
 
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profileLoaded, setProfileLoaded] = useState(false)
+  const isSales = profile?.role === 'sales'
+
   const [goals, setGoals] = useState<CommercialGoals>(EMPTY_GOALS)
   const [goalsOpen, setGoalsOpen] = useState(false)
   const [goalsForm, setGoalsForm] = useState<CommercialGoals>(EMPTY_GOALS)
   const [achieved, setAchieved] = useState<CommercialAchieved>(EMPTY_ACHIEVED)
 
   useEffect(() => {
+    getCurrentProfile().then((p) => { setProfile(p); setProfileLoaded(true) })
+  }, [])
+
+  useEffect(() => {
+    if (isSales) return // meta individual vem do servidor (sales_goals), não do localStorage
     try {
       const stored = localStorage.getItem(GOALS_STORAGE_KEY)
       setGoals(stored ? JSON.parse(stored) : EMPTY_GOALS)
@@ -101,7 +114,14 @@ export default function ComercialPage() {
     } catch {
       setAchieved(EMPTY_ACHIEVED)
     }
-  }, [])
+  }, [isSales])
+
+  useEffect(() => {
+    if (!isSales || !profile) return
+    getSalesGoal(profile.id).then((g) => {
+      setGoals(g ? { daily: g.daily, weekly: g.weekly, monthly: g.monthly, semester: g.semester } : EMPTY_GOALS)
+    })
+  }, [isSales, profile])
 
   function openGoals() { setGoalsForm(goals); setGoalsOpen(true) }
   function saveGoals() {
@@ -119,7 +139,9 @@ export default function ComercialPage() {
   async function load() {
     setLoading(true)
     try {
-      const s = await getCommercialSummary(period)
+      const s = isSales && profile
+        ? await getSalesPerformance(profile.id, period)
+        : await getCommercialSummary(period)
       setSummary(s)
       setError(false)
     } catch {
@@ -129,7 +151,7 @@ export default function ComercialPage() {
     }
   }
 
-  useEffect(() => { load() }, [period])
+  useEffect(() => { if (profileLoaded) load() }, [period, profileLoaded, isSales])
 
   if (error) {
     return (
@@ -153,11 +175,20 @@ export default function ComercialPage() {
       <PeriodSelector value={period} onChange={setPeriod} />
 
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">{tg('title')}</h2>
-        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={openGoals}>
-          <Pencil className="h-3 w-3 mr-1" />{hasAnyGoal ? tg('edit') : tg('set')}
-        </Button>
+        <div>
+          <h2 className="text-sm font-semibold">{isSales ? t('individualGoal.title') : tg('title')}</h2>
+          {isSales && <p className="text-xs text-muted-foreground mt-0.5">{t('individualGoal.subtitle')}</p>}
+        </div>
+        {!isSales && (
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={openGoals}>
+            <Pencil className="h-3 w-3 mr-1" />{hasAnyGoal ? tg('edit') : tg('set')}
+          </Button>
+        )}
       </div>
+
+      {isSales && !hasAnyGoal && (
+        <p className="text-xs text-muted-foreground">{t('individualGoal.noGoal')}</p>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

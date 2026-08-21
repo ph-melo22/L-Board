@@ -6,9 +6,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.17.0'
+const VERSION = '1.19.0'
 
 const CHANGELOG = [
+  {
+    version: '1.19.0',
+    date: '2026-08-21',
+    changes: [
+      'Nova aba "Equipe" em /crm (src/app/(dashboard)/crm/TeamOverview.tsx), visível só para founder/manager: métricas por vendedor (total de leads, abordados, fechados, perdidos, pipeline aberto, follow-ups pendentes/atrasados) e barra de progresso da meta no período selecionado (diária/semanal/mensal/semestral)',
+      'Nova tabela sales_goals (supabase/sales_goals_schema.sql): meta individual por vendedor definida por founder/manager (src/services/salesGoals.ts). RLS: o vendedor só lê a própria meta, só founder/manager pode criar/editar',
+      'Nova coluna crm_leads.closed_at (mesmo arquivo): marca quando o lead entrou em "ganho", setada por moveLeadStage (services/crm.ts) — é a data usada para somar o valor fechado por vendedor em cada período (getSalesPerformance)',
+      'Extraído src/lib/goalPeriods.ts::computePeriodTotals — lógica de soma por dia/semana/mês/semestre que antes só existia em services/commercial.ts, agora reaproveitada também por getSalesPerformance (services/crm.ts)',
+      '/comercial (comercial/page.tsx): usuário com role sales vê a própria meta individual (sales_goals) e o que já fechou, sem os botões de editar meta — no lugar, mostra "Definida pelo seu gerente comercial" ou um aviso se ainda não foi definida. Founder continua vendo o painel comercial da empresa (financial_entries) como antes',
+    ],
+  },
+  {
+    version: '1.18.0',
+    date: '2026-08-21',
+    changes: [
+      'CRM (crm/page.tsx): no dialog de Importar Leads via IA, founder/manager agora escolhem entre "Distribuir entre a equipe" ou "Atribuir a uma pessoa" no lugar do seletor único de responsável. No modo distribuir, os leads selecionados são divididos em rodízio entre os vendedores (role sales) mais o próprio gerente/founder que fez o import',
+      'CRM (crm/[id]/page.tsx): a lista de follow-ups do lead ganha checkbox — marcar conclui a tarefa (updateTaskStatus, reaproveitado de services/demands.ts) sem precisar sair da página do lead e ir em Demandas. Falha reverte o checkbox e mostra toast (crmDetail.toast.followUpUpdateError)',
+    ],
+  },
   {
     version: '1.17.0',
     date: '2026-08-21',
@@ -608,7 +627,7 @@ const ROLES = [
     role: 'sales',
     label: 'Vendedor',
     color: 'text-violet-700 bg-violet-50 border-violet-200',
-    acesso: 'Comercial, Demandas, CRM — sem Dashboard. No CRM, só vê os leads em que é responsável (mesma regra de developer/employee).',
+    acesso: 'Comercial, Demandas, CRM — sem Dashboard. No CRM, só vê os leads em que é responsável (mesma regra de developer/employee). Em /comercial vê a meta individual definida pelo founder/manager (sales_goals) em vez do painel financeiro da empresa.',
   },
 ]
 
@@ -620,7 +639,7 @@ const PAGES = [
   { route: '/auth/confirm', file: 'src/app/auth/confirm/route.ts', description: 'Route handler que completa login via verifyOtp(token_hash, type) — sem PKCE. Usado por links gerados server-side (convite de equipe), já que o destinatário não tem code_verifier no navegador.', type: 'público' },
   { route: '/auth/reset-password', file: 'src/app/auth/reset-password/page.tsx', description: 'Definição de nova senha. Usado para recuperação e para aceitar convites. Checklist de requisitos em tempo real (8+ caracteres, maiúscula, minúscula, número, símbolo) — botão só libera com tudo atendido.', type: 'público' },
   { route: '/dashboard', file: 'src/app/(dashboard)/dashboard/page.tsx', description: 'Visão geral: MRR, receita, custos, lucro, clientes, tarefas, receita em risco. Gráfico de área 6 meses + simulador de crescimento.', type: 'privado' },
-  { route: '/comercial', file: 'src/app/(dashboard)/comercial/page.tsx', description: 'Dashboard comercial: metas diária, semanal, mensal e do semestre (comparadas à receita de financial_entries). Gráfico de barras do semestre com linha de ritmo mensal necessário. Metas editáveis, salvas em localStorage.', type: 'founder' },
+  { route: '/comercial', file: 'src/app/(dashboard)/comercial/page.tsx', description: 'Founder/founder-like: dashboard comercial com metas diária/semanal/mensal/semestre comparadas à receita de financial_entries, editáveis em localStorage. Role sales: mesma UI mas mostra a meta individual (tabela sales_goals) contra os leads que ele fechou (crm_leads.deal_value onde stage=ganho), sem edição — quem define é o founder/manager pela aba Equipe do CRM.', type: 'founder/sales' },
   { route: '/marketing', file: 'src/app/(dashboard)/marketing/page.tsx', description: 'Dashboard de marketing: KPIs de investimento, retorno de vendas, leads, CAC, ROI e taxa de conversão. Gráfico de investimento x retorno por canal. CRUD de campanhas (canal, status, datas, tráfego, leads, conversões).', type: 'founder/manager' },
   { route: '/clients', file: 'src/app/(dashboard)/clients/page.tsx', description: 'Listagem com filtro por status, ordenação, paginação. CRUD completo. Tabela com scroll horizontal no mobile.', type: 'founder' },
   { route: '/clients/[id]', file: 'src/app/(dashboard)/clients/[id]/page.tsx', description: 'Detalhe do cliente: métricas, informações, tarefas vinculadas e card de Integrações (API Keys).', type: 'founder' },
@@ -632,7 +651,7 @@ const PAGES = [
   { route: '/projects/[id]', file: 'src/app/(dashboard)/projects/[id]/page.tsx', description: 'Detalhe do projeto: atividades com sub-atividades, dashboard de progresso, membros, campos detalhados e botão "Importar via IA" para gerar tasks a partir de PDF.', type: 'founder' },
   { route: '/api/projects/[id]/ai-tasks', file: 'src/app/api/projects/[id]/ai-tasks/route.ts', description: 'POST — recebe PDF via multipart/form-data, extrai texto com pdf-parse, envia ao GPT-4o e retorna JSON com tasks e subtasks gerados.', type: 'api' },
   { route: '/api/notify/task-assigned', file: 'src/app/api/notify/task-assigned/route.ts', description: 'POST — envia e-mail via Resend ao membro delegado. Falha silenciosamente se RESEND_API_KEY não estiver configurada.', type: 'api' },
-  { route: '/crm', file: 'src/app/(dashboard)/crm/page.tsx', description: 'Kanban de leads (Novo/Qualificação/Proposta/Negociação/Ganho/Perdido), movido por botões ←/→. Badge "Atrasado" quando o follow-up vence. Filtro por responsável (só founder/manager).', type: 'privado' },
+  { route: '/crm', file: 'src/app/(dashboard)/crm/page.tsx', description: 'Kanban de leads (Novo/Qualificação/Proposta/Negociação/Ganho/Perdido), movido por botões ←/→. Badge "Atrasado" quando o follow-up vence. Filtro por responsável (só founder/manager). Para founder/manager, ganha abas Kanban/Equipe — a aba Equipe (TeamOverview.tsx) mostra métricas por vendedor (leads, abordados, fechados, perdidos, pipeline aberto, follow-ups pendentes/atrasados) e progresso de meta editável (daily/weekly/monthly/semester). Import via IA ganha opção "Distribuir entre a equipe" (rodízio entre vendedores + quem importou) além de atribuir a uma pessoa.', type: 'privado' },
   { route: '/crm/[id]', file: 'src/app/(dashboard)/crm/[id]/page.tsx', description: 'Detalhe do lead: dados editáveis, timeline de interações, follow-ups vinculados, botão "Converter em Cliente" (Ganho) e painel de chat de IA fixo (LeadChat.tsx).', type: 'privado' },
   { route: '/api/crm/assistant', file: 'src/app/api/crm/assistant/route.ts', description: 'GET/DELETE (histórico em crm_lead_messages) e POST (chat + execute_action) — assistente de IA escopado a um lead, com 5 tools. Acesso verificado via RLS (lead só retorna se o usuário pode vê-lo).', type: 'api' },
   { route: '/api/crm/ai-import', file: 'src/app/api/crm/ai-import/route.ts', description: 'POST — recebe arquivo via multipart/form-data (CSV, PDF, Word, imagem, TXT), extrai com extractContent() e pede ao GPT-4o uma lista estruturada de leads (até 200) para revisão antes de criar.', type: 'api' },
@@ -671,7 +690,7 @@ const SERVICES = [
     file: 'src/services/commercial.ts',
     tabela: 'financial_entries',
     funcoes: [
-      { name: 'getCommercialSummary(referenceMonthKey?)', desc: 'Soma financial_entries (não cancelados) do dia, da semana (seg-dom) — sempre reais/atuais —, do mês e do semestre de referência (default mês atual), mais breakdown mês a mês e semesterLabel. Navegável via PeriodSelector em /comercial.' },
+      { name: 'getCommercialSummary(referenceMonthKey?)', desc: 'Soma financial_entries (não cancelados) do dia, da semana (seg-dom) — sempre reais/atuais —, do mês e do semestre de referência (default mês atual), mais breakdown mês a mês e semesterLabel. Navegável via PeriodSelector em /comercial. Delega a soma por período para src/lib/goalPeriods.ts::computePeriodTotals (compartilhado com getSalesPerformance em crm.ts).' },
     ],
   },
   {
@@ -691,9 +710,20 @@ const SERVICES = [
     funcoes: [
       { name: 'getLeads() / getLead(id)', desc: 'Lista/busca leads com nome do responsável (join em profiles!owner_id). RLS já filtra por visibilidade (owner ou founder/manager).' },
       { name: 'createLead / updateLead / deleteLead', desc: 'CRUD de leads.' },
-      { name: 'moveLeadStage(id, stage, lossReason?)', desc: 'Atualiza o estágio e registra uma interação stage_change na timeline.' },
+      { name: 'moveLeadStage(id, stage, lossReason?)', desc: 'Atualiza o estágio e registra uma interação stage_change na timeline. Também seta crm_leads.closed_at = now() ao entrar em "ganho" e limpa (null) ao sair — é a data usada para calcular quanto cada vendedor fechou em cada período.' },
       { name: 'getLeadInteractions(id) / addLeadInteraction(id, type, content)', desc: 'Timeline do lead — toda interação atualiza também crm_leads.last_interaction_at.' },
       { name: 'getLeadFollowUpTasks(id) / createFollowUpTask(id, formData)', desc: 'Follow-ups são tarefas normais (tabela tasks) com lead_id setado — aparecem também em /demands.' },
+      { name: 'getAllLeadFollowUpTasks()', desc: 'Todas as tarefas com lead_id setado (qualquer dono) — usado pela aba Equipe do CRM para contar follow-ups pendentes/atrasados por vendedor.' },
+      { name: 'getSalesPerformance(userId, referenceMonthKey)', desc: 'Soma deal_value dos leads em "ganho" daquele owner_id por closed_at, via computePeriodTotals (mesmo helper de getCommercialSummary). Usado na aba Equipe e em /comercial para o role sales.' },
+    ],
+  },
+  {
+    file: 'src/services/salesGoals.ts',
+    tabela: 'sales_goals',
+    funcoes: [
+      { name: 'getSalesGoal(userId)', desc: 'Meta individual (daily/weekly/monthly/semester) de um vendedor. RLS: o próprio vendedor só lê a própria linha.' },
+      { name: 'getTeamSalesGoals()', desc: 'Todas as metas da organização — RLS restringe a founder/manager.' },
+      { name: 'upsertSalesGoal(userId, goals)', desc: 'Cria ou atualiza (onConflict: user_id) a meta de um vendedor. RLS só permite founder/manager.' },
     ],
   },
   {
@@ -808,9 +838,11 @@ const MODELS = [
   { name: 'MarketingCampaign', tabela: 'marketing_campaigns', campos: ['id', 'organization_id', 'name', 'channel', 'status', 'start_date', 'end_date', 'investment', 'traffic', 'leads_generated', 'conversions', 'revenue_generated', 'notes', 'created_at'] },
   { name: 'CommunicationChannel', tabela: 'communication_channels', campos: ['id', 'organization_id', 'name', 'description', 'created_by', 'created_at'] },
   { name: 'CommunicationMessage', tabela: 'communication_messages', campos: ['id', 'channel_id', 'author_id', 'content', 'created_at', '+profiles join (full_name)'] },
-  { name: 'CrmLead', tabela: 'crm_leads', campos: ['id', 'organization_id', 'owner_id', 'name', 'company', 'role_title', 'email', 'phone', 'stage', 'source', 'product_interest', 'deal_value', 'win_probability', 'expected_close_date', 'loss_reason', 'industry', 'company_size', 'priority', 'tags[]', 'client_id', 'next_follow_up_date', 'last_interaction_at', 'notes', 'created_at', 'updated_at', '+profiles join (full_name)'] },
+  { name: 'CrmLead', tabela: 'crm_leads', campos: ['id', 'organization_id', 'owner_id', 'name', 'company', 'role_title', 'email', 'phone', 'stage', 'source', 'product_interest', 'deal_value', 'win_probability', 'expected_close_date', 'loss_reason', 'industry', 'company_size', 'priority', 'tags[]', 'client_id', 'next_follow_up_date', 'last_interaction_at', 'notes', 'closed_at', 'created_at', 'updated_at', '+profiles join (full_name)'] },
   { name: 'CrmLeadInteraction', tabela: 'crm_lead_interactions', campos: ['id', 'lead_id', 'author_id', 'type', 'content', 'created_at', '+profiles join (full_name)'] },
   { name: 'CrmLeadMessage', tabela: 'crm_lead_messages', campos: ['id', 'lead_id', 'user_id', 'role', 'content', 'created_at'] },
+  { name: 'SalesGoal', tabela: 'sales_goals', campos: ['id', 'organization_id', 'user_id', 'daily', 'weekly', 'monthly', 'semester', 'updated_at', '+profiles join (full_name)'] },
+  { name: 'PeriodTotals', tabela: '—', campos: ['today', 'thisWeek', 'thisMonth', 'semesterTotal', 'semesterMonthly[]', 'semesterLabel — shape compartilhado por CommercialSummary e getSalesPerformance'] },
 ]
 
 const INFRA = [
