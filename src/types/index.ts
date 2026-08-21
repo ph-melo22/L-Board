@@ -202,7 +202,7 @@ export interface OrgApiKey {
 
 // ─── Team / Profiles ──────────────────────────────────────────────────────────
 
-export type UserRole = 'founder' | 'manager' | 'financial' | 'developer' | 'employee'
+export type UserRole = 'founder' | 'manager' | 'financial' | 'developer' | 'employee' | 'sales'
 
 export interface Profile {
   id: string

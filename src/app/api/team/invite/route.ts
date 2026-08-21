@@ -7,7 +7,7 @@ import { auditLog } from '@/lib/auditLog'
 import { escapeHtml, inviteEmailHtml } from '@/lib/emailTemplates'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee']
+const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee', 'sales']
 
 export async function POST(request: NextRequest) {
   const { user, profile, error: authError } = await requireAuth()

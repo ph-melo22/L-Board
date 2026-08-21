@@ -22,7 +22,8 @@
     "manager": "Gestão",
     "financial": "Financeiro",
     "developer": "Dev / TI",
-    "employee": "Funcionário"
+    "employee": "Funcionário",
+    "sales": "Comercial"
   },
   "header": {
     "openMenu": "Abrir menu",
@@ -329,7 +330,8 @@
       "manager":   { "label": "Gestor",         "desc": "Acesso a Dashboard, Clientes, Demandas e Projetos." },
       "financial": { "label": "Financeiro",     "desc": "Acesso a Dashboard, Clientes, Financeiro e Contador." },
       "developer": { "label": "Developer / TI", "desc": "Acesso a Dashboard, Demandas, Projetos e Documentação." },
-      "employee":  { "label": "Funcionário",    "desc": "Acesso a Dashboard, Demandas e Projetos." }
+      "employee":  { "label": "Funcionário",    "desc": "Acesso a Dashboard, Demandas e Projetos." },
+      "sales":     { "label": "Vendedor",       "desc": "Acesso a CRM, Demandas e Comercial. No CRM, só vê os próprios leads." }
     },
     "toast": {
       "memberRemoved": "Membro removido",

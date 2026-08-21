@@ -9,6 +9,7 @@ const ROLE_ALLOWED: Record<string, string[]> = {
   financial: ['/dashboard', '/financial', '/contador', '/clients'],
   developer: ['/dashboard', '/demands', '/docs', '/projects', '/crm'],
   employee:  ['/dashboard', '/demands', '/projects', '/crm'],
+  sales:     ['/comercial', '/demands', '/crm'],
 }
 
 const AUTH_UTILITY_PATHS = ['/auth/reset-password', '/auth/callback', '/auth/forgot-password']

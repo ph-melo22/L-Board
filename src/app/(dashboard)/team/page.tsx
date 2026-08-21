@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Shield, User, Code2, AlertTriangle, Mail, MailPlus, Briefcase, BarChart2 } from 'lucide-react'
+import { Plus, Trash2, Shield, User, Code2, AlertTriangle, Mail, MailPlus, Briefcase, BarChart2, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -25,13 +25,13 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 const ROLE_ICONS: Record<UserRole, React.ElementType> = {
-  founder: Shield, manager: Briefcase, financial: BarChart2, developer: Code2, employee: User,
+  founder: Shield, manager: Briefcase, financial: BarChart2, developer: Code2, employee: User, sales: TrendingUp,
 }
 const ROLE_COLORS: Record<UserRole, string> = {
   founder: 'text-primary', manager: 'text-orange-500', financial: 'text-emerald-500',
-  developer: 'text-blue-500', employee: 'text-muted-foreground',
+  developer: 'text-blue-500', employee: 'text-muted-foreground', sales: 'text-violet-500',
 }
-const ROLE_KEYS: UserRole[] = ['founder', 'manager', 'financial', 'developer', 'employee']
+const ROLE_KEYS: UserRole[] = ['founder', 'manager', 'financial', 'developer', 'employee', 'sales']
 
 export default function TeamPage() {
   const { toast } = useToast()

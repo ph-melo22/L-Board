@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/requireAuth'
 import { auditLog } from '@/lib/auditLog'
 
-const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee']
+const VALID_ROLES = ['founder', 'manager', 'financial', 'developer', 'employee', 'sales']
 
 export async function PATCH(request: NextRequest) {
   const { user, profile, error: authError } = await requireAuth()

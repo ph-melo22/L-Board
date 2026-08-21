@@ -90,8 +90,9 @@ src/
 | `financial` | /dashboard, /financial, /contador, /clients |
 | `developer` | /dashboard, /demands, /docs, /projects |
 | `employee` | /dashboard, /demands, /projects |
+| `sales` | /comercial, /demands, /crm (sem /dashboard) — no CRM só vê os próprios leads |
 
-A constraint `profiles_role_check` no banco (`supabase/schema.sql`) precisa aceitar os 5 valores acima — se um role for adicionado só no código (middleware/UI) e não na constraint, o convite quebra silenciosamente depois de já criar o usuário órfão no Supabase Auth.
+A constraint `profiles_role_check` no banco (`supabase/schema.sql`) precisa aceitar os 6 valores acima — se um role for adicionado só no código (middleware/UI) e não na constraint, o convite quebra silenciosamente depois de já criar o usuário órfão no Supabase Auth.
 
 ### Variáveis de ambiente necessárias
 

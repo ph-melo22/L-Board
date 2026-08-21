@@ -56,6 +56,11 @@ const NAV_ITEMS = {
     { href: '/projects',  key: 'projects',  icon: FolderKanban },
     { href: '/crm',       key: 'crm',       icon: Handshake },
   ],
+  sales:     [
+    { href: '/comercial', key: 'comercial', icon: TrendingUp },
+    { href: '/crm',       key: 'crm',       icon: Handshake },
+    { href: '/demands',   key: 'demands',   icon: ListTodo },
+  ],
 }
 
 interface SidebarProps {

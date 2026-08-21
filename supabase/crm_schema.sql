@@ -1,3 +1,5 @@
+
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- L Board — CRM Kanban (leads)
 -- Cole tudo isso no SQL Editor do Supabase e clique em Run
@@ -70,7 +72,7 @@ CREATE INDEX idx_crm_lead_messages     ON crm_lead_messages(lead_id, created_at)
 CREATE INDEX idx_tasks_lead            ON tasks(lead_id);
 
 -- ─── Row Level Security ───────────────────────────────────────────────────────
--- Acesso ao módulo: founder, manager, developer, employee (financial não entra).
+-- Acesso ao módulo: founder, manager, developer, employee, sales (financial não entra).
 -- Visibilidade da linha: dono do lead (owner_id) sempre vê o próprio; founder/manager veem todos.
 
 ALTER TABLE crm_leads              ENABLE ROW LEVEL SECURITY;
@@ -82,7 +84,7 @@ CREATE POLICY "crm_leads_access" ON crm_leads FOR ALL TO authenticated
     EXISTS (
       SELECT 1 FROM profiles p WHERE p.id = auth.uid()
         AND p.organization_id = crm_leads.organization_id
-        AND p.role IN ('founder', 'manager', 'developer', 'employee')
+        AND p.role IN ('founder', 'manager', 'developer', 'employee', 'sales')
         AND (p.role IN ('founder', 'manager') OR crm_leads.owner_id = auth.uid())
     )
   )
@@ -90,7 +92,7 @@ CREATE POLICY "crm_leads_access" ON crm_leads FOR ALL TO authenticated
     EXISTS (
       SELECT 1 FROM profiles p WHERE p.id = auth.uid()
         AND p.organization_id = crm_leads.organization_id
-        AND p.role IN ('founder', 'manager', 'developer', 'employee')
+        AND p.role IN ('founder', 'manager', 'developer', 'employee', 'sales')
         AND (p.role IN ('founder', 'manager') OR crm_leads.owner_id = auth.uid())
     )
   );

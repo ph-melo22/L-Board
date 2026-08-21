@@ -6,9 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const VERSION = '1.16.0'
+const VERSION = '1.17.0'
 
 const CHANGELOG = [
+  {
+    version: '1.17.0',
+    date: '2026-08-21',
+    changes: [
+      'Novo role "sales" (rótulo "Vendedor" na UI): acesso restrito a /comercial, /demands e /crm — sem /dashboard. Adicionado em src/types/index.ts (UserRole), src/middleware.ts (ROLE_ALLOWED), src/components/layout/Sidebar.tsx (NAV_ITEMS) e nas telas/rotas de equipe (team/page.tsx, api/team/invite, api/team/role)',
+      'No CRM (supabase/crm_schema.sql), o role sales entra na política de RLS crm_leads_access com a mesma visibilidade de developer/employee: só enxerga e edita os leads em que é owner_id, não o funil inteiro da organização',
+      'Constraint profiles_role_check (supabase/schema.sql) passa a aceitar 6 valores de role, incluindo "sales"',
+    ],
+  },
   {
     version: '1.16.0',
     date: '2026-08-14',
@@ -594,6 +603,12 @@ const ROLES = [
     label: 'Funcionário',
     color: 'text-muted-foreground bg-muted border-border',
     acesso: 'Dashboard, Demandas, Projetos, CRM. No CRM, só vê os leads em que é responsável.',
+  },
+  {
+    role: 'sales',
+    label: 'Vendedor',
+    color: 'text-violet-700 bg-violet-50 border-violet-200',
+    acesso: 'Comercial, Demandas, CRM — sem Dashboard. No CRM, só vê os leads em que é responsável (mesma regra de developer/employee).',
   },
 ]
 
